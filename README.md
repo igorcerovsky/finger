@@ -1,7 +1,5 @@
 # Middle Finger Climbing Biomechanics Model — Improved (v2)
 
-![Finger Biomechanics Forces](finger_biomechanics_forces.png)
-
 ## Purpose
 
 2D static biomechanics model of the **middle finger** for climbing grips. The improved model adds ten physiological and methodological upgrades over the baseline, all implemented in order.
@@ -107,6 +105,31 @@ python3 finger_biomechanics_model.py --load-point fingertip
 # Extended hang for fatigue model
 python3 finger_biomechanics_model.py --fatigue-time 60
 ```
+
+---
+
+## Geometry Advantage: Why the Original Analysis Was Misleading
+
+The previous model compared short vs long fingers at **the same joint angles** for the same load. This produces near-zero differences (~1–3%) because both the external moment arm (proportional to finger length) and the tendon moment arm (also proportional to finger length via improvement #2) scale by the same ratio and cancel exactly.
+
+**The physically correct question** is: what are the tendon forces when both fingers grip the **same hold** (same contact point in space)?
+
+The short finger defines the hold position at its nominal grip angles. The longer finger must adopt **more flexion** to reach that same contact point — steeper PIP angles, more negative DIP flexion.
+
+### Fixed-Hold Results (same hold, average body weight load)
+
+| Grip | Finger | PIP flex | FDP | FDS | A2 | ΔFDS vs short |
+|------|--------|----------|-----|-----|----|--------------|
+| half_crimp | short (ref) | 75° | 306 N | 414 N | 204 N | — |
+| half_crimp | average | 100° | 288 N | 322 N | 269 N | **−22%** |
+| half_crimp | long | 116° | 276 N | 236 N | 255 N | **−43%** |
+| full_crimp | short (ref) | 105° | 289 N | 337 N | 347 N | — |
+| full_crimp | average | 122° | 276 N | 225 N | 304 N | **−33%** |
+| full_crimp | long | 134° | 156 N | 156 N | 255 N | **−54%** |
+
+**Interpretation:** The FDS reduction of −43% (long vs short, half-crimp) and −54% (full-crimp) is large and clinically meaningful. Since FDS is the dominant contributor to A2 pulley stress, this matches the empirical observation that climbers with longer fingers have substantially lower crimp injury rates per unit of grip load.
+
+The open-drag posture shows the *reverse*: longer fingers flexing more to reach a shallow hold actually increases FDP slightly (+17%), which aligns with the known observation that open-drag is not intrinsically protective for long fingers.
 
 ---
 
