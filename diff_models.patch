@@ -1,0 +1,194 @@
+--- finger_biomechanics_model.py	2026-03-01 22:52:44
++++ finger_biomechanics_model_claude.py	2026-02-27 13:52:45
+@@ -1209,191 +1209,8 @@
+     # ── Mechanism C: hold-size contact-point (short-finger advantage) ──
+     _hold_size_analysis(athletes, avg_f, cfg_main)
+ 
+-    # ── Mechanism D: The 'Fat Finger' Wall Clearance Penalty ──
+-    _micro_crimp_wall_clearance(athletes, avg_f, cfg_main)
+-
+     print("\nDone.")
+ 
+ 
+-def _micro_crimp_wall_clearance(athletes: list, f_mag: float, cfg: SimConfig) -> None:
+-    """
+-    Mechanism D: The Micro-Crimp Wall Clearance Constraint (The 'Fat Finger' Penalty).
+-    
+-    Explains the absolute dominance of short-fingered climbers on holds <10 mm.
+-    
+-    Physical setup
+-    ──────────────
+-    On a flush vertical wall, the climber's finger joints cannot penetrate the wall.
+-    A thicker finger has a larger pad radius (R_tip) and larger DIP joint radius (R_dip).
+-    If the hold depth (D) is smaller than the finger's radius, the center of the bone 
+-    (the rotation axis) CANNOT be placed directly above the hold's edge. The soft tissue 
+-    hits the wall and physically pushes the bone outwards.
+-    
+-    This creates a mandatory minimum horizontal moment arm for the DIP joint:
+-        Min_Moment_Arm = max(R_dip - D, 0)
+-    
+-    Because the required flexor tendon force (FDP) is directly proportional to this 
+-    external moment arm, a thick finger hitting the wall constraint experiences an 
+-    exponential spike in required tendon force, completely overriding the length-based 
+-    angle advantages seen on larger holds.
+-    """
+-    print("=== Mechanism D: Micro-Crimp Wall Clearance (The 'Fat Finger' Penalty) ===")
+-    print("  Why short climbers absolutely dominate on micro-crimps (<10mm):")
+-    print("  Thick fingers hit the wall, forcing the bone axis away from the hold edge.")
+-    print("  This creates a mandatory minimum DIP moment arm that cannot be optimized away.")
+-    
+-    # Estimate finger radius scaling with overall length.
+-    # Base short finger radius ~6.0 mm. Scaling linearly.
+-    def get_radius(lengths):
+-        # Lm is index 1
+-        return 6.0 * (lengths[1] / 22.0)
+-        
+-    print(f"  {'Hold D mm':>11} {'Short DIP_MA':>15} {'Long DIP_MA':>14} {'FDP_short':>12} {'FDP_long':>11} {'Long Penalty':>15}")
+-    
+-    holds = [15.0, 10.0, 8.0, 6.0, 4.0]
+-    
+-    short_l = athletes[0].lengths_mm
+-    long_l = athletes[2].lengths_mm
+-    
+-    r_pad_short = get_radius(short_l)
+-    r_pad_long  = get_radius(long_l)
+-    
+-    # Internal FDP moment arm at DIP (approximate from scaling model, dip_f = 0)
+-    s_short = short_l[1] / 26.0
+-    s_long = long_l[1] / 26.0
+-    
+-    r_fdp_short = s_short * 4.2  
+-    r_fdp_long  = s_long * 4.2   
+-    
+-    for D in holds:
+-        # Minimum horizontal distance from DIP joint to the hold edge
+-        # Baseline horizontal offset even in full crimp (say 2 mm for bone geometry)
+-        baseline = 2.0 
+-        
+-        # If hold depth D is less than the finger radius,
+-        # the flesh hits the wall and pushes the bone further out.
+-        ma_short = max(r_pad_short - D, 0.0) + baseline
+-        ma_long  = max(r_pad_long  - D, 0.0) + baseline
+-        
+-        # FDP force required strictly to balance the DIP joint against external load
+-        fdp_short = f_mag * ma_short / r_fdp_short
+-        fdp_long  = f_mag * ma_long  / r_fdp_long
+-        
+-        ratio = fdp_long / fdp_short
+-        
+-        print(f"  {D:11.1f} {ma_short:15.1f} {ma_long:14.1f} {fdp_short:12.0f} {fdp_long:11.0f} {ratio:14.2f}x")
+-        
+-    print()
+-    print("  Interpretation:")
+-    print("  On large edges (15mm), neither finger hits the wall limit. The long finger's larger")
+-    print("  internal FDP moment arm actually gives it a slight advantage (Penalty < 1.0x).")
+-    print("  However, on micro-crimps (<10mm), the thick finger bottoms out against the wall.")
+-    print("  Its DIP moment arm is forced to grow while the short finger's remains small.")
+-    print("  At 4mm, the long finger requires ~1.9x more FDP force relative to the short finger.")
+-    print("  The wall acts as a hard geometric barrier that heavily punishes thick fingers!")
+-    print("  This completely overrides any angle advantage they had on larger holds.")
+-
+-    # High-resolution graph generation
+-    holds_continuous = np.arange(4.0, 20.1, 0.1)
+-    ratios = []
+-    fdp_shorts = []
+-    fdp_longs = []
+-    fds_shorts = []
+-    fds_longs = []
+-    
+-    # ── Accurate PIP Moment Approximation for FDS ──
+-    # In a half crimp (PIP=75 deg, DIP=-20 deg, abs=0 deg at the distal phalanx):
+-    # - Distal phalanx is horizontal.
+-    # - Middle phalanx slants DOWN toward the DIP by 20 degrees.
+-    # Therefore, the PIP joint is horizontally behind the DIP by Lm * cos(20)
+-    # and vertically ABOVE the DIP by Lm * sin(20).
+-    theta_m_rad = np.deg2rad(-20.0)
+-    lm_short = short_l[1]
+-    lm_long  = long_l[1]
+-    
+-    # We must account for the shear force on the hold (30% of vertical per mechanism C).
+-    # This shear pushes proximally. Because the PIP is above the DIP,
+-    # this shear force creates an EXTENSION moment at the PIP, significantly
+-    # reducing the required FDS!
+-    f_shear = f_mag * 0.30
+-    
+-    for D in holds_continuous:
+-        # FDP computation (driven by DIP moment arm)
+-        ma_dip_short = max(r_pad_short - D, 0.0) + 2.0
+-        ma_dip_long  = max(r_pad_long  - D, 0.0) + 2.0
+-        
+-        s_fdp = f_mag * ma_dip_short / r_fdp_short
+-        l_fdp = f_mag * ma_dip_long  / r_fdp_long
+-        
+-        fdp_shorts.append(s_fdp)
+-        fdp_longs.append(l_fdp)
+-        ratios.append(l_fdp / s_fdp)
+-        
+-        # FDS computation (driven by PIP moment arm - shear relief - FDP contribution)
+-        # 1. Total horizontal distance from PIP to the hold edge
+-        ma_pip_short_x = ma_dip_short + lm_short * np.cos(theta_m_rad)
+-        ma_pip_long_x  = ma_dip_long  + lm_long  * np.cos(theta_m_rad)
+-        
+-        # 2. Total vertical distance from PIP to the hold edge
+-        # PIP is higher than DIP by Lm * sin(20). (theta_m is negative, so use -sin)
+-        dy_pip_short = -lm_short * np.sin(theta_m_rad)
+-        dy_pip_long  = -lm_long  * np.sin(theta_m_rad)
+-        
+-        # 3. External Moment at PIP (Net = Flexion from vertical - Extension from shear)
+-        m_pip_ext_short = (f_mag * ma_pip_short_x) - (f_shear * dy_pip_short)
+-        m_pip_ext_long  = (f_mag * ma_pip_long_x)  - (f_shear * dy_pip_long)
+-        
+-        # Internal moment arms for PIP
+-        r_fdp_pip_short = s_short * 2.8
+-        r_fdp_pip_long  = s_long  * 2.8
+-        r_fds_short = s_short * 6.5
+-        r_fds_long  = s_long  * 6.5
+-        
+-        s_fds = max((m_pip_ext_short - s_fdp * r_fdp_pip_short) / r_fds_short, 0.0)
+-        l_fds = max((m_pip_ext_long  - l_fdp * r_fdp_pip_long)  / r_fds_long, 0.0)
+-        
+-        fds_shorts.append(s_fds)
+-        fds_longs.append(l_fds)
+-        
+-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
+-    
+-    # Top subplot: FDP & FDS Absolute Load
+-    ax1.plot(holds_continuous, fdp_longs, 'r-', linewidth=2.0, label="Long FDP")
+-    ax1.plot(holds_continuous, fdp_shorts, 'b-', linewidth=2.0, label="Short FDP")
+-    ax1.plot(holds_continuous, fds_longs, 'r--', linewidth=2.0, label="Long FDS", alpha=0.8)
+-    ax1.plot(holds_continuous, fds_shorts, 'b--', linewidth=2.0, label="Short FDS", alpha=0.8)
+-    
+-    ax1.axvline(r_pad_long, color='purple', linestyle=':', alpha=0.6, label=f"Long Pad Rad ({r_pad_long:.1f}mm)")
+-    ax1.axvline(r_pad_short, color='cyan', linestyle=':', alpha=0.6, label=f"Short Pad Rad ({r_pad_short:.1f}mm)")
+-    ax1.set_ylabel("Required Tension (N)")
+-    ax1.set_title("Absolute Tendon Loads vs Hold Depth (Micro-Crimps)")
+-    ax1.grid(True, alpha=0.3)
+-    ax1.legend(loc="upper left", ncol=2)
+-    
+-    # Bottom subplot: Penalty Ratio
+-    ax2.plot(holds_continuous, ratios, 'r-', linewidth=2.5, label="Long/Short FDP Ratio")
+-    ax2.axhline(1.0, color='gray', linestyle='--', alpha=0.7, label="Equal Effort (1.0x)")
+-    ax2.axvline(r_pad_long, color='purple', linestyle=':', alpha=0.6)
+-    ax2.axvline(r_pad_short, color='cyan', linestyle=':', alpha=0.6)
+-    
+-    penalty_zone = holds_continuous < r_pad_long
+-    ax2.fill_between(holds_continuous[penalty_zone], 1.0, np.array(ratios)[penalty_zone], 
+-                     where=(np.array(ratios)[penalty_zone] > 1.0), 
+-                     color='red', alpha=0.1, label="Micro-Crimp Penalty Zone")
+-    
+-    ax2.invert_xaxis()  # Show 20mm down to 4mm
+-    ax2.set_xlabel("Hold Depth (mm)")
+-    ax2.set_ylabel("Penalty Factor")
+-    ax2.set_title("The 'Fat Finger' Penalty Factor")
+-    ax2.grid(True, alpha=0.3)
+-    ax2.legend(loc="upper left")
+-    
+-    plt.tight_layout()
+-    out_png = Path(__file__).with_name("micro_crimp_penalty.png")
+-    plt.savefig(out_png, dpi=200, bbox_inches="tight")
+-    plt.close()
+-    print(f"\n  → Saved detailed penalty graph: {out_png}")
+-
+-
+ if __name__ == "__main__":
+     main()
