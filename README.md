@@ -1,191 +1,128 @@
-# Middle Finger Climbing Biomechanics Model
+# Middle Finger Climbing Biomechanics
 
-2D static biomechanics model of the **middle finger** for rock-climbing grips.  
-Solves for FDP, FDS, EDC tendon forces and A2/A3/A4 pulley loads across grip postures,
-athlete sizes, and a time-dependent fatigue model.
+Reduced 2D biomechanics model of the middle finger for climbing grip analysis.
 
----
+![Finger biomechanics forces](img/finger_biomechanics_forces.png)
 
-## Finger Anatomy — Phalanx Lengths
+![Finger-length dependent force study](img/plot_length_vs_force_peerj_study_half_crimp_8p0mm.png)
 
-A finger has three bones (**phalanges**) spanning from the knuckle to the tip:
+## Overview
 
-```
-MCP ──── Lp ──── PIP ──── Lm ──── DIP ──── Ld ──── TIP
-         Proximal          Middle             Distal
-```
+The current code is intentionally narrower than the original prototype. Unsupported mechanics were removed or downgraded after benchmarking against published studies.
 
-| Symbol | Full name | Joint span | Typical length (middle finger) |
-|--------|-----------|------------|-------------------------------|
-| **Lp** | Proximal phalanx | MCP → PIP | 23 – 32 mm |
-| **Lm** | Middle phalanx   | PIP → DIP | 19 – 30 mm |
-| **Ld** | Distal phalanx   | DIP → tip | 16 – 25 mm |
+Use this repository to:
 
-> **Joint abbreviations** — MCP: metacarpophalangeal (knuckle); PIP: proximal interphalangeal;
-> DIP: distal interphalangeal.
+- comparing FDP and FDS force demand across finger lengths
+- comparing open drag, half crimp, and full crimp postures
+- visualizing finger geometry, tendon paths, and pulley reaction vectors
+- checking whether a change in finger length produces a biomechanical advantage or disadvantage
 
-The **total finger ray** = Lp + Lm + Ld (≈ 60–92 mm across the human population,
-excluding the metacarpal). Lm is the scaling reference throughout the model
-(`L_REF = 26 mm`): all moment-arm bounds are normalised to a 26 mm middle phalanx
-and multiplied by `Lm / L_REF`.
+The current code is **not** a fully validated hand model. It reproduces some published trends, but it does not yet match all published absolute values.
 
----
-
-## Finger Length vs Required Tendon Forces
-
-![Finger length vs force](plot_length_vs_force_peerj.png)
-
-Two models compared across the literature hand-size range (5th-pct female → 95th-pct male)
-for a fixed **100 N fingertip load** in three grip postures:
-
-| Model | Lines | Description |
-|-------|-------|-------------|
-| **Standard** | solid | Moment arms scale *proportionally* with bone length (Improvement #2). Longer finger → larger MA → forces nearly constant. |
-| **PeerJ 7470** | dashed | Moment arms grow only ~5 % per 22 % bone increase (bonobo vs human finding). Longer finger → *higher* tendon forces — a **length disadvantage**. |
-
-Script: [`plot_length_vs_force_peerj.py`](plot_length_vs_force_peerj.py)
-
----
-
-## Ten Model Improvements
-
-### #1 — Tendon-Excursion Moment Arms
-
-**Replaces:** arbitrary 45/55 blend weights.  
-**Method:** `r_i = dL/dθ_i` via central finite difference (An et al. 1983).
-Tendon path length is recomputed at `θ ± 1°` for each joint;
-moment arm = `(L+ − L−) / (2Δθ)`.
-
-### #2 — Moment Arms Scale with Phalanx Length
-
-**Replaces:** fixed empirical constants identical across athletes.  
-**Method:** All physiological bound curves are normalised to a 26 mm reference middle
-phalanx and multiplied by `Lm / L_REF`. Longer fingers automatically receive
-proportionally larger moment arms.
-
-### #3 — Grip-Dependent Load Direction
-
-**Replaces:** fixed `[0, F_y]` vertical force for all postures.  
-**Method:** A proximal shear component along `−u_d` is added, scaled by
-`μ_eff × |cos(θ_d)|` where `μ_eff = 0.30`. For open drag (phalanx nearly vertical)
-the force is nearly vertical; for full crimp (~horizontal) a ~30% proximal shear
-is added.
-
-### #4 — Passive Joint Stiffness at All Joints
-
-**Replaces:** single scalar `dip_passive_fraction`.  
-**Method:** Minami-style exponential passive torque
-`M_passive(θ) = k·(exp(b·(θ−θ₀)) − 1)` at DIP, PIP, and MCP.
-Only activates beyond onset angles (60/80/70°) and grows progressively at end-range.
-
-### #5 — MCP Moment Equilibrium
-
-**Extends:** the 2-joint (DIP, PIP) solver with a third equilibrium check at MCP.  
-**Reports:** `MCP residual = M_mcp_ext − (FDP·r_fdp_mcp + FDS·r_fds_mcp − T_edc·r_edc_mcp − M_pass_mcp)`.
-Non-zero residual quantifies the moment that would be closed by interossei/lumbricals
-(not yet solved as unknowns).
-
-### #6 — Distributed Pulley Wrapping Arcs
-
-**Replaces:** single waypoints for A2, A3, A4.  
-**Method:** Each annular pulley is discretised into `n_arc = 5` arc points.
-Resultant force uses the capstan principle `R = T·(u_in + u_out)` with actual
-incoming/outgoing tendon chord directions.
-
-### #7 — EDC Passive Tendon
-
-**Adds:** a dorsal extensor digitorum communis path from MCP → PIP → terminal slip.  
-**Method:** Linear spring: `T_edc = 1.2 N/deg × max(combined_flexion − 30°, 0)`.
-Reported as `EDC (N)` in output.
-
-### #8 — Held-Out Calibration Validation
-
-**Method:** Power-law calibration fitted on **open-drag + full-crimp** only.
-**Half-crimp is a genuine held-out test** (Schweizer 2009):
-
-- A2: predicted 150 N vs published 197 N (−24%)
-- A4: predicted 182 N vs published 165 N (+10% ✓)
-
-### #9 — Four-Finger Load Sharing
-
-**Adds:** index, middle, ring finger instances with load-sharing coefficients from
-Vigouroux et al. (2006): index 24%, middle 30%, ring 28%.
-
-### #10 — Isometric Fatigue Model
-
-**Method:** `FDS_capacity(t) = FDS_fresh × exp(−t / τ_fds)`, `τ_fds = 20 s`.
-As FDS weakens, FDP compensates to maintain the PIP moment.
-For full crimp (average climber, 30 s hang): FDP rises +189%, peak A2 ≈ 1184 N.
-
----
-
-## Output Column Reference
-
-| Column | Meaning |
-|--------|---------|
-| `FDP (N)` | Flexor digitorum profundus tension |
-| `FDS (N)` | Flexor digitorum superficialis tension |
-| `EDC (N)` | EDC passive tension (#7) |
-| `ratio` | FDP / FDS |
-| `A2 / A3 / A4 (N)` | Pulley resultant force (distributed arc, #6) |
-| `r_fdp_dip (mm)` | FDP moment arm at DIP (tendon excursion, #1+#2) |
-| `r_fds_pip (mm)` | FDS moment arm at PIP (tendon excursion, #1+#2) |
-| `Mpass_pip mNm` | Passive PIP stiffness torque (#4) |
-| `MCP resid mNm` | MCP equilibrium residual (#5); lower = better balanced |
-
----
-
-## Literature Validation
-
-Fingertip load, average climber (72.8 kg):
-
-| Metric | Model | Published | Source |
-|--------|-------|-----------|--------|
-| FDP/FDS open drag | 0.85 | ~0.88 | Vigouroux 2006 |
-| FDP/FDS half crimp | 1.19 | between open/full | Vigouroux 2006 |
-| FDP/FDS full crimp | 1.46 | ~1.75 | Vigouroux 2006 |
-| A2 open drag | 159 N | 121 N | Schweizer 2009 |
-| A2 full crimp | 305 N | 287 N | Schweizer 2009 |
-| A4 half crimp (held-out) | 182 N | 165 N (+10%) | Schweizer 2009 |
-
-## How to Run
+## Quick Start
 
 ```bash
-# Main model — distal-mid load point
 python3 finger_biomechanics_model.py
-
-# Fingertip loading (literature comparison mode)
-python3 finger_biomechanics_model.py --load-point fingertip
-
-# Extended hang for fatigue model
-python3 finger_biomechanics_model.py --fatigue-time 60
-
-# Finger length vs force plot (standard + PeerJ models)
+python3 finger_biomechanics_model.py --load-point-mm-from-tip 0
 python3 plot_length_vs_force_peerj.py
+python3 plot_length_vs_force_peerj.py --contact-sweep-grip full_crimp --load-point-mm-from-tip 6
 ```
 
----
+Generated images are written to `img/`.
 
-## Known Limitations
+## Methods
 
-- **MCP not fully closed** — interossei/lumbrical forces not solved as unknowns.
-- **2D planar only** — no out-of-plane abduction/adduction.
-- **EDC passive-only** — active extensor contraction not modelled.
-- **Fixed load-sharing coefficients** — Vigouroux (2006) mean values; individual variation ±20%.
-- **Single-muscle fatigue** — only FDS degradation modelled.
-- **Fixed pulley offset (4 mm)** — anatomical variation not parameterised.
+`finger_biomechanics_model.py` implements a reduced planar model of the middle finger with:
 
----
+- three phalanges (`Lp`, `Lm`, `Ld`) and configurable joint posture
+- FDP insertion on the distal phalanx and FDS insertion on the middle phalanx
+- annular pulley redirection at A2, A3, and A4
+- DIP and PIP static equilibrium for FDP and FDS
+- passive DIP/PIP resistance
+- external load applied in global `+y`
+
+The load/hold is defined by a contact point measured proximally from the fingertip along the distal phalanx:
+
+- `0 mm` = fingertip loading
+- `Ld / 2` = distal-phalanx midpoint
+- values above `Ld` are clipped to the DIP end
+
+The default grip presets are:
+
+- `open_drag`
+- `half_crimp`
+- `full_crimp`
+
+The study plot in `plot_length_vs_force_peerj.py` uses the same solver to sweep finger length and hold contact point.
+
+## Study Figures
+
+`plot_length_vs_force_peerj.py` produces three figures in one image:
+
+- Figure 1: all three major grip types on one force-vs-length plot for one fixed hold/contact point
+- Figure 2: contact-point family of curves for `0, 2, 4, 6, 8, 10, 12, 14, 18, 20 mm` from the fingertip for one selected grip
+- Figure 3: FDP and FDS heatmaps over finger length and contact distance for the selected grip
+
+Use:
+
+```bash
+python3 plot_length_vs_force_peerj.py
+python3 plot_length_vs_force_peerj.py --contact-sweep-grip full_crimp --load-point-mm-from-tip 6
+```
+
+Interpretation:
+
+- rising force with increasing finger length indicates a mechanical disadvantage for that grip/hold definition
+- changing contact distance changes the external moment arm and therefore the FDP/FDS demand
+- the heatmaps show where the disadvantage is strongest across the full length/contact space
+
+## Benchmark Summary
+
+The model is benchmarked against three published anchors:
+
+- Vigouroux et al. 2006: FDP/FDS ratio in open-hand vs crimp postures
+- Schweizer 2009: A2 and A4 pulley loads at 100 N fingertip load
+- PeerJ 7470: longer fingers gain only modest moment-arm advantage and still require higher flexor force
+
+Current status for the average-climber fingertip case:
+
+- `open_drag` FDP/FDS is close to the Vigouroux open-hand value
+- `full_crimp` FDP/FDS remains below the Vigouroux crimp value
+- A2 is overpredicted relative to Schweizer 2009
+- A4 is not matched consistently across all grips
+- the PeerJ length-disadvantage trend is reproduced
+
+## Scope And Limits
+
+This repository is useful for:
+
+- relative comparison of short vs long fingers under the same assumptions
+- posture-to-posture comparison of FDP/FDS demand
+- visualization of tendon routing and pulley reaction directions
+- hold/contact sensitivity studies using the fingertip-distance parameter
+
+It should not be used as evidence for:
+
+- exact human pulley-load magnitudes
+- exact proximal flexor moment arms
+- MCP or extensor equilibrium
+- fatigue or multi-finger force sharing
+
+Unsupported additions from the earlier prototype were removed from the active model path, including MCP closure, EDC loading, fatigue, four-finger sharing, and post-hoc calibration.
+
+## Files
+
+- main model: `finger_biomechanics_model.py`
+- study plot: `plot_length_vs_force_peerj.py`
+- generated images: `img/`
+- finger-geometry figure: `img/finger_biomechanics_forces.png`
+- study figure: `img/plot_length_vs_force_peerj_study_half_crimp_8p0mm.png`
 
 ## References
 
-- An, Ueba, Chao, Cooney & Linscheid, J Biomech (1983) — tendon excursion moment arms
-- Chao, An, Cooney & Linscheid, *Biomechanics of the Hand* (1989) — MCP/EDC equilibrium
-- Minami, An, Cooney & Linscheid, J Hand Surg (1985) — passive joint stiffness
-- Uchiyama, Cooney & Linscheid, J Biomech (1995) — distributed pulley wrapping
-- Vigouroux et al., J Biomech (2006): <https://doi.org/10.1016/j.jbiomech.2005.10.034>
-- Schweizer, J Hand Surg Am (2001): <https://doi.org/10.1053/jhsu.2001.26322>
-- Schweizer, J Biomech (2009): <https://pubmed.ncbi.nlm.nih.gov/19367698/>
-- Ki et al., BMC Sports Sci Med Rehabil (2024): <https://bmcsportsscimedrehabil.biomedcentral.com/articles/10.1186/s13102-024-01096-y>
-- Schöffl et al., Diagnostics (2021): <https://pmc.ncbi.nlm.nih.gov/articles/PMC8159322/>
-- PeerJ 7470 (2019) — length disadvantage in apes vs humans
+- Vigouroux, Quaine, Labarre-Vila, Moutet, J Biomech (2006): [https://doi.org/10.1016/j.jbiomech.2005.10.034](https://doi.org/10.1016/j.jbiomech.2005.10.034)
+- Schweizer, J Hand Surg Am (2001): [https://doi.org/10.1053/jhsu.2001.26322](https://doi.org/10.1053/jhsu.2001.26322)
+- Schweizer, J Biomech (2009): [https://pubmed.ncbi.nlm.nih.gov/19367698/](https://pubmed.ncbi.nlm.nih.gov/19367698/)
+- PeerJ 7470: [https://peerj.com/articles/7470/](https://peerj.com/articles/7470/)
+- Minami et al., J Hand Surg (1985): passive finger-joint stiffness
+- An et al., J Biomech (1983): tendon-excursion moment-arm method

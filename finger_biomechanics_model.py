@@ -4,11 +4,11 @@ Middle-finger biomechanics model for climbing grips (2D static equilibrium).
 
 This version keeps only the parts that can be traced to published hand/climbing
 biomechanics papers:
-- tendon-excursion-based moment arms
+- tendon-excursion-based effective moment arms for DIP/PIP
 - DIP/PIP static equilibrium for FDP and FDS
 - pulley-resultant loads for A2/A3/A4
-- literature comparison against Vigouroux 2006, Schweizer 2001/2009, and
-  PeerJ 7470 moment-arm data
+- literature comparison against Vigouroux 2006, Schweizer 2001/2009, and the
+  PeerJ 7470 length-scaling trend
 
 References
 Vigouroux et al., J Biomech 2006  https://doi.org/10.1016/j.jbiomech.2005.10.034
@@ -73,7 +73,7 @@ class SimConfig:
     """Top-level simulation knobs."""
     load_fraction_of_bw: float = 0.15
     pulley_offset_mm: float = 4.0
-    load_point: str = "distal_mid"       # "distal_mid" | "fingertip"
+    load_point_mm_from_tip: Optional[float] = None
     n_arc_points: int = 5                # sample points per pulley arc
 
 
@@ -92,12 +92,10 @@ def build_joint_positions(pose: FingerPose) -> Dict[str, np.ndarray]:
     pip = mcp + pose.Lp * u_p
     dip = pip + pose.Lm * u_m
     tip = dip + pose.Ld * u_d
-    distal_mid = dip + 0.5 * pose.Ld * u_d
-    return dict(MCP=mcp, PIP=pip, DIP=dip, TIP=tip, DISTAL_MID=distal_mid,
-                uP=u_p, uM=u_m, uD=u_d)
+    return dict(MCP=mcp, PIP=pip, DIP=dip, TIP=tip, uP=u_p, uM=u_m, uD=u_d)
 
 
-# ──────────────── Improvement #6: distributed pulley arcs ────────────────────
+# ───────────────────────── distributed pulley arcs ───────────────────────────
 
 def _arc_points(centre: np.ndarray, radius: float,
                 ang_start_deg: float, ang_end_deg: float, n: int) -> np.ndarray:
@@ -123,9 +121,8 @@ def build_tendon_geometry(pose: FingerPose,
                           offset_mm: float = 4.0,
                           n_arc: int = 5) -> Dict:
     """
-    Build all joint positions, pulley anchor points, and tendon paths.
-    Improvement #6: each annular pulley is a short arc (n_arc sample points).
-    Improvement #7: EDC path added on dorsal side.
+    Build joint positions, pulley centres, and flexor tendon paths.
+    Each annular pulley is represented by a short sampled arc.
     """
     jp = build_joint_positions(pose)
     mcp, pip, dip, tip = jp["MCP"], jp["PIP"], jp["DIP"], jp["TIP"]
@@ -146,19 +143,13 @@ def build_tendon_geometry(pose: FingerPose,
     fdp_ins = dip + 0.90 * pose.Ld * u_d + 0.8 * offset_mm * n_d
     anchor  = mcp + np.array([-18.0, -20.0])
 
-    # Improvement #7: EDC dorsal path
-    edc_origin = mcp  + offset_mm * (-n_p)
-    edc_mid    = pip  + offset_mm * (-n_pm)
-    edc_ins    = tip  + 0.5 * offset_mm * (-n_d)
-
-    # Improvement #6: arc-discretised pulleys
+    # Arc-discretised pulleys
     a2_arc = _flexion_arc(a2_c, offset_mm, unit(anchor - a2_c), unit(a3_c - a2_c), n_arc)
     a3_arc = _flexion_arc(a3_c, offset_mm, unit(a2_c  - a3_c), unit(a4_c - a3_c), n_arc)
     a4_arc = _flexion_arc(a4_c, offset_mm, unit(a3_c  - a4_c), unit(fdp_ins - a4_c), n_arc)
 
     fdp_path = np.vstack([anchor, a2_c, a3_c, a4_c, fdp_ins])
     fds_path = np.vstack([anchor, a2_c, a3_c, fds_ins])
-    edc_path = np.vstack([edc_origin, edc_mid, edc_ins])
 
     return {
         **jp,
@@ -168,12 +159,10 @@ def build_tendon_geometry(pose: FingerPose,
         "A4": a4_c, "A4_ARC": a4_arc,
         "FDS_INS": fds_ins, "FDP_INS": fdp_ins,
         "FDP_PATH": fdp_path, "FDS_PATH": fds_path,
-        "EDC_PATH": edc_path, "EDC_INS": edc_ins,
     }
 
 
-# ──────────── Improvement #1: tendon-excursion moment arms ───────────────────
-# Improvement #2: length-scaled physiological bounds
+# ────────────────── effective moment arms from tendon excursion ──────────────
 
 _L_REF_MM = 26.0   # reference middle phalanx length
 
@@ -194,8 +183,12 @@ def tendon_excursion_moment_arms(pose: FingerPose,
                                  offset_mm: float = 4.0,
                                  dth: float = 1.0) -> Dict[str, float]:
     """
-    Improvement #1: r_i = dL/dθ_i via central finite difference.
-    Improvement #2: physiological bounds scale with Lm / L_REF.
+    Estimate DIP/PIP flexor moment arms from tendon excursion.
+
+    The raw excursion derivative is bounded because the reduced tendon routing in
+    this script is not the full via-point model used in published hand models.
+    These are effective arms for the reduced solver, not a validated replacement
+    for the full PeerJ/OpenSim moment-arm model.
     """
     tp, tm, td = pose.theta_p, pose.theta_m, pose.theta_d
 
@@ -214,12 +207,9 @@ def tendon_excursion_moment_arms(pose: FingerPose,
     r_fdp_dip_raw = dr("FDP", "d")
     r_fdp_pip_raw = dr("FDP", "m")
     r_fds_pip_raw = dr("FDS", "m")
-    r_fdp_mcp_raw = dr("FDP", "p")
-    r_fds_mcp_raw = dr("FDS", "p")
-    r_edc_mcp_raw = dr("EDC", "p")
-
-    # Improvement #2: length-scaled bounds
-    s = pose.Lm / _L_REF_MM
+    # PeerJ 7470 reports that moment arms increase only modestly with longer
+    # phalanges, so use weak scaling rather than linear scaling.
+    s = (pose.Lm / _L_REF_MM) ** 0.25
     pip_f = pose.theta_p - pose.theta_m
     dip_f = pose.theta_m - pose.theta_d
 
@@ -237,38 +227,32 @@ def tendon_excursion_moment_arms(pose: FingerPose,
         r_fdp_dip = _b(r_fdp_dip_raw, lo_fdp_dip, hi_fdp_dip),
         r_fdp_pip = _b(r_fdp_pip_raw, lo_fdp_pip, hi_fdp_pip),
         r_fds_pip = _b(r_fds_pip_raw, lo_fds_pip, hi_fds_pip),
-        r_fdp_mcp = _b(r_fdp_mcp_raw, s * 1.5,    s * 4.5),
-        r_fds_mcp = _b(r_fds_mcp_raw, s * 1.0,    s * 4.0),
-        r_edc_mcp = _b(r_edc_mcp_raw, s * 5.0,    s * 10.0),
     )
 
 
-# ────────── Improvement #4: passive joint stiffness (Minami 1985 style) ──────
+# ─────────────────── passive joint stiffness (DIP/PIP only) ──────────────────
 
 def passive_moment_Nm(joint: str, flex_deg: float) -> float:
     """
     M_passive(θ) = k * (exp(b*(θ − θ0)) − 1)  [Nm]
     Positive = flexion-resisting (extension) torque.
-    Parameters are approximate fits to Minami et al. (1985).
+    Parameters are approximate fits to Minami et al. (1985) for DIP/PIP.
     """
     params = {
         "DIP": (0.010, 0.065, 60.0),
         "PIP": (0.008, 0.055, 80.0),
-        "MCP": (0.006, 0.045, 70.0),
     }
     k, b, theta0 = params[joint]
     excess = max(flex_deg - theta0, 0.0)
     return float(k * (np.exp(b * excess) - 1.0))
 
 
-# ─────── Improvement #6: distributed pulley wrapping load ────────────────────
+# ─────────────────── distributed pulley wrapping load ────────────────────────
 
 def pulley_load_arc(arc: np.ndarray, tension_N: float,
                     tendon_in: Optional[np.ndarray] = None,
                     tendon_out: Optional[np.ndarray] = None) -> Tuple[np.ndarray, float]:
     """
-    Improvement #6: capstan resultant force across a discretised pulley arc.
-
     Physical principle (Uchiyama 1995):
         The total resultant of a tendon wrapping around a frictionless pulley is
         R = T * (u_in + u_out)
@@ -276,7 +260,7 @@ def pulley_load_arc(arc: np.ndarray, tension_N: float,
     tendon chords, and T is the tendon tension.  This is independent of whether
     the pulley is modelled as a point or an arc.
 
-    The arc representation (Improvement #6) improves on the single-point model
+    The arc representation improves on the single-point model
     by computing the *distributed* normal load per unit length along the pulley
     (useful for pulley stress / rupture risk), while preserving the correct
     resultant magnitude.
@@ -305,7 +289,7 @@ def pulley_load_arc(arc: np.ndarray, tension_N: float,
     return vec, float(np.linalg.norm(vec))
 
 
-# ────────── Improvement #3: grip-dependent load direction ────────────────────
+# ─────────────────────────── external load direction ──────────────────────────
 
 def contact_force_vector(pose: FingerPose, magnitude_N: float) -> np.ndarray:
     """
@@ -319,72 +303,48 @@ def contact_force_vector(pose: FingerPose, magnitude_N: float) -> np.ndarray:
     return np.array([0.0, magnitude_N], dtype=float)
 
 
-def external_load_point(geo: Dict, load_point: str) -> np.ndarray:
-    if load_point == "distal_mid":
-        return geo["DISTAL_MID"]
-    if load_point == "fingertip":
-        return geo["TIP"]
-    raise ValueError(f"Unknown load_point '{load_point}'")
-
-
-# ─────────── Improvement #7: EDC passive tension ─────────────────────────────
-
-def edc_passive_tension_N(pose: FingerPose) -> float:
+def load_point_mm_from_tip(pose: FingerPose, cfg: SimConfig) -> float:
     """
-    Improvement #7: linear spring EDC engagement beyond 30 deg combined flexion.
-    k_edc ≈ 1.2 N/deg (Chao 1989 passive approximation).
+    External contact point measured proximally from the fingertip along the
+    distal phalanx. If not provided, default to the distal-phalanx midpoint.
     """
-    pip_flex = max(pose.theta_p - pose.theta_m - 30.0, 0.0)
-    mcp_flex = max(90.0 - pose.theta_p, 0.0)
-    return float(1.2 * (pip_flex + mcp_flex))
+    mm = 0.5 * pose.Ld if cfg.load_point_mm_from_tip is None else cfg.load_point_mm_from_tip
+    return float(np.clip(mm, 0.0, pose.Ld))
 
 
-# ─────────────────── Core solver ─────────────────────────────────────────────
+def external_load_point(geo: Dict, pose: FingerPose, cfg: SimConfig) -> np.ndarray:
+    d_mm = load_point_mm_from_tip(pose, cfg)
+    return geo["TIP"] - d_mm * geo["uD"]
+
+
+# ─────────────────── core solver ─────────────────────────────────────────────
 
 def solve_static_equilibrium(pose: FingerPose,
                               distal_force_N: float,
                               cfg: SimConfig) -> Dict:
-    """
-    Solve 2D static equilibrium at DIP, PIP and MCP.
-
-    Improvements applied: #1 #2 #3 #4 #5 #6 #7
-    """
-    scale = pose.Lm / 26.0
-    scaled_offset = cfg.pulley_offset_mm * scale
-
-    geo  = build_tendon_geometry(pose, offset_mm=scaled_offset,
+    """Solve DIP/PIP static equilibrium for FDP and FDS in a 2D finger model."""
+    geo  = build_tendon_geometry(pose, offset_mm=cfg.pulley_offset_mm,
                                  n_arc=cfg.n_arc_points)
-    arms = tendon_excursion_moment_arms(pose, offset_mm=scaled_offset)
+    arms = tendon_excursion_moment_arms(pose, offset_mm=cfg.pulley_offset_mm)
 
-    # Improvement #3
     F_ext   = contact_force_vector(pose, distal_force_N)
-    mcp     = geo["MCP"] * 1e-3
     pip     = geo["PIP"] * 1e-3
     dip     = geo["DIP"] * 1e-3
-    contact = external_load_point(geo, cfg.load_point) * 1e-3
+    contact_mm = external_load_point(geo, pose, cfg)
+    contact = contact_mm * 1e-3
 
     M_dip_ext = abs(cross2(contact - dip, F_ext))
     M_pip_ext = abs(cross2(contact - pip, F_ext))
-    M_mcp_ext = abs(cross2(contact - mcp, F_ext))
 
-    # Improvement #4
     dip_flex = pose.theta_m - pose.theta_d
     pip_flex = pose.theta_p - pose.theta_m
-    mcp_flex = 90.0 - pose.theta_p
 
     M_pass_dip = passive_moment_Nm("DIP", max(dip_flex, 0.0))
     M_pass_pip = passive_moment_Nm("PIP", max(pip_flex, 0.0))
-    M_pass_mcp = passive_moment_Nm("MCP", max(mcp_flex, 0.0))
 
     r_fdp_dip = max(arms["r_fdp_dip"] * 1e-3, 1e-5)
     r_fdp_pip = max(arms["r_fdp_pip"] * 1e-3, 1e-5)
     r_fds_pip = max(arms["r_fds_pip"] * 1e-3, 1e-5)
-    r_fdp_mcp = max(arms["r_fdp_mcp"] * 1e-3, 1e-5)
-    r_fds_mcp = max(arms["r_fds_mcp"] * 1e-3, 1e-5)
-    r_edc_mcp = max(arms["r_edc_mcp"] * 1e-3, 1e-5)
-
-    # Improvement #7
-    T_edc = edc_passive_tension_N(pose)
 
     # DIP equilibrium → FDP
     f_fdp = max((M_dip_ext - M_pass_dip) / r_fdp_dip, 0.0)
@@ -394,59 +354,20 @@ def solve_static_equilibrium(pose: FingerPose,
 
     ratio = f_fdp / f_fds if f_fds > 1e-6 else float("inf")
 
-    # Improvement #5: MCP residual
-    M_mcp_flexors  = f_fdp * r_fdp_mcp + f_fds * r_fds_mcp
-    M_mcp_extensor = T_edc * r_edc_mcp + M_pass_mcp
-    mcp_residual   = M_mcp_ext - (M_mcp_flexors - M_mcp_extensor)
+    # Pulley resultants from actual tendon-path direction changes.
+    a2_fdp_vec, _ = pulley_load_arc(geo["A2_ARC"], f_fdp, geo["ANCHOR"] - geo["A2"], geo["A3"] - geo["A2"])
+    a2_fds_vec, _ = pulley_load_arc(geo["A2_ARC"], f_fds, geo["ANCHOR"] - geo["A2"], geo["A3"] - geo["A2"])
+    a3_fdp_vec, _ = pulley_load_arc(geo["A3_ARC"], f_fdp, geo["A2"] - geo["A3"], geo["A4"] - geo["A3"])
+    a3_fds_vec, _ = pulley_load_arc(geo["A3_ARC"], f_fds, geo["A2"] - geo["A3"], geo["FDS_INS"] - geo["A3"])
+    a4_fdp_vec, _ = pulley_load_arc(geo["A4_ARC"], f_fdp, geo["A3"] - geo["A4"], geo["FDP_INS"] - geo["A4"])
 
-    # Improvement #6: pulley loads with joint-flexion-based wrap angles.
-    #
-    # Root cause of geometric approach failure: the tendon anchor is far
-    # off-axis, creating ~165° wrap angles at A2 regardless of posture.
-    # Real A2 wrap angles (Schweizer 2001, Table 2): ~17° (open) to ~46° (crimp).
-    #
-    # Fix: use the Schweizer 2001 regression  α = k × joint_flex
-    #   A2: α_A2 = 0.44 × PIP_flex  (FDP and FDS both cross A2)
-    #   A3: α_A3 = 0.58 × PIP_flex  (FDP and FDS both cross A3)
-    #   A4: α_A4 = 0.55 × DIP_flex  (FDP only crosses A4)
-    # Resultant = T × 2 × sin(α/2)  (capstan formula for direction change α).
-    # DIP extension (negative dip_flex) → A4 wrap → 0 (pulley unloaded).
-
-    pip_flex_deg = max(pose.theta_p - pose.theta_m, 0.0)
-    dip_flex_deg = pose.theta_m - pose.theta_d   # signed; negative when DIP extended
-
-    # Wrap-angle regressions from Schweizer 2001 Table 2 (cadaver).
-    # A2/A3: both FDP and FDS tendons cross; driven by PIP flexion.
-    #   α_A2 = 0.44 × PIP_flex   α_A3 = 0.58 × PIP_flex
-    # A4: FDP only; primarily PIP-driven even when DIP is extended because
-    #   the A4 pulley sits on the proximal middle phalanx and its wrap is set
-    #   by the PIP-DIP angle combination (An 1985):
-    #   α_A4 = 0.25 × PIP_flex + 0.25 × max(DIP_flex, 0)
-    # DIP extension makes the DIP term zero but PIP contribution remains.
-    wrap_a2 = np.deg2rad(0.44 * pip_flex_deg)
-    wrap_a3 = np.deg2rad(0.58 * pip_flex_deg)
-    wrap_a4 = np.deg2rad(0.25 * pip_flex_deg + 0.25 * max(dip_flex_deg, 0.0))
-
-    def _resultant_scalar(tension, wrap_rad):
-        """Capstan resultant: T × 2sin(α/2)."""
-        return tension * 2.0 * np.sin(wrap_rad / 2.0)
-
-    # Resultant magnitude (scalar)
-    A2_mag = _resultant_scalar(f_fdp, wrap_a2) + _resultant_scalar(f_fds, wrap_a2)
-    A3_mag = _resultant_scalar(f_fdp, wrap_a3) + _resultant_scalar(f_fds, wrap_a3)
-    A4_mag = _resultant_scalar(f_fdp, wrap_a4)
-
-    # Direction: palmar normal at each pulley location (for visualisation only)
-    n_p = rot_cw_90(geo["uP"])
-    n_pm = unit(n_p + rot_cw_90(geo["uM"]))
-    A2_vec = A2_mag * n_p
-    A3_vec = A3_mag * n_pm
-    A4_vec = A4_mag * rot_cw_90(geo["uM"])
+    A2_vec = a2_fdp_vec + a2_fds_vec
+    A3_vec = a3_fdp_vec + a3_fds_vec
+    A4_vec = a4_fdp_vec
 
     return dict(
         FDP_N           = f_fdp,
         FDS_N           = f_fds,
-        EDC_N           = T_edc,
         FDP_FDS_ratio   = ratio,
         A2_N            = float(np.linalg.norm(A2_vec)),
         A3_N            = float(np.linalg.norm(A3_vec)),
@@ -456,57 +377,84 @@ def solve_static_equilibrium(pose: FingerPose,
         A4_vec          = A4_vec,
         M_dip_ext_Nm    = M_dip_ext,
         M_pip_ext_Nm    = M_pip_ext,
-        M_mcp_ext_Nm    = M_mcp_ext,
         M_pass_dip_Nm   = M_pass_dip,
         M_pass_pip_Nm   = M_pass_pip,
-        M_pass_mcp_Nm   = M_pass_mcp,
-        mcp_residual_Nm = float(mcp_residual),
         debug_moments = {
             "M_dip_ext": M_dip_ext,
             "M_pip_ext": M_pip_ext,
-            "M_mcp_ext": M_mcp_ext,
             "M_pass_dip": M_pass_dip,
             "M_pass_pip": M_pass_pip,
-            "M_pass_mcp": M_pass_mcp,
         },
         r_fdp_dip_mm    = arms["r_fdp_dip"],
         r_fdp_pip_mm    = arms["r_fdp_pip"],
         r_fds_pip_mm    = arms["r_fds_pip"],
-        r_fdp_mcp_mm    = arms["r_fdp_mcp"],
-        r_fds_mcp_mm    = arms["r_fds_mcp"],
-        r_edc_mcp_mm    = arms["r_edc_mcp"],
         F_ext           = F_ext,
         geo             = geo,
-        load_point      = cfg.load_point,
+        load_point_mm_from_tip = load_point_mm_from_tip(pose, cfg),
     )
 
 
-# ──────────── Improvement #8: held-out calibration ───────────────────────────
-
-def benchmark_peerj_moment_arms(avg_lit: Dict[str, Dict]) -> None:
+def benchmark_peerj_length_scaling(cfg: SimConfig) -> None:
     """
-    Compare model moment arms to PeerJ 7470 Table 3 human third-digit averages.
-
-    PeerJ table values are posture-averaged, so this function compares against the
-    mean of the three default climbing postures rather than a single grip.
+    PeerJ 7470 benchmark: longer bones increase moment arms only modestly,
+    which creates a force disadvantage for the same external load.
     """
-    peerj = {
-        "r_fdp_dip_mm": 4.3,
-        "r_fdp_pip_mm": 11.1,
-        "r_fdp_mcp_mm": 12.1,
-        "r_fds_pip_mm": 7.3,
-        "r_fds_mcp_mm": 12.8,
+    human_lengths = (26.0, 25.0, 26.0)
+    long_lengths = tuple(v * 1.22 for v in human_lengths)
+    human_pose = posture_from_joint_targets(human_lengths, 75.0, -20.0, 0.0, 0.0, "half_crimp")
+    long_pose = posture_from_joint_targets(long_lengths, 75.0, -20.0, 0.0, 0.0, "half_crimp")
+
+    human_arms = tendon_excursion_moment_arms(human_pose, offset_mm=cfg.pulley_offset_mm)
+    long_arms = tendon_excursion_moment_arms(long_pose, offset_mm=cfg.pulley_offset_mm)
+
+    human_sol = solve_static_equilibrium(human_pose, 100.0, SimConfig(load_point_mm_from_tip=0.0))
+    long_sol = solve_static_equilibrium(long_pose, 100.0, SimConfig(load_point_mm_from_tip=0.0))
+
+    def pct(a, b):
+        return 100.0 * (b - a) / max(a, 1e-6)
+
+    print("=== PeerJ 7470 Benchmark (length disadvantage direction check) ===")
+    print("  22% longer phalanges should increase moment arms only modestly,")
+    print("  while increasing required flexor force for the same load.")
+    print(f"  FDP DIP arm change = {pct(human_arms['r_fdp_dip'], long_arms['r_fdp_dip']):+.1f}%")
+    print(f"  FDP PIP arm change = {pct(human_arms['r_fdp_pip'], long_arms['r_fdp_pip']):+.1f}%")
+    print(f"  FDS PIP arm change = {pct(human_arms['r_fds_pip'], long_arms['r_fds_pip']):+.1f}%")
+    print(f"  Required FDP change at 100 N fingertip load = {pct(human_sol['FDP_N'], long_sol['FDP_N']):+.1f}%")
+    print()
+
+
+def print_benchmark_status(avg_lit: Dict[str, Dict]) -> None:
+    """Report the current reduced model against the published benchmark anchors."""
+    targets = {
+        "ratio_open": 0.88,
+        "ratio_full": 1.75,
+        "A2_open": 121.0,
+        "A2_half": 197.0,
+        "A2_full": 287.0,
+        "A4_open": 103.0,
+        "A4_half": 165.0,
+        "A4_full": 226.0,
     }
 
-    modeled = {}
-    for key in peerj:
-        modeled[key] = float(np.mean([avg_lit[g][key] for g in avg_lit]))
+    values = {
+        "ratio_open": avg_lit["open_drag"]["FDP_FDS_ratio"],
+        "ratio_full": avg_lit["full_crimp"]["FDP_FDS_ratio"],
+        "A2_open": avg_lit["open_drag"]["A2_N"],
+        "A2_half": avg_lit["half_crimp"]["A2_N"],
+        "A2_full": avg_lit["full_crimp"]["A2_N"],
+        "A4_open": avg_lit["open_drag"]["A4_N"],
+        "A4_half": avg_lit["half_crimp"]["A4_N"],
+        "A4_full": avg_lit["full_crimp"]["A4_N"],
+    }
 
-    print("=== PeerJ 7470 Benchmark (human third-digit moment arms) ===")
-    for key, published in peerj.items():
-        pred = modeled[key]
-        err = 100.0 * (pred - published) / published
-        print(f"  {key:13s} model={pred:5.1f} mm  published={published:4.1f} mm  error={err:+5.1f}%")
+    print("=== Benchmark Status ===")
+    print("  The reduced DIP/PIP model is still only partially matched to the papers.")
+    for key in ["ratio_open", "ratio_full", "A2_open", "A2_half", "A2_full", "A4_open", "A4_half", "A4_full"]:
+        value = values[key]
+        target = targets[key]
+        err = 100.0 * (value - target) / target
+        verdict = "PASS" if abs(err) <= 20.0 else "MISS"
+        print(f"  {key:10s} = {value:6.1f}  target {target:6.1f}  error {err:+6.1f}%  {verdict}")
     print()
 
 # ─────────────────────────── grip presets ────────────────────────────────────
@@ -561,7 +509,7 @@ def visualize_grips(grips: Dict[str, FingerPose],
             p = geo[pkey]
             ax.plot(p[:, 0], p[:, 1], "--", color=col, lw=1.5, label=lbl)
 
-        # Pulley arcs (Improvement #6)
+        # Pulley arcs
         for akey, col in [("A2_ARC", "#7f7f7f"),
                           ("A3_ARC", "#9467bd"),
                           ("A4_ARC", "#8c564b")]:
@@ -574,7 +522,7 @@ def visualize_grips(grips: Dict[str, FingerPose],
             ax.text(p[0] + 1, p[1] + 1, key, fontsize=7)
 
         # External force vector
-        lp = external_load_point(geo, cfg.load_point)
+        lp = external_load_point(geo, pose, cfg)
         Fv = res["F_ext"] * fscale
         ax.arrow(lp[0], lp[1], Fv[0], Fv[1], width=0.25, color="green",
                  length_includes_head=True)
@@ -598,7 +546,8 @@ def visualize_grips(grips: Dict[str, FingerPose],
 
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=5, fontsize=8)
-    fig.suptitle(f"Middle finger biomechanics — {cfg.load_point} loading", y=1.03, fontsize=11)
+    mm_label = "distal-mid default" if cfg.load_point_mm_from_tip is None else f"{cfg.load_point_mm_from_tip:.1f} mm from tip"
+    fig.suptitle(f"Middle finger biomechanics — load point {mm_label}", y=1.03, fontsize=11)
     fig.savefig(out_file, dpi=200, bbox_inches="tight")
     print(f"  → Saved: {out_file}")
 
@@ -608,12 +557,17 @@ def visualize_grips(grips: Dict[str, FingerPose],
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--load-point", choices=["distal_mid", "fingertip"],
-                        default="distal_mid")
+    parser.add_argument(
+        "--load-point-mm-from-tip",
+        type=float,
+        default=None,
+        help="External contact point measured proximally from the fingertip along the distal phalanx. "
+             "Default: distal phalanx midpoint. Use 0 for fingertip loading.",
+    )
     args = parser.parse_args()
 
-    cfg_main = SimConfig(load_point=args.load_point)
-    cfg_lit  = SimConfig(load_point="fingertip")
+    cfg_main = SimConfig(load_point_mm_from_tip=args.load_point_mm_from_tip)
+    cfg_lit  = SimConfig(load_point_mm_from_tip=0.0)
 
     athletes = [
         AthleteCase("Climber_Short",   54.0, (21.0, 22.0, 23.0)),
@@ -623,6 +577,10 @@ def main() -> None:
 
     load_frac = 0.15
     print("\n=== Middle-Finger Climbing Biomechanics ===\n")
+    if cfg_main.load_point_mm_from_tip is None:
+        print("Main run contact point: distal-phalanx midpoint (default)\n")
+    else:
+        print(f"Main run contact point: {cfg_main.load_point_mm_from_tip:.1f} mm from fingertip\n")
 
     all_results: Dict[str, Dict[str, Dict]] = {}
 
@@ -650,7 +608,9 @@ def main() -> None:
         all_results[athlete.name] = athlete_res
 
         if athlete.name == "Climber_Average":
-            out_png = Path(__file__).with_name("finger_biomechanics_forces.png")
+            out_dir = Path(__file__).resolve().parent / "img"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            out_png = out_dir / "finger_biomechanics_forces.png"
             visualize_grips(grips, athlete_res, cfg_main, out_png)
             print()
 
@@ -674,7 +634,8 @@ def main() -> None:
           f"(Schweizer 2009: 103 / 165 / 226 N)")
     print()
 
-    benchmark_peerj_moment_arms(avg_lit)
+    print_benchmark_status(avg_lit)
+    benchmark_peerj_length_scaling(cfg_lit)
     print("\nDone.")
 
 
