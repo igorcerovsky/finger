@@ -2,48 +2,21 @@
 """
 Middle-finger biomechanics model for climbing grips (2D static equilibrium).
 
-Improvements over baseline model
-─────────────────────────────────
- #1  Tendon-excursion moment arms          – dL/dθ via finite difference; replaces
-                                             arbitrary 45/55 blend weights.
- #2  Moment arms scale with phalanx length – reference values normalised to a 26 mm
-                                             middle phalanx and scaled linearly.
- #3  Grip-dependent load direction         – contact force has a proximal shear
-                                             component derived from distal-phalanx
-                                             orientation (not always [0, Fy]).
- #4  Passive joint stiffness at all joints – Minami-style exponential M_passive(θ)
-                                             at DIP, PIP and MCP replaces the single
-                                             scalar dip_passive_fraction.
- #5  MCP moment equilibrium               – third equilibrium equation adds EDC
-                                             passive contribution; MCP residual
-                                             reported as equilibrium quality metric.
- #6  Distributed pulley wrapping arcs     – each annular pulley is discretised into
-                                             n_arc sample points; load integrates
-                                             T * κ over the arc.
- #7  EDC passive tendon                   – dorsal extensor path from MCP dorsum
-                                             to terminal slip; passive-only at
-                                             climbing-grip flexion angles.
- #8  Held-out validation for calibration  – power-law fit uses open + full-crimp
-                                             anchors; half-crimp is a genuine
-                                             out-of-sample test vs Schweizer 2009.
- #9  Four-finger model                    – index, middle, ring each modelled with
-                                             load-sharing coefficients from Vigouroux
-                                             (2006) Table 1.
-#10  Fatigue model                        – isometric fatigue reduces FDS capacity
-                                             exponentially; FDP compensates to
-                                             maintain grip; peak pulley load reported.
+This version keeps only the parts that can be traced to published hand/climbing
+biomechanics papers:
+- tendon-excursion-based moment arms
+- DIP/PIP static equilibrium for FDP and FDS
+- pulley-resultant loads for A2/A3/A4
+- literature comparison against Vigouroux 2006, Schweizer 2001/2009, and
+  PeerJ 7470 moment-arm data
 
 References
-──────────
 Vigouroux et al., J Biomech 2006  https://doi.org/10.1016/j.jbiomech.2005.10.034
 Schweizer, J Hand Surg Am 2001    https://doi.org/10.1053/jhsu.2001.26322
 Schweizer, J Biomech 2009         https://pubmed.ncbi.nlm.nih.gov/19367698/
-Ki et al., BMC Sports 2024        https://bmcsportsscimedrehabil.biomedcentral.com/...
-Schöffl et al., Diagnostics 2021  https://pmc.ncbi.nlm.nih.gov/articles/PMC8159322/
+PeerJ 7470                        https://peerj.com/articles/7470/
 An et al., J Biomech 1983         tendon-excursion moment-arm method
-Chao et al., Biomechanics Hand 89 six-tendon equilibrium including MCP
 Minami et al., J Hand Surg 1985   passive joint stiffness curves
-Uchiyama et al., J Biomech 1995   distributed pulley wrapping mechanics
 """
 
 from __future__ import annotations
@@ -56,11 +29,6 @@ from typing import Dict, Optional, Tuple
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
-try:
-    from scipy.optimize import fsolve as _fsolve
-    _SCIPY = True
-except ImportError:
-    _SCIPY = False
 
 
 # ─────────────────────────── tiny geometry helpers ───────────────────────────
@@ -107,8 +75,6 @@ class SimConfig:
     pulley_offset_mm: float = 4.0
     load_point: str = "distal_mid"       # "distal_mid" | "fingertip"
     n_arc_points: int = 5                # sample points per pulley arc
-    fatigue_time_s: float = 30.0         # sustained hang duration for #10
-    fds_fatigue_tau_s: float = 20.0      # FDS fatigue time constant (s)
 
 
 # ──────────────────────────── coordinate builders ────────────────────────────
@@ -343,31 +309,14 @@ def pulley_load_arc(arc: np.ndarray, tension_N: float,
 
 def contact_force_vector(pose: FingerPose, magnitude_N: float) -> np.ndarray:
     """
-    Improvement #3: contact force direction depends on distal phalanx orientation.
+    Use the externally applied load direction from the project brief:
+    force acts in +y.
 
-    In climbing the hold reaction always has a dominant upward (+y) component
-    (supporting body weight).  As the phalanx flattens toward horizontal
-    (full crimp, theta_d near 0 deg), the edge also creates a proximal shear
-    component along the bone axis (negative u_d direction).
-
-    Physical model:
-        F = [0, F_y]  +  mu_eff * F * |cos(theta_d)| * (-u_d)
-    renormalised to magnitude_N.
-
-    This preserves a DIP flexion moment for all grip postures while adding
-    the grip-type-dependent shear seen in cadaveric loading experiments.
-    mu_eff = 0.30 approximates a rounded-edge friction coefficient.
+    The earlier shear term based on an assumed friction coefficient was removed
+    because it was not benchmarked to a published experimental setup and it
+    materially changed the tendon-force ratios.
     """
-    u_d = segment_unit(pose.theta_d)
-    MU_EFF = 0.30
-    shear_frac = MU_EFF * abs(np.cos(np.deg2rad(pose.theta_d)))
-
-    F_vertical = np.array([0.0, magnitude_N])
-    F_shear    = magnitude_N * shear_frac * (-u_d)
-    F_total    = F_vertical + F_shear
-
-    mag = np.linalg.norm(F_total)
-    return F_total * (magnitude_N / mag) if mag > 1e-6 else np.array([0.0, magnitude_N])
+    return np.array([0.0, magnitude_N], dtype=float)
 
 
 def external_load_point(geo: Dict, load_point: str) -> np.ndarray:
@@ -534,154 +483,31 @@ def solve_static_equilibrium(pose: FingerPose,
 
 # ──────────── Improvement #8: held-out calibration ───────────────────────────
 
-def fit_power_law(x1, y1, x2, y2):
-    x1, x2 = max(float(x1), 1e-6), max(float(x2), 1e-6)
-    y1, y2 = max(float(y1), 1e-6), max(float(y2), 1e-6)
-    if abs(np.log(x2) - np.log(x1)) < 1e-9:
-        return 1.0, 1.0
-    n = float(np.log(y2 / y1) / np.log(x2 / x1))
-    k = float(y1 / x1**n)
-    return k, n
-
-
-def apply_power_law(x, k, n):
-    return float(k * max(float(x), 1e-6)**n)
-
-
-def benchmark_with_holdout(avg_lit: Dict[str, Dict]) -> None:
+def benchmark_peerj_moment_arms(avg_lit: Dict[str, Dict]) -> None:
     """
-    Improvement #8: fit on open + full-crimp; validate on half-crimp.
+    Compare model moment arms to PeerJ 7470 Table 3 human third-digit averages.
 
-    Reference values (Schweizer 2009, Table 1, 100 N fingertip load):
-        A2: open=121 N, half=197 N, full=287 N
-        A4: open=103 N, half=165 N, full=226 N
-
-    Calibration note on A2 residual
-    ────────────────────────────────
-    The power-law calibration rescales the model's raw A2 values to match
-    the Schweizer 2009 open-drag and full-crimp anchors, then predicts the
-    held-out half-crimp value.
-
-    A2 wrap angle at half_crimp in the model (0.44 × 75° PIP = 33°) sits
-    proportionally between the open (0.44 × 40° = 17.6°) and full-crimp
-    (0.44 × 105° = 46.2°) wraps almost linearly in sin-space.  Schweizer's
-    half-crimp A2 (197 N) is, however, disproportionately large relative to
-    its open (121 N) and full-crimp (287 N) anchors.  The most likely cause
-    is that Schweizer's clinical measurements used different effective grip
-    forces per posture (patients self-selected load in each grip), making the
-    half-crimp datapoint not strictly comparable to the other two under a
-    fixed-force model.  A ~20 % residual is therefore an expected comparison
-    limitation rather than a model error.
-
-    A4 validates well (+3–5 %) because A4 is primarily FDP-driven and the
-    PIP-dominated wrap formula (α_A4 = 0.25 × PIP + 0.25 × max(DIP, 0))
-    corrects for the erroneous pure-DIP assumption in the baseline model.
+    PeerJ table values are posture-averaged, so this function compares against the
+    mean of the three default climbing postures rather than a single grip.
     """
-    A2_LIT = dict(open_drag=121.0, half_crimp=197.0, full_crimp=287.0)
-    A4_LIT = dict(open_drag=103.0, half_crimp=165.0, full_crimp=226.0)
+    peerj = {
+        "r_fdp_dip_mm": 4.3,
+        "r_fdp_pip_mm": 11.1,
+        "r_fdp_mcp_mm": 12.1,
+        "r_fds_pip_mm": 7.3,
+        "r_fds_mcp_mm": 12.8,
+    }
 
-    a2_k, a2_n = fit_power_law(avg_lit["open_drag"]["A2_N"],  A2_LIT["open_drag"],
-                                avg_lit["full_crimp"]["A2_N"], A2_LIT["full_crimp"])
-    a4_k, a4_n = fit_power_law(avg_lit["open_drag"]["A4_N"],  A4_LIT["open_drag"],
-                                avg_lit["full_crimp"]["A4_N"], A4_LIT["full_crimp"])
+    modeled = {}
+    for key in peerj:
+        modeled[key] = float(np.mean([avg_lit[g][key] for g in avg_lit]))
 
-    a2_pred = apply_power_law(avg_lit["half_crimp"]["A2_N"], a2_k, a2_n)
-    a4_pred = apply_power_law(avg_lit["half_crimp"]["A4_N"], a4_k, a4_n)
-
-    a2_err = 100.0 * (a2_pred - A2_LIT["half_crimp"]) / A2_LIT["half_crimp"]
-    a4_err = 100.0 * (a4_pred - A4_LIT["half_crimp"]) / A4_LIT["half_crimp"]
-
-    print("=== Improvement #8: Held-Out Calibration (Schweizer 2009) ===")
-    print("  Fit anchors: open_drag + full_crimp   |   Held out: half_crimp")
-    print(f"  A2: predicted={a2_pred:.1f} N  published={A2_LIT['half_crimp']:.1f} N  "
-          f"error={a2_err:+.1f}%")
-    print(f"  A4: predicted={a4_pred:.1f} N  published={A4_LIT['half_crimp']:.1f} N  "
-          f"error={a4_err:+.1f}%")
-    if abs(a2_err) > 15:
-        print("  [A2 note] ~20% A2 residual is expected: Schweizer's half-crimp measurement")
-        print("  was made at a different effective grip force than open/full-crimp, making")
-        print("  the half-crimp anchor incompatible with fixed-force model calibration.")
-        print("  A4 is the more reliable validation metric (force-independent via FDP/wrap).")
+    print("=== PeerJ 7470 Benchmark (human third-digit moment arms) ===")
+    for key, published in peerj.items():
+        pred = modeled[key]
+        err = 100.0 * (pred - published) / published
+        print(f"  {key:13s} model={pred:5.1f} mm  published={published:4.1f} mm  error={err:+5.1f}%")
     print()
-
-
-# ──────────── Improvement #9: four-finger load sharing ───────────────────────
-
-FINGER_DEFS = {
-    "index":  dict(share=0.24, lp=0.95, lm=0.94, ld=0.95),
-    "middle": dict(share=0.30, lp=1.00, lm=1.00, ld=1.00),
-    "ring":   dict(share=0.28, lp=0.97, lm=0.97, ld=0.97),
-}
-
-
-def four_finger_results(base_lengths: Tuple[float, float, float],
-                        total_N: float, cfg: SimConfig) -> Dict:
-    """Improvement #9: per-finger equilibrium with Vigouroux load sharing."""
-    results = {}
-    for fname, fd in FINGER_DEFS.items():
-        f_mag = total_N * fd["share"]
-        lengths = (base_lengths[0] * fd["lp"],
-                   base_lengths[1] * fd["lm"],
-                   base_lengths[2] * fd["ld"])
-        grips = _build_grips(lengths)
-        results[fname] = {
-            gname: solve_static_equilibrium(pose, f_mag, cfg)
-            for gname, pose in grips.items()
-        }
-    return results
-
-
-# ──────────────── Improvement #10: fatigue model ─────────────────────────────
-
-def fatigue_peak_loads(pose: FingerPose, distal_force_N: float,
-                       cfg: SimConfig) -> Dict:
-    """
-    Improvement #10: FDS capacity decays exponentially with time.
-    FDP compensates to maintain grip moment.  Returns peak FDP, A2, and timing.
-
-    When fresh FDP = 0 (FDS alone handles all load), the fatigue-driven FDP
-    demand is the deficit moment divided by the FDP moment arm at PIP.
-    """
-    fresh = solve_static_equilibrium(pose, distal_force_N, cfg)
-    fds0  = fresh["FDS_N"]
-    fdp0  = fresh["FDP_N"]
-    r_fds = max(fresh["r_fds_pip_mm"] * 1e-3, 1e-5)
-    r_fdp = max(fresh["r_fdp_pip_mm"] * 1e-3, 1e-5)
-    M_pip = fresh["M_pip_ext_Nm"]
-    M_dip = fresh["M_dip_ext_Nm"]
-
-    times   = np.linspace(0.0, cfg.fatigue_time_s, 400)
-    fds_cap = fds0 * np.exp(-times / cfg.fds_fatigue_tau_s)
-
-    # FDP must cover any moment deficit at PIP as FDS weakens
-    # Also ensure FDP can always cover DIP moment
-    fdp_pip_demand = np.maximum((M_pip - fds_cap * r_fds) / r_fdp, fdp0)
-    fdp_dip_demand = max(M_dip / max(fresh["r_fdp_dip_mm"] * 1e-3, 1e-5), fdp0)
-    fdp_dem = np.maximum(fdp_pip_demand, fdp_dip_demand)
-
-    idx      = int(np.argmax(fdp_dem))
-
-    # Scale A2 from fresh values; if fresh FDP=0, use FDS-based A2 scaling
-    if fdp0 > 1.0:
-        a2_scale = fresh["A2_N"] / fdp0
-    else:
-        # A2 is FDS-dominated when FDP~0; estimate A2 increase proportionally
-        a2_scale = fresh["A2_N"] / max(fds0, 1e-6) * 0.6  # FDP contributes ~60% of A2
-
-    peak_fdp = float(fdp_dem[idx])
-    peak_a2  = float(fresh["A2_N"] + peak_fdp * a2_scale)
-
-    return dict(
-        peak_fdp_N  = peak_fdp,
-        peak_a2_N   = peak_a2,
-        peak_time_s = float(times[idx]),
-        fds_at_peak = float(fds_cap[idx]),
-        fdp_vs_time = fdp_dem,
-        fds_vs_time = fds_cap,
-        times       = times,
-        fresh       = fresh,
-    )
-
 
 # ─────────────────────────── grip presets ────────────────────────────────────
 
@@ -711,15 +537,11 @@ def _build_grips(lengths_mm) -> Dict[str, FingerPose]:
 def visualize_grips(grips: Dict[str, FingerPose],
                     solved: Dict[str, Dict],
                     cfg: SimConfig,
-                    out_file: Path,
-                    fatigue_data: Optional[Dict] = None) -> None:
+                    out_file: Path) -> None:
 
     n_grip = len(grips)
-    has_fat = fatigue_data is not None
-    n_cols  = n_grip + (1 if has_fat else 0)
-
-    fig = plt.figure(figsize=(5.2 * n_cols + 0.5, 6.5), constrained_layout=True)
-    gs  = gridspec.GridSpec(1, n_cols, figure=fig)
+    fig = plt.figure(figsize=(5.2 * n_grip + 0.5, 6.5), constrained_layout=True)
+    gs  = gridspec.GridSpec(1, n_grip, figure=fig)
     axes = [fig.add_subplot(gs[0, i]) for i in range(n_grip)]
 
     fscale = 0.025
@@ -735,8 +557,7 @@ def visualize_grips(grips: Dict[str, FingerPose],
 
         # Tendons
         for pkey, col, lbl in [("FDP_PATH", "#1f77b4", "FDP"),
-                                ("FDS_PATH", "#ff7f0e", "FDS"),
-                                ("EDC_PATH", "#2ca02c", "EDC")]:
+                                ("FDS_PATH", "#ff7f0e", "FDS")]:
             p = geo[pkey]
             ax.plot(p[:, 0], p[:, 1], "--", color=col, lw=1.5, label=lbl)
 
@@ -752,7 +573,7 @@ def visualize_grips(grips: Dict[str, FingerPose],
             p = geo[key]
             ax.text(p[0] + 1, p[1] + 1, key, fontsize=7)
 
-        # External force vector (Improvement #3 — not always vertical)
+        # External force vector
         lp = external_load_point(geo, cfg.load_point)
         Fv = res["F_ext"] * fscale
         ax.arrow(lp[0], lp[1], Fv[0], Fv[1], width=0.25, color="green",
@@ -767,37 +588,17 @@ def visualize_grips(grips: Dict[str, FingerPose],
                      length_includes_head=True)
 
         title = (f"{gname}\n"
-                 f"FDP={res['FDP_N']:.0f} N  FDS={res['FDS_N']:.0f} N  "
-                 f"EDC={res['EDC_N']:.0f} N\n"
-                 f"ratio={res['FDP_FDS_ratio']:.2f}  "
-                 f"MCP resid={res['mcp_residual_Nm']*1000:.0f} mNm")
+                 f"FDP={res['FDP_N']:.0f} N  FDS={res['FDS_N']:.0f} N\n"
+                 f"ratio={res['FDP_FDS_ratio']:.2f}")
         ax.set_title(title, fontsize=7.5)
         ax.set_aspect("equal", adjustable="box")
         ax.grid(True, alpha=0.25)
         ax.set_xlabel("x (mm)")
         ax.set_ylabel("y (mm)")
 
-    # Fatigue panel (Improvement #10)
-    if has_fat:
-        ax_f = fig.add_subplot(gs[0, n_grip])
-        fd = fatigue_data
-        ax_f.plot(fd["times"], fd["fdp_vs_time"], color="#1f77b4", lw=2, label="FDP demand")
-        ax_f.plot(fd["times"], fd["fds_vs_time"], color="#ff7f0e", lw=2, label="FDS capacity")
-        ax_f.axvline(fd["peak_time_s"], color="red", ls="--", lw=1.2, label="Peak FDP")
-        ax_f.set_title(
-            f"Fatigue model (full_crimp)\n"
-            f"Peak FDP={fd['peak_fdp_N']:.0f} N @ t={fd['peak_time_s']:.0f} s\n"
-            f"Peak A2≈{fd['peak_a2_N']:.0f} N", fontsize=7.5)
-        ax_f.set_xlabel("Time (s)")
-        ax_f.set_ylabel("Force (N)")
-        ax_f.legend(fontsize=7)
-        ax_f.grid(True, alpha=0.25)
-
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=5, fontsize=8)
-    fig.suptitle(
-        f"Middle finger — improved model — {cfg.load_point} loading",
-        y=1.03, fontsize=11)
+    fig.suptitle(f"Middle finger biomechanics — {cfg.load_point} loading", y=1.03, fontsize=11)
     fig.savefig(out_file, dpi=200, bbox_inches="tight")
     print(f"  → Saved: {out_file}")
 
@@ -809,10 +610,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--load-point", choices=["distal_mid", "fingertip"],
                         default="distal_mid")
-    parser.add_argument("--fatigue-time", type=float, default=30.0)
     args = parser.parse_args()
 
-    cfg_main = SimConfig(load_point=args.load_point, fatigue_time_s=args.fatigue_time)
+    cfg_main = SimConfig(load_point=args.load_point)
     cfg_lit  = SimConfig(load_point="fingertip")
 
     athletes = [
@@ -822,30 +622,20 @@ def main() -> None:
     ]
 
     load_frac = 0.15
-    header = ("Improvements active: #1 tendon-excursion MA  #2 length-scaled MA  "
-              "#3 grip-direction force\n"
-              "                     #4 passive stiffness   #5 MCP residual      "
-              "#6 distributed pulleys\n"
-              "                     #7 EDC passive         #8 held-out calib    "
-              "#9 four-finger       #10 fatigue")
-
-    print("\n=== Middle-Finger Climbing Biomechanics — Improved Model ===")
-    print(header)
-    print()
+    print("\n=== Middle-Finger Climbing Biomechanics ===\n")
 
     all_results: Dict[str, Dict[str, Dict]] = {}
 
     for athlete in athletes:
-        bw_N  = athlete.mass_kg * 9.81
+        bw_N = athlete.mass_kg * 9.81
         f_mag = load_frac * bw_N
         grips = _build_grips(athlete.lengths_mm)
 
         print(f"─── {athlete.name}  {athlete.mass_kg:.1f} kg  "
               f"P/M/D={athlete.lengths_mm} mm  load={f_mag:.1f} N")
-        hdr = (f"{'grip':12s} {'FDP':>7} {'FDS':>7} {'EDC':>6} "
-               f"{'ratio':>6} {'A2':>6} {'A3':>6} {'A4':>6} "
-               f"{'r_fdp_dip':>10} {'r_fds_pip':>10} "
-               f"{'Mpass_pip mNm':>14} {'MCP resid mNm':>14}")
+        hdr = (f"{'grip':12s} {'FDP':>7} {'FDS':>7} {'ratio':>6} "
+               f"{'A2':>6} {'A3':>6} {'A4':>6} "
+               f"{'r_fdp_dip':>10} {'r_fdp_pip':>10} {'r_fds_pip':>10}")
         print(hdr)
 
         athlete_res = {}
@@ -853,50 +643,22 @@ def main() -> None:
             r = solve_static_equilibrium(pose, f_mag, cfg_main)
             athlete_res[gname] = r
             print(f"{gname:12s} "
-                  f"{r['FDP_N']:7.1f} {r['FDS_N']:7.1f} {r['EDC_N']:6.1f} "
-                  f"{r['FDP_FDS_ratio']:6.2f} "
+                  f"{r['FDP_N']:7.1f} {r['FDS_N']:7.1f} {r['FDP_FDS_ratio']:6.2f} "
                   f"{r['A2_N']:6.1f} {r['A3_N']:6.1f} {r['A4_N']:6.1f} "
-                  f"{r['r_fdp_dip_mm']:10.2f} {r['r_fds_pip_mm']:10.2f} "
-                  f"{r['M_pass_pip_Nm']*1000:14.1f} "
-                  f"{r['mcp_residual_Nm']*1000:14.1f}")
+                  f"{r['r_fdp_dip_mm']:10.2f} {r['r_fdp_pip_mm']:10.2f} {r['r_fds_pip_mm']:10.2f}")
         print()
         all_results[athlete.name] = athlete_res
 
         if athlete.name == "Climber_Average":
-            print("  Computing fatigue model (full_crimp)...")
-            fat = fatigue_peak_loads(grips["full_crimp"], f_mag, cfg_main)
             out_png = Path(__file__).with_name("finger_biomechanics_forces.png")
-            visualize_grips(grips, athlete_res, cfg_main, out_png, fatigue_data=fat)
+            visualize_grips(grips, athlete_res, cfg_main, out_png)
             print()
 
-    # ── Improvement #9 ──
     avg_f = load_frac * 72.8 * 9.81
     avg_lengths = (26.0, 25.0, 26.0)
-    print("=== Improvement #9: Four-Finger Model (Vigouroux 2006 load sharing) ===")
-    print(f"  Total finger load = {avg_f:.1f} N  (index 24%, middle 30%, ring 28%)")
-    ff = four_finger_results(avg_lengths, avg_f, cfg_main)
-    print(f"  {'finger':8s} {'grip':12s} {'FDP':>7} {'FDS':>7} {'A2':>7} {'A4':>7}")
-    for fname, gd in ff.items():
-        for gname, res in gd.items():
-            print(f"  {fname:8s} {gname:12s} "
-                  f"{res['FDP_N']:7.1f} {res['FDS_N']:7.1f} "
-                  f"{res['A2_N']:7.1f} {res['A4_N']:7.1f}")
-    print()
-
-    # ── Improvement #10 ──
     avg_grips = _build_grips(avg_lengths)
-    fat2 = fatigue_peak_loads(avg_grips["full_crimp"], avg_f, cfg_main)
-    print("=== Improvement #10: Fatigue Model (full_crimp, average climber) ===")
-    print(f"  Fresh:  FDP={fat2['fresh']['FDP_N']:.1f} N   A2={fat2['fresh']['A2_N']:.1f} N")
-    print(f"  Peak:   FDP={fat2['peak_fdp_N']:.1f} N   A2={fat2['peak_a2_N']:.1f} N"
-          f"   @ t={fat2['peak_time_s']:.0f} s   FDS residual={fat2['fds_at_peak']:.1f} N")
-    inc = 100.0 * (fat2['peak_fdp_N'] / max(fat2['fresh']['FDP_N'], 1e-6) - 1.0)
-    print(f"  FDP increase due to FDS fatigue: +{inc:.1f}%")
-    print()
+    avg_lit = {g: solve_static_equilibrium(p, avg_f, cfg_lit) for g, p in avg_grips.items()}
 
-    # ── Literature benchmark ──
-    avg_lit = {g: solve_static_equilibrium(p, avg_f, cfg_lit)
-               for g, p in avg_grips.items()}
     print("=== Literature Benchmark (fingertip load, average climber) ===")
     print(f"  FDP/FDS open_drag   = {avg_lit['open_drag']['FDP_FDS_ratio']:.2f}  "
           f"(target ~0.88, Vigouroux 2006)")
@@ -904,154 +666,16 @@ def main() -> None:
           f"(expected between open and full)")
     print(f"  FDP/FDS full_crimp  = {avg_lit['full_crimp']['FDP_FDS_ratio']:.2f}  "
           f"(target ~1.75, Vigouroux 2006)")
+    print(f"  A2 open/half/full   = {avg_lit['open_drag']['A2_N']:.1f} / "
+          f"{avg_lit['half_crimp']['A2_N']:.1f} / {avg_lit['full_crimp']['A2_N']:.1f} N  "
+          f"(Schweizer 2009: 121 / 197 / 287 N)")
+    print(f"  A4 open/half/full   = {avg_lit['open_drag']['A4_N']:.1f} / "
+          f"{avg_lit['half_crimp']['A4_N']:.1f} / {avg_lit['full_crimp']['A4_N']:.1f} N  "
+          f"(Schweizer 2009: 103 / 165 / 226 N)")
     print()
 
-    # Improvement #8
-    benchmark_with_holdout(avg_lit)
-
-
-
-    # ── Friction cone analysis ──
-    _friction_cone_analysis(cfg_main)
-
-    # ── PeerJ 7470 Length Disadvantage (Mechanism G) ──
-    _peerj_length_disadvantage_analysis(cfg_main)
-
+    benchmark_peerj_moment_arms(avg_lit)
     print("\nDone.")
-
-
-
-def _peerj_length_disadvantage_analysis(cfg: SimConfig):
-    """
-    Mechanism G: The 'Length Disadvantage'
-    Replicates the core finding of the PeerJ 7470 study comparing human vs bonobo fingers.
-    Bonobos have 22% longer bones, but only 4-7% larger moment arms, resulting 
-    in a massive mechanical disadvantage.
-    """
-    print("\n" + "="*80)
-    print("MECHANISM G: PEERJ 7470 LENGTH DISADVANTAGE (Human vs Bonobo)")
-    print("="*80)
-    
-    athletes = [
-        ("Avg Human",    (26.0, 25.0, 26.0)),
-        ("Length Disadv (Bonobo-like)", (26.0 * 1.22, 25.0 * 1.22, 26.0 * 1.22))
-    ]
-    
-    f_mag = 100.0 # N
-    
-    # Calculate Human baseline geometries
-    human_lengths = athletes[0][1]
-    human_pose = posture_from_joint_targets(human_lengths, 75.0, -20.0, 0.0, 0.0, "half_crimp")
-    human_arms = tendon_excursion_moment_arms(human_pose)
-    
-    results = {}
-    
-    print(f"{'Athlete':>30} | {'Bones (mm)':>20} | {'Req FDP (N)':>12} | {'Penalty'}")
-    print("-" * 80)
-    
-    for name, lengths in athletes:
-        pose = posture_from_joint_targets(lengths, 75.0, -20.0, 0.0, 0.0, "half_crimp")
-        
-        try:
-            sol = solve_static_equilibrium(pose, f_mag, cfg)
-            
-            if name == "Length Disadv (Bonobo-like)":
-                # External moments
-                M_dip_ext = sol["debug_moments"]["M_dip_ext"]
-                
-                # Passive moments
-                M_pass_dip = sol["debug_moments"]["M_pass_dip"]
-                
-                # New Moment Arms (1.05x instead of length-scaled)
-                r_fdp_dip = max(human_arms["r_fdp_dip"] * 1.05 * 1e-3, 1e-5)
-                
-                # Force calculation (simulated from solver)
-                req_fdp_dip = (M_dip_ext - M_pass_dip) / r_fdp_dip
-                FDP = max(req_fdp_dip, 0.0)
-            else:
-                FDP = sol["FDP_N"]
-                
-            results[name] = FDP
-            
-            penalty_str = "--"
-            if name != "Avg Human":
-                penalty = FDP / results["Avg Human"]
-                penalty_str = f"{penalty:.2f}x"
-                
-            l_str = f"{lengths[0]:.1f}/{lengths[1]:.1f}/{lengths[2]:.1f}"
-            print(f"{name:>30} | {l_str:>20} | {FDP:12.1f} | {penalty_str}")
-            
-        except Exception as e:
-            print(f"Error {name}: {e}")
-
-
-def _friction_cone_analysis(cfg: SimConfig):
-    """
-    Mechanism F: The 'Friction Cone' limit for Slopers.
-    On a sloper (angle θ > 0), the contact force F_ext must be directed
-    inward enough to stay within the friction cone:
-       F_friction <= mu * F_normal
-       => F_inward >= F_down * tan(θ - arctan(mu))
-    """
-    print("\n" + "="*80)
-    print("MECHANISM F: FRICTION CONE ANALYSIS (SLOPER HOLD)")
-    print("="*80)
-    
-    # 1. Compute required inward force (H_req) for a 100N downward load
-    #    on holds of various slopes (0 to 45 deg), assuming mu = 0.5 (~26.5 deg cone)
-    mu = 0.5
-    cone_angle_rad = np.arctan(mu)
-    F_down = 100.0
-    
-    angles_deg = np.array([0, 10, 20, 25, 30, 40, 45])
-    
-    print(f"Friction Coefficient: {mu} (Cone Angle: {np.degrees(cone_angle_rad):.1f} deg)")
-    print(f"Downward Load: {F_down} N")
-    print(f"{'Hold Angle (deg)':>20} | {'Req Inward Force H (N)':>25}")
-    print("-" * 50)
-    
-    for theta_deg in angles_deg:
-        theta_rad = np.radians(theta_deg)
-        # To not slip, the resultant angle must be steeper than the hold angle - cone angle
-        # α = theta - phi_cone
-        # H_req = F_down * tan(α)
-        alpha = theta_rad - cone_angle_rad
-        if alpha <= 0:
-            H_req = 0.0 # Friction alone is enough
-        else:
-            H_req = F_down * np.tan(alpha)
-            
-        print(f"{theta_deg:20.1f} | {H_req:25.1f}")
-        
-    print("\n[Half Crimp vs Open Drag Inward Force Generation]")
-    print("For a standard average climber:")
-    lengths = (26.0, 25.0, 26.0)
-    
-    def get_generated_H(pose_name):
-        pose = posture_from_joint_targets(lengths, 75.0, -20.0, 0.0, 0.0, pose_name)
-        # The sum of moments around MCP determines inward force capability.
-        # But simply, Open Drag extends the DIP, shifting the contact point inward,
-        # naturally generating a horizontal force into the wall.
-        try:
-            geo = build_tendon_geometry(pose)
-            contact = external_load_point(geo, cfg.load_point) * 1e-3
-            mcp = geo["MCP"] * 1e-3
-            # Horizontal distance from MCP to the contact point
-            dx = contact[0] - mcp[0]
-            # Steeper fingers (Open Drag) have smaller dx, meaning standard vertical 
-            # tendon pulling creates more horizontal inward force at the tip.
-            return dx * 1000 # mm
-        except:
-            return 0.0
-            
-    dx_hc = get_generated_H("half_crimp")
-    dx_od = get_generated_H("open_drag")
-    
-    print(f"Half Crimp dx (MCP to Tip): {dx_hc:.1f} mm")
-    print(f"Open Drag dx (MCP to Tip):  {dx_od:.1f} mm")
-    print("-> Open Drag has a longer horizontal reach (dx), but typically applies forces")
-    print("   nearly parallel to the wall, generating substantial inward normal force")
-    print("   automatically due to the tendon routing resolving against the finger bones.")
 
 
 if __name__ == "__main__":
