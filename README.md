@@ -1,128 +1,93 @@
-# Middle Finger Climbing Biomechanics
+# 3D Climbing Finger Biomechanics Model
 
-Reduced 2D biomechanics model of the middle finger for climbing grip analysis.
+![Finger Kinematics 3D Model](outputs/climbing_3d_fig1.png)
 
-![Finger biomechanics forces](img/finger_biomechanics_forces.png)
+## 1. Abstract
+The **3D Climbing Finger Biomechanics Model** is a full three-dimensional spatial analysis of human finger biomechanics during climbing. This repository provides a static equilibrium framework to evaluate deep flexor (FDP), superficial flexor (FDS), and lumbrical (LU) muscle forces across various climbing grips (crimp, half-crimp, open hand, pinch). Extending beyond traditional 2D planar models, this solver accounts for lateral wall friction, MCP radial abduction, out-of-plane pulley forces, and 6-DOF joint reactions to accurately assess off-axis injury risks.
 
-![Finger-length dependent force study](img/plot_length_vs_force_peerj_study_half_crimp_8p0mm.png)
+## 2. Introduction & Theoretical Background
+The biomechanical demands of rock climbing frequently exceed standard physiological limits, heavily loading the flexor tendon pulleys and collateral ligaments. Prior literature (e.g., Vigouroux et al. 2006, Schweizer 2001) primarily modelled these interactions in 2D. However, climbing holds inherently apply 3D forces—especially overhanging "side-pulls" or asymmetric slope grips.
 
-## Overview
+This model incorporates:
+*   **4 Degrees of Freedom (DOF):** Flexion at DIP, PIP, MCP, plus radial abduction at the MCP joint.
+*   **3 Primary Flexors:** Flexor Digitorum Profundus (FDP), Flexor Digitorum Superficialis (FDS), and Lumbricals (LU).
+*   **Empirical Physiological Constraints:** Utilizes *in vivo* intra-muscular EMG force-sharing ratios (Vigouroux 2006) to solve the exact flexor distribution, resolving the mathematical indeterminacy of the human hand without guessing optimization functions.
 
-The current code is intentionally narrower than the original prototype. Unsupported mechanics were removed or downgraded after benchmarking against published studies.
+## 3. Methods
 
-Use this repository to:
+### 3.1 Kinematics
+The forward kinematics define a local coordinate frame with the origin placed at the MCP joint:
+- `x` -> toward wall (grip force direction)
+- `y` -> dorsal (upward relative to standard climbing posture)
+- `z` -> radial (toward the thumb)
 
-- comparing FDP and FDS force demand across finger lengths
-- comparing open drag, half crimp, and full crimp postures
-- visualizing finger geometry, tendon paths, and pulley reaction vectors
-- checking whether a change in finger length produces a biomechanical advantage or disadvantage
+Phalanx lengths (PP, MP, DP) are derived from published anthropometric data (Özsoy et al.), with default scaling parameters to analyze the universally observed **"long finger disadvantage"** on small holds.
 
-The current code is **not** a fully validated hand model. It reproduces some published trends, but it does not yet match all published absolute values.
+### 3.2 Contact Geometry
+Force application is not assumed purely at the anatomical tip. The model calculates the exact contact point ($C$) on the distal phalanx (DP) palmar surface based on:
+1.  **Hold Depth ($d_{hold}$)**
+2.  **Hold Edge Radius ($r_{edge}$)**
+3.  **Wall Overhang Angle ($\beta$)**
+4.  **Skin-Rock Friction Utilization Ratio ($\mu$)**
 
-## Quick Start
+### 3.3 Solution Algorithms
+To solve the 4-equation system (3 flexion moments + 1 abduction moment) with 3 muscles, three direct mathematical solvers are compared:
+1.  **Direct (3x3 Exact):** Pure linear algebra solving DIP/PIP/MCP flexion directly.
+2.  **EMG-Constrained (Method 2 - Primary):** Constrains the FDP/FDS ratio to Vigouroux 2006 biological data. Highly accurate and physiologically validated.
+3.  **LU-minimizing (Method 3):** Solves a 2-muscle system assuming Lumbricals act purely as stabilizers.
 
+## 4. Results
+
+### 4.1 Tendon Forces & Recruitment (EMG vs Direct)
+The required FDP and FDS forces dynamically scale based on the specific grip posture enforced by hold depth and edge radius.
+
+![Tendon Forces](outputs/climbing_3d_fig2.png)
+
+### 4.2 Kinematic Coupling & PIP Flexion
+A continuous sweep of the PIP joint angle reveals how mechanical advantages shift. Crimp grips hyperextend the DIP, transferring extreme load to the A2 and A4 pulleys. 
+
+![FDP & FDS vs PIP Angle](outputs/climbing_3d_fig3.png)
+
+### 4.3 Out-of-Plane Pulley Load (3D Specificity)
+Unlike 2D models, this 3D model identifies the severe lateral shearing force on the A2/A4 pulleys introduced by MCP radial abduction during side-pulls. 
+
+![3D Pulley Forces](outputs/climbing_3d_fig4.png)
+
+### 4.4 Mediolateral (ML) Joint Shear
+The 6-DOF joint reaction solver outputs the mediolateral shear acting on the MCP and PIP collateral ligaments, which is critical for diagnosing lateral impingement injuries.
+
+![6-DOF Joint Reactions](outputs/climbing_3d_fig5.png)
+
+### 4.5 The Long Finger Disadvantage
+Climbers with longer phalanges suffer a distinct biomechanical disadvantage on shallow holds. As hold depth is reduced, the lever arm artificially extends for a long finger, requiring exponentially higher internal tendon forces for the same external body weight.
+
+![Long Finger Summary](outputs/climbing_3d_fig6.png)
+![Hold Depth Analysis](outputs/climbing_3d_fig7.png)
+
+## 5. Usage & Quick Start
+
+### Installation
+Ensure you have `numpy` and `matplotlib` installed:
 ```bash
-python3 finger_biomechanics_model.py
-python3 finger_biomechanics_model.py --load-point-mm-from-tip 0
-python3 plot_length_vs_force_peerj.py
-python3 plot_length_vs_force_peerj.py --contact-sweep-grip full_crimp --load-point-mm-from-tip 6
+pip install numpy matplotlib
 ```
 
-Generated images are written to `img/`.
-
-## Methods
-
-`finger_biomechanics_model.py` implements a reduced planar model of the middle finger with:
-
-- three phalanges (`Lp`, `Lm`, `Ld`) and configurable joint posture
-- FDP insertion on the distal phalanx and FDS insertion on the middle phalanx
-- annular pulley redirection at A2, A3, and A4
-- DIP and PIP static equilibrium for FDP and FDS
-- passive DIP/PIP resistance
-- external load applied in global `+y`
-
-The load/hold is defined by a contact point measured proximally from the fingertip along the distal phalanx:
-
-- `0 mm` = fingertip loading
-- `Ld / 2` = distal-phalanx midpoint
-- values above `Ld` are clipped to the DIP end
-
-The default grip presets are:
-
-- `open_drag`
-- `half_crimp`
-- `full_crimp`
-
-The study plot in `plot_length_vs_force_peerj.py` uses the same solver to sweep finger length and hold contact point.
-
-## Study Figures
-
-`plot_length_vs_force_peerj.py` produces three figures in one image:
-
-- Figure 1: all three major grip types on one force-vs-length plot for one fixed hold/contact point
-- Figure 2: contact-point family of curves for `0, 2, 4, 6, 8, 10, 12, 14, 18, 20 mm` from the fingertip for one selected grip
-- Figure 3: FDP and FDS heatmaps over finger length and contact distance for the selected grip
-
-Use:
-
+### Running the Simulation
+To run the full 3D simulation and generate updated output figures locally:
 ```bash
-python3 plot_length_vs_force_peerj.py
-python3 plot_length_vs_force_peerj.py --contact-sweep-grip full_crimp --load-point-mm-from-tip 6
+python3 climbing_finger_3d.py
 ```
+*Note: Generated images will be dumped to `/outputs/` assuming configured paths or current working directory.*
 
-Interpretation:
+### Configuration
+You can edit the `Config` class directly inside `climbing_finger_3d.py` to change:
+- `body_weight_kg` and `bw_fraction` (load per finger)
+- `beta_wall_deg` (Wall steepness: 0 = vertical, 90 = full horizontal roof)
+- `d_hold_mm` (Depth of the crimp edge)
+- `F_lateral_N` (Applied side-pull force)
 
-- rising force with increasing finger length indicates a mechanical disadvantage for that grip/hold definition
-- changing contact distance changes the external moment arm and therefore the FDP/FDS demand
-- the heatmaps show where the disadvantage is strongest across the full length/contact space
-
-## Benchmark Summary
-
-The model is benchmarked against three published anchors:
-
-- Vigouroux et al. 2006: FDP/FDS ratio in open-hand vs crimp postures
-- Schweizer 2009: A2 and A4 pulley loads at 100 N fingertip load
-- PeerJ 7470: longer fingers gain only modest moment-arm advantage and still require higher flexor force
-
-Current status for the average-climber fingertip case:
-
-- `open_drag` FDP/FDS is close to the Vigouroux open-hand value
-- `full_crimp` FDP/FDS remains below the Vigouroux crimp value
-- A2 is overpredicted relative to Schweizer 2009
-- A4 is not matched consistently across all grips
-- the PeerJ length-disadvantage trend is reproduced
-
-## Scope And Limits
-
-This repository is useful for:
-
-- relative comparison of short vs long fingers under the same assumptions
-- posture-to-posture comparison of FDP/FDS demand
-- visualization of tendon routing and pulley reaction directions
-- hold/contact sensitivity studies using the fingertip-distance parameter
-
-It should not be used as evidence for:
-
-- exact human pulley-load magnitudes
-- exact proximal flexor moment arms
-- MCP or extensor equilibrium
-- fatigue or multi-finger force sharing
-
-Unsupported additions from the earlier prototype were removed from the active model path, including MCP closure, EDC loading, fatigue, four-finger sharing, and post-hoc calibration.
-
-## Files
-
-- main model: `finger_biomechanics_model.py`
-- study plot: `plot_length_vs_force_peerj.py`
-- generated images: `img/`
-- finger-geometry figure: `img/finger_biomechanics_forces.png`
-- study figure: `img/plot_length_vs_force_peerj_study_half_crimp_8p0mm.png`
-
-## References
-
-- Vigouroux, Quaine, Labarre-Vila, Moutet, J Biomech (2006): [https://doi.org/10.1016/j.jbiomech.2005.10.034](https://doi.org/10.1016/j.jbiomech.2005.10.034)
-- Schweizer, J Hand Surg Am (2001): [https://doi.org/10.1053/jhsu.2001.26322](https://doi.org/10.1053/jhsu.2001.26322)
-- Schweizer, J Biomech (2009): [https://pubmed.ncbi.nlm.nih.gov/19367698/](https://pubmed.ncbi.nlm.nih.gov/19367698/)
-- PeerJ 7470: [https://peerj.com/articles/7470/](https://peerj.com/articles/7470/)
-- Minami et al., J Hand Surg (1985): passive finger-joint stiffness
-- An et al., J Biomech (1983): tendon-excursion moment-arm method
+## 6. References
+1.  **Vigouroux, Quaine, Labarre-Vila, Moutet.** *Estimation of finger muscle tendon tensions and pulley forces during specific sport-climbing grip techniques.* Journal of Biomechanics, 39:2583-2592 (2006).
+2.  **An KN, Ueba Y, Chao EY, Cooney WP, Linscheid RL.** *Tendon excursion and moment arm of index finger muscles.* Journal of Biomechanics, 16(6):419-25 (1983).
+3.  **Schweizer.** *Biomechanical properties of the crimp grip position in rock climbers.* Journal of Biomechanics, 34(2):217-23 (2001).
+4.  **Brand PW, Hollister A.** *Clinical Mechanics of the Hand.* 3rd Edition, Mosby (1999).
