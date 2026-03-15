@@ -1,0 +1,28 @@
+======================================================
+   MODEL COMPARISON: 3D Climbing vs PeerJ Human       
+======================================================
+
+--- 1. Running Our 3D Model ('climbing_finger_3d.py') ---
+-> Our Model (EMG Constrained) - FDP: 211.7 N, FDS: 176.4 N
+-> Our Model (Direct 3x3)      - FDP: 204.8 N, FDS: 185.1 N
+
+--- 2. Running PeerJ Model ('Fingermodel.py') ---
+-> PeerJ Model (Min Stress SQP) - FDP: 137.5 N, FDS: 189.0 N
+
+------------------------------------------------------
+   ANALYSIS OF DIFFERENCES                            
+------------------------------------------------------
+1. Muscle Recruitment Paradigm:
+   - Our 3D Model: Uses exact biological EMG sharing ratios (Vigouroux 2006).
+   - PeerJ Model: Uses Static Optimization (minimizing squared muscle stress).
+     This leads the PeerJ model to favor FDS strongly because its moment arms 
+     at PIP and MCP are superior, mathematically avoiding FDP when possible 
+     even though climbers intrinsically recruit FDP to stabilize the DIP joint.
+
+2. Geometry & Extensor Mechanism:
+   - Our 3D Model: Simplifies extensor mechanism to focus on primary flexors 
+     with lateral friction and exact crimp contact point shifting.
+   - PeerJ Model: A full hand model including intrinsic muscles (Lumbricals, 
+     Interossei) and the entire Extensor Hood mechanism via routing fractions. 
+     The external force causes co-contraction in these stabilizers, 
+     altering the net flexor demand.
