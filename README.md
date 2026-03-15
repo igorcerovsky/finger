@@ -64,6 +64,11 @@ Climbers with longer phalanges suffer a distinct biomechanical disadvantage on s
 ![Long Finger Summary](outputs/climbing_3d_fig6.png)
 ![Hold Depth Analysis](outputs/climbing_3d_fig7.png)
 
+### 4.6 Mathematical Optimization vs Biological Reality (PeerJ Comparison)
+When compared to purely mathematical models (such as the standard Static Optimization solver used in the **PeerJ 7470** human finger model), unique climbing realities emerge:
+*   **Static Optimization Engines** attempt to solve the finger's indeterminacy by minimizing total squared tendon stress. Because the FDS tendon has a superior structural lever-arm at the PIP and MCP joints, pure mathematics determines that the FDS is "more efficient." When evaluating a 100N tip load, these engines mathematically "turn off" the FDP muscle entirely to minimize systemic stress.
+*   **Our Model (Biological Reality)** inherently rejects this theoretically perfect solution. To stabilize the DIP joint from buckling under extreme loads, the human nervous system intrinsically *co-contracts* the "inefficient" deep flexor (FDP). Our `climbing_finger_3d.py` model heavily relies on its **EMG-Constrained solver**, guaranteeing the simulation mimics the true *in vivo* climbing state (Vigouroux 2006) rather than an artificial mathematical minimum.
+
 ## 5. Usage & Quick Start
 
 ### Installation
