@@ -481,11 +481,13 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         ext = external_moments(kin, F_ext_dir, g,
                                p_contact_DP=p_C_DP, p_contact_MP=p_C_MP,
                                F_mag_DP=F_DP, F_mag_MP=F_MP)
-        # Use EMG method (3×2 lstsq) for scoring — same as Fig 8 uses for plotting.
-        # The direct 3×3 np.linalg.solve produces large negative forces at degenerate
-        # postures; clipping them to 0 gives a false minimum (F_total≈0) that the
-        # grid search picks incorrectly.  The EMG 3×2 system is better-conditioned
-        # and recovers non-negative forces at physically plausible postures.
+        # Use EMG method (3×2 lstsq) for scoring — same as Fig 8 plots.
+        # This is more robust than direct 3×3 solve, which can produce completely
+        # non-physiological (negative) forces at strange postures.
+        # To guide the optimizer, we calculate the continuous unclipped forces,
+        # and apply a smooth quadratic penalty for any negative values. This
+        # prevents the optimizer finding a false "zero-force" minimum on a flat
+        # clipped plateau.
         r_emg = grip_base.emg_ratio
         A3e = np.array([
             [r_emg*ma['FDP_DIP'],                    ma['LU_DIP']],
@@ -494,20 +496,41 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         ])
         b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
         sol, _, _, _ = np.linalg.lstsq(A3e, b3e, rcond=None)
-        F_FDS_e = max(sol[0], 0.0)
-        F_LU_e  = max(sol[1], 0.0)
-        F_FDP_e = r_emg * F_FDS_e
-        total   = F_FDP_e + F_FDS_e + F_LU_e
-        # Degenerate posture: all forces zero = non-physical, return large penalty
-        if total < 10.0:
-            return 1e6
-        return total
-
+        
+        # Muscle forces can only pull (>= 0)
+        x_clip = np.array([max(sol[0], 0.0), max(sol[1], 0.0)])
+        F_FDS_clip = x_clip[0]
+        F_LU_clip  = x_clip[1]
+        F_FDP_clip = r_emg * F_FDS_clip
+        
+        raw_total = F_FDP_clip + F_FDS_clip + F_LU_clip
+        
+        # Calculate how badly the non-negative muscles fail to balance the external load
+        # If the joints would collapse (e.g. at degenerate straight-finger postures),
+        # this residual will be massive. We heavily penalise it.
+        M_muscle = A3e.dot(x_clip)
+        residual_error = float(np.linalg.norm(M_muscle - b3e))
+        
+        penalty = 10.0 * residual_error
+        
+        # Smooth penalty for anatomically impossible joint angles
+        # PIP max extension ~0°, max flexion ~120°
+        # DIP max extension ~-25°, max flexion ~90°
+        if float(pip) < 0.0:   penalty += 1000.0 * float(pip)**2
+        if float(pip) > 120.0: penalty += 1000.0 * (float(pip) - 120.0)**2
+        if float(dip) < -25.0: penalty += 1000.0 * (float(dip) + 25.0)**2
+        if float(dip) > 90.0:  penalty += 1000.0 * (float(dip) - 90.0)**2
+            
+        return float(raw_total + penalty)
 
     # ── 1. Grid search ───────────────────────────────────────────────
-    pip_grid = np.linspace(theta_PIP_0 - 20.0, theta_PIP_0 + 20.0, 9)
-    dip_grid = np.linspace(theta_DIP_0 - 20.0, theta_DIP_0 + 20.0, 9)
+    # Search over the entire biological range — do not restrict to grip base.
+    # On steep walls/shallow holds, climbers are mechanically forced out of
+    # open hand into steep crimps to avoid joint collapse (negative moments).
+    pip_grid = np.linspace(0.0, 110.0, 12)   # 12 points for PIP
+    dip_grid = np.linspace(-25.0, 90.0, 12)  # 12 points for DIP
     best_f   = np.inf
+
     best_pip, best_dip = theta_PIP_0, theta_DIP_0
     for pip in pip_grid:
         for dip in dip_grid:

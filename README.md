@@ -73,7 +73,7 @@ Three methods solve the system (3 flexion moments + 1 abduction moment) for 3 mu
 
 ### 3.4 Equilibrium Posture Finder
 
-For each hold depth, `find_equilibrium_posture()` searches the DIP/PIP angle space (±20° grid, then Nelder-Mead refinement) to find the posture minimising total tendon force — the motor neuroscience minimum-effort principle (Uno et al. 1989, Latash 2012). Uses the 4×3 row-scaled lstsq internally for consistency with Method 4.
+For each hold depth, `find_equilibrium_posture()` searches the full anatomical PIP/DIP angle space (grid search, then Nelder-Mead refinement) to find the posture minimising total tendon force. It uses the **EMG-constrained 3×2 lstsq** for scoring. Crucially, the solver applies an **equilibrium residual penalty**: if an external load vector passes such that the finger naturally extends (e.g., negative MCP moments on a steep overhang), the flexor muscles cannot balance it without extensors, and the posture is heavily penalised as mechanically unviable (the joint would collapse).
 
 ### 3.5 Model Selection & Validation Against PeerJ 7470
 
@@ -130,7 +130,7 @@ Force vs hold depth sweep extended to 45 mm. Purple shading marks the zone where
 
 ### 4.7 Deep Hold Phenotype Analysis (Fig 8 — Key Result)
 
-**The central figure for phenotype/genotype research.** Sweeps hold depth from 2 to 45 mm at equilibrium posture, using the min-effort solver, comparing Short (−15%), Standard, and Long (+15%) finger phenotypes:
+**The central figure for phenotype/genotype research.** Sweeps hold depth from 2 to 45 mm at equilibrium posture, using the **EMG-constrained solver**, comparing Short (−15%), Standard, and Long (+15%) finger phenotypes:
 
 - **Panel A:** FDP vs FDS forces — crossover marked per phenotype
 - **Panel B:** FDP/FDS ratio with Vigouroux 2006 reference lines (crimp 1.75, slope 0.88)
@@ -140,13 +140,14 @@ Force vs hold depth sweep extended to 45 mm. Purple shading marks the zone where
 
 **Key findings:**
 
+1. **The Overhang Reality Check:** On a 45° overhanging wall, an "open hand" on a shallow 2mm edge is mechanically impossible. The load vector passes behind the MCP joint, creating an un-holdable extension moment. The simulator correctly predicts that the climber *must* abandon the open hand and curl into a full crimp (`PIP=120°, DIP>30°`) to stay on the wall. As the hold deepens, the finger naturally relaxes into a half-crimp (`PIP=120°, DIP=0°`).
+2. **Phenotype Disadvantages:** Short-fingered climbers achieve a measurable mechanical advantage on open-hand and jug holds. Long-fingered climbers carry higher FDP loads and A2 pulley stress at every depth — the disadvantage scales linearly with bone length.
+
 | Phenotype | FDP/FDS crossover depth | Clinical implication |
 |-----------|------------------------|----------------------|
 | Short finger (−15%) | Earlier (~19 mm) | FDS dominance sooner; lower A2 risk on open-hand holds |
 | Standard | ~22 mm (= L_DP) | Baseline |
 | Long finger (+15%) | Later (~25 mm) | Higher FDP demand; greater A2 pulley risk across all depths |
-
-**Short-fingered climbers achieve a measurable mechanical advantage on open-hand and jug holds.** Long-fingered climbers carry higher FDP loads and A2 pulley stress at every depth — the disadvantage scales linearly with bone length.
 
 ### 4.8 EMG Validation vs Biological Reality
 
