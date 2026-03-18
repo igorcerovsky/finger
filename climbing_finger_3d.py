@@ -784,8 +784,8 @@ def run_simulation():
     # ════════════════════════════════════════════════════════════
     # FIG 2 — Forces per grip × method × geometry
     # ════════════════════════════════════════════════════════════
-    fig2, axes2 = plt.subplots(4, 4, figsize=(20, 15))
-    fig2.suptitle(f"Tendon Forces — 4 Methods  |  Load: {F_tip:.1f} N\n"
+    fig2, axes2 = plt.subplots(3, 4, figsize=(20, 12))
+    fig2.suptitle(f"Tendon Forces — 3 Methods  |  Load: {F_tip:.1f} N\n"
                   "Standard (solid) vs Long (hatch)", fontsize=13, fontweight='bold')
     muscles = ['FDP','FDS','LU']
     mcols   = [MUSCLE_COLORS[m] for m in muscles]
@@ -1062,7 +1062,7 @@ def run_simulation():
     fig8, axes8 = plt.subplots(3, 1, figsize=(14, 16), sharex=True)
     fig8.suptitle(
         "Deep Hold Biomechanics: Equilibrium Posture Sweep (Open Hand)\n"
-        "Min-effort solver  |  Equilibrium DIP/PIP posture at each depth  |  "
+        "EMG-constrained solver  |  Equilibrium DIP/PIP posture at each depth  |  "
         f"Load: {F_tip:.1f} N\n"
         "Shading: Short (−15%) / Std / Long (+15%) finger phenotype\n"
         "Refs: Crowninshield & Brand 1981; Vigouroux 2006; Schweizer 2001",
