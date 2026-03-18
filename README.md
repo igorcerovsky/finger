@@ -18,6 +18,7 @@ Rock climbing biomechanics heavily loads the flexor tendon pulleys and collatera
 - **Deep / open-hand holds** (d > L_DP): skin contact bridges the DIP joint onto the MP; the external moment at the DIP joint partially disappears → FDS can overtake FDP. This matches EMG data (Vigouroux 2006: crimp ratio 1.75, slope 0.88).
 
 This model incorporates:
+
 - **4 Degrees of Freedom:** Flexion at DIP, PIP, MCP, plus radial abduction at MCP.
 - **3 Primary Flexors:** FDP, FDS, and Lumbrical (LU).
 - **4 Solution Methods:** Direct, EMG-constrained, LU-minimising, and minimum-effort.
@@ -31,6 +32,7 @@ This model incorporates:
 ### 3.1 Kinematics
 
 Forward kinematics with MCP at origin:
+
 - `x` → toward wall (grip force direction)
 - `y` → dorsal (upward in standard climbing posture)
 - `z` → radial (toward thumb)
@@ -44,6 +46,7 @@ Force application is not assumed at the anatomical tip. For hold depth `d_hold` 
 **Shallow hold (d_hold ≤ L_DP):** All force on the DP with a **triangular (Hertz-like) pressure profile** (Johnson 1985, Serina et al. 1997) — pressure peaks at the fingertip and tapers toward the DIP crease. The resultant centroid is at L/3 from the tip.
 
 **Deep hold (d_hold > L_DP):** Force splits across DP and MP:
+
 ```
 area_DP = L3 / 2             (∫ triangular profile over DP)
 area_MP = x² / (2 × total)  (∫ rising ramp profile over MP)
@@ -51,6 +54,7 @@ frac_DP = area_DP / (area_DP + area_MP)
 ```
 
 The MP contact centroid `p_C_MP` accounts for the **A3 annular pulley** (at ~15% of MP from PIP), which dominates skeletal force transfer from skin to bone (Moutet 2003):
+
 ```
 p_C_MP = 0.40 × geometric_centroid + 0.60 × A3_pulley_position
 ```
@@ -141,14 +145,17 @@ The EMG-constrained method (Method 2) matches published EMG ratios exactly: crim
 ## 5. Usage & Quick Start
 
 ### Installation
+
 ```bash
 pip install numpy matplotlib scipy
 ```
 
 ### Running the Simulation
+
 ```bash
 python3 climbing_finger_3d.py
 ```
+
 All 8 figures saved to `outputs/climbing_3d_fig{1-8}.png`.
 
 ### Configuration
