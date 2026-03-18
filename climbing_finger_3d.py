@@ -173,13 +173,12 @@ class ContactGeometry:
 
 MUSCLE_COLORS = {'FDP': '#1565C0', 'FDS': '#6A1B9A', 'LU': '#00838F'}
 METHOD_LABELS  = {
-    'direct':     'Direct (3x3 exact)',
-    'emg':        'EMG ratio constrained',
-    'lu_min':     'LU-minimising',
-    'min_effort': 'Min Effort (L-BFGS-B)',
+    'direct':  'Direct (3×3 exact)',
+    'emg':     'EMG ratio constrained',
+    'lu_min':  'LU-minimising',
 }
-METHOD_COLORS = {'direct': '#E53935', 'emg': '#1565C0', 'lu_min': '#2E7D32', 'min_effort': '#F57F17'}
-METHOD_STYLES = {'direct': '-', 'emg': '--', 'lu_min': '-.', 'min_effort': ':'}
+METHOD_COLORS = {'direct': '#E53935', 'emg': '#1565C0', 'lu_min': '#2E7D32'}
+METHOD_STYLES = {'direct': '-', 'emg': '--', 'lu_min': '-.'}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -435,58 +434,6 @@ def external_moments(kin, F_ext_dir, grip, passive_frac=None,
 
 
 # ─────────────────────────────────────────────────────────────
-#  MINIMUM-EFFORT MUSCLE FORCE SOLVER
-# ─────────────────────────────────────────────────────────────
-
-def solve_min_effort(A: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """
-    Find muscle forces [F_FDP, F_FDS, F_LU] that satisfy static equilibrium
-    while minimising the sum of squared forces.
-
-    Physical basis for redundancy:
-      The model has 3 unknowns [FDP, FDS, LU] but 4 equilibrium equations:
-      DIP flexion, PIP flexion, MCP flexion, MCP abduction. This 4x3
-      over-determined system is the correct setup: the nervous system must
-      balance all four joint moments simultaneously, and the extra constraint
-      (abduction) creates genuine redundancy that the optimizer resolves.
-
-      Without the abduction row the 3x3 system is exactly determined and
-      the optimizer has no freedom — it would always return the direct solve.
-
-    Objective:   min  f(x) = x[0]^2 + x[1]^2 + x[2]^2   (min squared forces)
-    Constraints: A @ x ≈ b  (4 equilibrium equations, soft-penalised)
-    Bounds:      x[i] >= 0  (muscles can only pull)
-
-    References:
-      Seireg A. & Arvikar R. (1975) J Biomechanics 8(2):89-102.
-      Crowninshield R.D. & Brand R.A. (1981) J Biomechanics 14(11):793-801.
-      An K.N. et al. (1984) J Biomechanical Engineering 106(4):364-367.
-      Byrd R.H. et al. (1995) SIAM J Sci Comput 16(5):1190-1208.
-    """
-    try:
-        from scipy.optimize import minimize  # type: ignore
-    except ImportError:
-        return np.maximum(np.linalg.lstsq(A, b, rcond=None)[0], 0.0)
-
-    penalty = 1e3   # penalty weight for constraint violation
-
-    def objective(x):
-        residual = A @ x - b
-        return float(np.dot(x, x) + penalty * np.dot(residual, residual))
-
-    def grad(x):
-        return 2.0 * x + 2.0 * penalty * (A.T @ (A @ x - b))
-
-    # Warm-start: least-squares solution of the overdetermined system
-    x0 = np.maximum(np.linalg.lstsq(A, b, rcond=None)[0], 0.0)
-
-    bounds = [(0.0, None)] * 3
-    res = minimize(objective, x0, jac=grad, method='L-BFGS-B', bounds=bounds,
-                   options={'maxiter': 500, 'ftol': 1e-12, 'gtol': 1e-9})
-    return np.maximum(res.x, 0.0)
-
-
-# ─────────────────────────────────────────────────────────────
 #  EQUILIBRIUM POSTURE FINDER
 # ─────────────────────────────────────────────────────────────
 
@@ -506,7 +453,7 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
 
     Algorithm (grid search + L-BFGS-B local refinement):
       1. 9x9 grid over:  PIP in [theta_PIP_base ± 20°], DIP in [theta_DIP_base ± 20°]
-      2. At each grid point: solve_min_effort to get total tendon force
+      2. At each grid point: solve direct (3×3) to get total tendon force
       3. Select best grid point as warm-start
       4. scipy.optimize.minimize over (PIP, DIP) for smooth refinement
       5. Return GripAngles at optimum. MCP and phi_MCP are held fixed.
@@ -534,14 +481,28 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         ext = external_moments(kin, F_ext_dir, g,
                                p_contact_DP=p_C_DP, p_contact_MP=p_C_MP,
                                F_mag_DP=F_DP, F_mag_MP=F_MP)
-        A3 = np.array([
-            [ma['FDP_DIP'],  0.0,           ma['LU_DIP']],
-            [ma['FDP_PIP'],  ma['FDS_PIP'],  ma['LU_PIP']],
-            [ma['FDP_MCP'],  ma['FDS_MCP'],  ma['LU_MCP']],
+        # Use EMG method (3×2 lstsq) for scoring — same as Fig 8 uses for plotting.
+        # The direct 3×3 np.linalg.solve produces large negative forces at degenerate
+        # postures; clipping them to 0 gives a false minimum (F_total≈0) that the
+        # grid search picks incorrectly.  The EMG 3×2 system is better-conditioned
+        # and recovers non-negative forces at physically plausible postures.
+        r_emg = grip_base.emg_ratio
+        A3e = np.array([
+            [r_emg*ma['FDP_DIP'],                    ma['LU_DIP']],
+            [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP']],
+            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP']],
         ])
-        b3 = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
-        f = solve_min_effort(A3, b3)
-        return float(np.sum(f))
+        b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
+        sol, _, _, _ = np.linalg.lstsq(A3e, b3e, rcond=None)
+        F_FDS_e = max(sol[0], 0.0)
+        F_LU_e  = max(sol[1], 0.0)
+        F_FDP_e = r_emg * F_FDS_e
+        total   = F_FDP_e + F_FDS_e + F_LU_e
+        # Degenerate posture: all forces zero = non-physical, return large penalty
+        if total < 10.0:
+            return 1e6
+        return total
+
 
     # ── 1. Grid search ───────────────────────────────────────────────
     pip_grid = np.linspace(theta_PIP_0 - 20.0, theta_PIP_0 + 20.0, 9)
@@ -582,7 +543,7 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
 def solve_all_methods(grip, geom, F_ext, contact: ContactGeometry = None):
     """
     Returns dict keyed by method name, each with F_FDP, F_FDS, F_LU, etc.
-    Four methods: direct, emg, lu_min, min_effort.
+    Three methods: direct, emg, lu_min.
 
     If contact is provided: force applied at contact point C on DP palmar surface.
     If contact is None:     force applied at TIP (original behaviour, backward compat).
@@ -625,19 +586,25 @@ def solve_all_methods(grip, geom, F_ext, contact: ContactGeometry = None):
     f1 = np.maximum(f1, 0.0)
 
     # ── Method 2: EMG-constrained ─────────────────────────────
-    # Fix F_FDP = r * F_FDS; solve 2x2 for [FDS, LU] from PIP + MCP rows
+    # Fix F_FDP = r * F_FDS; solve 3×2 overdetermined system for [FDS, LU]
+    # using all three flexion rows (DIP, PIP, MCP).
+    # Including the DIP row ensures DIP equilibrium is approximately respected
+    # even in crimp hyperextension where it dominates.
+    #
+    # System:  [r*FDP_DIP, LU_DIP ] [FDS]   [M_DIP]
+    #           [r*FDP_PIP + FDS_PIP, LU_PIP] [LU ] = [M_PIP]
+    #           [r*FDP_MCP + FDS_MCP, LU_MCP]         [M_MCP]
+    #
     r = grip.emg_ratio
-    A2e = np.array([
-        [r*ma['FDP_PIP'] + ma['FDS_PIP'],  ma['LU_PIP']],
-        [r*ma['FDP_MCP'] + ma['FDS_MCP'],  ma['LU_MCP']],
+    A3e = np.array([
+        [r*ma['FDP_DIP'],                    ma['LU_DIP']],   # DIP row
+        [r*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP']],   # PIP row
+        [r*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP']],   # MCP row
     ])
-    b2e = np.array([ext['PIP'], ext['MCP']])
-    try:
-        sol = np.linalg.solve(A2e, b2e)
-    except np.linalg.LinAlgError:
-        sol = np.linalg.lstsq(A2e, b2e, rcond=None)[0]
-    F_FDS2 = max(sol[0], 0.0)
-    F_LU2  = max(sol[1], 0.0)
+    b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
+    sol2, _, _, _ = np.linalg.lstsq(A3e, b3e, rcond=None)   # min-norm LS
+    F_FDS2 = max(sol2[0], 0.0)
+    F_LU2  = max(sol2[1], 0.0)
     F_FDP2 = r * F_FDS2
     f2     = np.array([F_FDP2, F_FDS2, F_LU2])
 
@@ -655,21 +622,8 @@ def solve_all_methods(grip, geom, F_ext, contact: ContactGeometry = None):
     else:
         f3 = f2.copy()
 
-    # ── Method 4: Minimum effort (L-BFGS-B over 4x3 overdetermined system) ──
-    # Adds the abduction row to create genuine redundancy (4 eqs, 3 unknowns).
-    # The optimizer distributes load to minimise sum-of-squared forces.
-    # Ref: Crowninshield & Brand (1981), Seireg & Arvikar (1975).
-    A4full = np.array([
-        [ma['FDP_DIP'],  0.0,           ma['LU_DIP']],
-        [ma['FDP_PIP'],  ma['FDS_PIP'],  ma['LU_PIP']],
-        [ma['FDP_MCP'],  ma['FDS_MCP'],  ma['LU_MCP']],
-        [ma['FDP_abd'],  ma['FDS_abd'],  ma['LU_abd']],   # abduction DOF
-    ])
-    b4full = np.array([ext['DIP'], ext['PIP'], ext['MCP'], ext['abd']])
-    f4 = solve_min_effort(A4full, b4full)
-
     results = {}
-    for mname, f in [('direct', f1), ('emg', f2), ('lu_min', f3), ('min_effort', f4)]:
+    for mname, f in [('direct', f1), ('emg', f2), ('lu_min', f3)]:
         FDP, FDS, LU = f
         ratio = FDP/FDS if FDS > 0.1 else np.inf
         results[mname] = dict(
@@ -1102,7 +1056,7 @@ def run_simulation():
                                  t_DP=Config.t_DP_mm, mu=Config.mu_friction,
                                  beta_wall=Config.beta_wall_deg)
             eq_grip = find_equilibrium_posture(base_grip, geom, F_ext, ct)
-            r = solve_all_methods(eq_grip, geom, F_ext, contact=ct)['min_effort']
+            r = solve_all_methods(eq_grip, geom, F_ext, contact=ct)['emg']
             pf = pulley_forces_3d(r['F_FDP'], r['F_FDS'], r['kin'], geom)
             fdp_eq.append(r['F_FDP'])
             fds_eq.append(r['F_FDS'])
@@ -1197,27 +1151,31 @@ def run_simulation():
 # ─────────────────────────────────────────────────────────────
 
 def print_summary(all_res, jreact, F_tip):
-    W = 120
+    W = 100
     print('\n' + '='*W)
     print('  3D CLIMBING FINGER BIOMECHANICS  (Standard geometry)')
     print(f'  Load: {F_tip:.1f} N')
     print('='*W)
-    print(f"{'Grip':<13} {'Method':<14} {'F_FDP':>8} {'F_FDS':>8} {'F_LU':>7} "
+    print(f"{'Grip':<13} {'Method':<25} {'F_FDP':>8} {'F_FDS':>8} {'F_LU':>7} "
           f"{'Total':>8} {'Ratio':>7} {'A2 3D':>8}")
     print('-'*W)
     for key in GRIPS:
-        for mname in ['direct', 'emg', 'lu_min', 'min_effort']:
+        for mname in ['direct', 'emg', 'lu_min']:
             r   = all_res[key][1][mname]
             jr  = jreact[key]
-            rat = f"{r['ratio']:.2f}" if not np.isinf(r['ratio']) else 'inf'
-            print(f"{GRIPS[key].name:<13} {mname:<14} "
+            rat = f"{r['ratio']:.2f}" if not np.isinf(r['ratio']) else 'inf '
+            note = ''
+            if key == 'crimp' and mname == 'direct' and r['F_FDS'] < 50.0:
+                note = '  ⚠ DIP hyperext — use EMG'
+            print(f"{GRIPS[key].name:<13} {METHOD_LABELS[mname]:<25} "
                   f"{r['F_FDP']:>8.1f} {r['F_FDS']:>8.1f} {r['F_LU']:>7.1f} "
-                  f"{r['F_total']:>8.1f} {rat:>7} {jr['pulley']['F_A2_mag']:>8.1f}")
+                  f"{r['F_total']:>8.1f} {rat:>7} {jr['pulley']['F_A2_mag']:>8.1f}{note}")
         print()
+    print('  Notes: Direct (3×3) crimp: DIP hyperextension makes FDS near-zero (artifact).')
+    print('         EMG method (Vigouroux 2006) is the physiological reference.')
     print('  References:')
     print('    Vigouroux et al. 2006 J Biomechanics 39:2583  | crimp FDP/FDS=1.75 | slope=0.88')
     print('    Schweizer 2001 J Biomechanics 34:217          | A2 pulley failure ~300-400 N')
-    print('    Crowninshield & Brand 1981 J Biomechanics 14:793 | min-effort criterion')
     print('    An KN et al. 1983 J Biomechanics 16:639       | moment arm data')
     print('='*W)
 

@@ -63,20 +63,32 @@ p_C_MP = 0.40 × geometric_centroid + 0.60 × A3_pulley_position
 
 ### 3.3 Solution Algorithms
 
-Four methods solve the 4-equation system (3 flexion moments + 1 abduction moment) for 3 muscle forces:
+Three methods solve the system (3 flexion moments + 1 abduction moment) for 3 muscle forces [FDP, FDS, LU]:
 
-| # | Method | Description |
-|---|--------|-------------|
-| 1 | **Direct (3×3 exact)** | Pure linear algebra on DIP/PIP/MCP flexion rows |
-| 2 | **EMG-constrained** | Fixes FDP/FDS ratio from Vigouroux 2006 *in vivo* EMG data |
-| 3 | **LU-minimising** | EMG ratio + lumbricals set to zero |
-| 4 | **Min-effort (L-BFGS-B)** | Minimises Σ F² over the **4×3 overdetermined system** (adds abduction row for genuine muscle-sharing redundancy) — Crowninshield & Brand 1981 criterion |
-
-**Why the 4×3 system matters for min-effort:** With only 3 flexion equations and 3 unknowns, the system is exactly determined and the optimizer has zero freedom (always returns the direct solve). The abduction row creates genuine redundancy, allowing the optimizer to distribute load physiologically.
+| # | Method | Key limitation |
+| --- | --- | --- |
+| 1 | **Direct (3×3 exact)** — linear algebra on DIP/PIP/MCP rows only | Ignores abduction; crimp FDS near-zero (DIP hyperext artifact: `FDS_DIP=0`) |
+| 2 | **EMG-constrained** — FDP/FDS = Vigouroux 2006 *in vivo* ratio; 3×2 overdetermined lstsq for \[FDS, LU\] | **Physiological reference** |
+| 3 | **LU-minimising** — EMG ratio + lumbricals zeroed; prime-mover-only test | Not physiological for all grips |
 
 ### 3.4 Equilibrium Posture Finder
 
-For each hold depth, `find_equilibrium_posture()` searches the DIP/PIP angle space (±20° grid, then Nelder-Mead refinement) to find the posture minimising total tendon force — the motor neuroscience minimum-effort principle (Uno et al. 1989, Latash 2012).
+For each hold depth, `find_equilibrium_posture()` searches the DIP/PIP angle space (±20° grid, then Nelder-Mead refinement) to find the posture minimising total tendon force — the motor neuroscience minimum-effort principle (Uno et al. 1989, Latash 2012). Uses the 4×3 row-scaled lstsq internally for consistency with Method 4.
+
+### 3.5 Model Selection & Validation Against PeerJ 7470
+
+This repository uses `climbing_finger_3d.py` as the primary model. The PeerJ `Fingermodel.py` (Vigouroux et al. 2019, [PeerJ 7470](https://peerj.com/articles/7470/)) is kept in `human_bonobo/` as **validation infrastructure**:
+
+| Criterion | `climbing_finger_3d.py` (primary) | PeerJ `Fingermodel.py` (validation) |
+|---|---|---|
+| **Scope** | 4 climbing grips + hold depth sweep | 4 cadaver postures + tendon load protocol |
+| **Muscles** | FDP, FDS, LU (3 prime flexors) | 10 muscles incl. full extensor hood |
+| **Hold depth** | ✅ 2–45 mm contact geometry | ❌ Fingertip point load only |
+| **Phenotype** | ✅ Short/Std/Long scaling | ❌ Fixed geometry |
+| **Validation** | EMG ratios (Vigouroux 2006) | ✅ Direct cadaver force measurements |
+| **Dependencies** | numpy, scipy, matplotlib | numpy, vtk + `Geometry_Middle_Cal_Hum/` data |
+
+Run `python human_bonobo/compare_models.py` to compare predictions on overlapping postures (MinorFlex ≈ half-crimp, HyperExt ≈ crimp hyperextension).
 
 ---
 
