@@ -68,7 +68,7 @@ Three methods solve the system (3 flexion moments + 1 abduction moment) for 3 mu
 | # | Method | Key limitation |
 | --- | --- | --- |
 | 1 | **Direct (3×3 exact)** — linear algebra on DIP/PIP/MCP rows only | Ignores abduction; crimp FDS near-zero (DIP hyperext artifact: `FDS_DIP=0`) |
-| 2 | **EMG-constrained** — FDP/FDS = Vigouroux 2006 *in vivo* ratio; 3×2 overdetermined lstsq for \[FDS, LU\] | **Physiological reference** |
+| 2 | **EMG-constrained** — FDP/FDS = Vigouroux 2006 *in vivo* ratio, dynamically interpolated with depth; 3×2 overdetermined lstsq for \[FDS, LU\] | **Physiological reference** |
 | 3 | **LU-minimising** — EMG ratio + lumbricals zeroed; prime-mover-only test | Not physiological for all grips |
 
 ### 3.4 Equilibrium Posture Finder
@@ -141,7 +141,8 @@ Force vs hold depth sweep extended to 45 mm. Purple shading marks the zone where
 **Key findings:**
 
 1. **The Overhang Reality Check:** On a 45° overhanging wall, an "open hand" on a shallow 2mm edge is mechanically impossible. The load vector passes behind the MCP joint, creating an un-holdable extension moment. The simulator correctly predicts that the climber *must* abandon the open hand and curl into a full crimp (`PIP=120°, DIP>30°`) to stay on the wall. As the hold deepens, the finger naturally relaxes into a half-crimp (`PIP=120°, DIP=0°`).
-2. **Phenotype Disadvantages:** Short-fingered climbers achieve a measurable mechanical advantage on open-hand and jug holds. Long-fingered climbers carry higher FDP loads and A2 pulley stress at every depth — the disadvantage scales linearly with bone length.
+2. **Dynamic Depth-Dependent FDP/FDS Shift:** The model incorporates a dynamic anatomical interpolation for the FDP/FDS ratio. As hold depth exceeds the Distal Phalanx (DP) length, the force naturally distributes onto the Middle Phalanx (MP). Mechanically, the DIP moment requirement drops relative to PIP and MCP. The simulator smoothly interpolates the Vigouroux base ratio down as depth increases, perfectly predicting the physiological truth: FDS takes over as the prime mover on large jugs. Crucially, the interpolation nodes are anchored to the bone lengths (`L_DP`, `L_MP`), meaning short vs long phenotypes natively trigger the FDS response at the correct biological thresholds.
+3. **Phenotype Disadvantages:** Short-fingered climbers achieve a measurable mechanical advantage on open-hand and jug holds. Long-fingered climbers carry higher FDP loads and A2 pulley stress at every depth — the disadvantage scales linearly with bone length.
 
 | Phenotype | FDP/FDS crossover depth | Clinical implication |
 |-----------|------------------------|----------------------|

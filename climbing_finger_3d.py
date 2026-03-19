@@ -433,6 +433,19 @@ def external_moments(kin, F_ext_dir, grip, passive_frac=None,
     return dict(DIP=M_DIP, PIP=M_PIP, MCP=M_MCP, abd=M_abd)
 
 
+def get_emg_ratio(r_base, d_eff, L_DP, L_MP):
+    """
+    Interpolate the FDP/FDS ratio based on hold depth relative to finger anatomy.
+    When load moves past the DP (d_hold > L_DP), FDP demand drops and FDS must surge.
+    """
+    if d_eff is None:
+        return r_base
+    
+    xs = [0.0, L_DP, L_DP + 0.5*L_MP, L_DP + 1.0*L_MP]
+    ys = [r_base, r_base, 0.45*r_base, 0.20*r_base]
+    return float(np.interp(d_eff, xs, ys))
+
+
 # ─────────────────────────────────────────────────────────────
 #  EQUILIBRIUM POSTURE FINDER
 # ─────────────────────────────────────────────────────────────
@@ -477,10 +490,11 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         ma   = moment_arms(g)
         F_mag = float(np.linalg.norm(F_ext[:2]))
         F_ext_dir = contact_force_vector(1.0, contact)
-        p_C_DP, p_C_MP, F_DP, F_MP, _, _ = compute_contact_point(g, geom, contact, kin, F_mag)
+        p_C_DP, p_C_MP, F_DP, F_MP, d_eff, _ = compute_contact_point(g, geom, contact, kin, F_mag)
         ext = external_moments(kin, F_ext_dir, g,
                                p_contact_DP=p_C_DP, p_contact_MP=p_C_MP,
                                F_mag_DP=F_DP, F_mag_MP=F_MP)
+
         # Use EMG method (3×2 lstsq) for scoring — same as Fig 8 plots.
         # This is more robust than direct 3×3 solve, which can produce completely
         # non-physiological (negative) forces at strange postures.
@@ -488,7 +502,7 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         # and apply a smooth quadratic penalty for any negative values. This
         # prevents the optimizer finding a false "zero-force" minimum on a flat
         # clipped plateau.
-        r_emg = grip_base.emg_ratio
+        r_emg = get_emg_ratio(grip_base.emg_ratio, d_eff, geom.L3, geom.L2)
         A3e = np.array([
             [r_emg*ma['FDP_DIP'],                    ma['LU_DIP']],
             [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP']],
@@ -563,7 +577,10 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
 #  THREE SOLUTION METHODS  (fast, no iterative optimisation)
 # ─────────────────────────────────────────────────────────────
 
-def solve_all_methods(grip, geom, F_ext, contact: ContactGeometry = None):
+def solve_all_methods(grip: GripAngles,
+                      geom: FingerGeometry,
+                      F_ext: np.ndarray,
+                      contact: ContactGeometry = None):
     """
     Returns dict keyed by method name, each with F_FDP, F_FDS, F_LU, etc.
     Three methods: direct, emg, lu_min.
@@ -581,6 +598,7 @@ def solve_all_methods(grip, geom, F_ext, contact: ContactGeometry = None):
         
         p_C_DP, p_C_MP, F_DP, F_MP, d_eff, s_from_DIP = compute_contact_point(grip, geom, contact, kin, F_mag_total)
         feas = check_friction_feasibility(F_ext_dir * F_mag_total, contact, kin) 
+        c_info = {'d_eff': d_eff} # For get_emg_ratio
     else:
         F_ext_dir  = F_ext / (np.linalg.norm(F_ext)+1e-9)
         F_DP       = float(np.linalg.norm(F_ext))
@@ -590,6 +608,7 @@ def solve_all_methods(grip, geom, F_ext, contact: ContactGeometry = None):
         d_eff      = None
         s_from_DIP = None
         feas       = None
+        c_info     = {'d_eff': None}
 
     ext = external_moments(kin, F_ext_dir, grip, p_contact_DP=p_C_DP, p_contact_MP=p_C_MP, F_mag_DP=F_DP, F_mag_MP=F_MP)
 
@@ -608,36 +627,32 @@ def solve_all_methods(grip, geom, F_ext, contact: ContactGeometry = None):
         f1 = np.linalg.lstsq(A3, b3, rcond=None)[0]
     f1 = np.maximum(f1, 0.0)
 
-    # ── Method 2: EMG-constrained ─────────────────────────────
-    # Fix F_FDP = r * F_FDS; solve 3×2 overdetermined system for [FDS, LU]
-    # using all three flexion rows (DIP, PIP, MCP).
-    # Including the DIP row ensures DIP equilibrium is approximately respected
-    # even in crimp hyperextension where it dominates.
-    #
-    # System:  [r*FDP_DIP, LU_DIP ] [FDS]   [M_DIP]
-    #           [r*FDP_PIP + FDS_PIP, LU_PIP] [LU ] = [M_PIP]
-    #           [r*FDP_MCP + FDS_MCP, LU_MCP]         [M_MCP]
-    #
-    r = grip.emg_ratio
+    # ─────────────────────────────────────────────────────────────
+    # Method 2: EMG-constrained (Vigouroux 2006)
+    # ─────────────────────────────────────────────────────────────
+    r_emg = get_emg_ratio(grip.emg_ratio, c_info['d_eff'] if contact else None, geom.L3, geom.L2)
+    
+    # Solve 3x2 overdetermined system (include DIP, PIP, MCP)
+    # Allows physiological balance without direct 3x3 artifact
     A3e = np.array([
-        [r*ma['FDP_DIP'],                    ma['LU_DIP']],   # DIP row
-        [r*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP']],   # PIP row
-        [r*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP']],   # MCP row
+        [r_emg*ma['FDP_DIP'],                    ma['LU_DIP']],   # DIP row
+        [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP']],   # PIP row
+        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP']],   # MCP row
     ])
     b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
     sol2, _, _, _ = np.linalg.lstsq(A3e, b3e, rcond=None)   # min-norm LS
     F_FDS2 = max(sol2[0], 0.0)
     F_LU2  = max(sol2[1], 0.0)
-    F_FDP2 = r * F_FDS2
+    F_FDP2 = r_emg * F_FDS2
     f2     = np.array([F_FDP2, F_FDS2, F_LU2])
 
     # ── Method 3: LU-minimising ───────────────────────────────
     # Set F_LU = 0; solve for FDS from PIP row, get FDP from ratio
-    denom_PIP = r*ma['FDP_PIP'] + ma['FDS_PIP']
-    denom_MCP = r*ma['FDP_MCP'] + ma['FDS_MCP']
+    denom_PIP = r_emg*ma['FDP_PIP'] + ma['FDS_PIP']
+    denom_MCP = r_emg*ma['FDP_MCP'] + ma['FDS_MCP']
     if denom_PIP > 0.1 and denom_MCP > 0.1:
         F_FDS3 = max(0.5*(ext['PIP']/denom_PIP + ext['MCP']/denom_MCP), 0.0)
-        F_FDP3 = r * F_FDS3
+        F_FDP3 = r_emg * F_FDS3
         # Any DIP residual absorbed by small LU correction
         dip_resid = ext['DIP'] - F_FDP3*ma['FDP_DIP']
         F_LU3 = max(-dip_resid / abs(ma['LU_DIP']), 0.0) if abs(ma['LU_DIP']) > 0.1 else 0.0
