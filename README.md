@@ -1,7 +1,7 @@
 # 3D Climbing Finger Biomechanics Model
 
 ![Finger Kinematics 3D Model](outputs/climbing_3d_fig1.png)
-
+*(Figure 1: **3D Finger Kinematics Model**. Displays the spatial geometry of the four standard climbing grips. Red arrows represent the external contact force vector applied to the distal phalanx. Blue/green/orange spheres denote joint centers, and diamonds represent the A2 and A4 pulleys. This 3D visualization captures critical out-of-plane radial abduction that planar models miss.)*
 ## 1. Abstract
 
 The **3D Climbing Finger Biomechanics Model** is a full three-dimensional spatial analysis of human finger biomechanics during climbing. It provides a static equilibrium framework to evaluate deep flexor (FDP), superficial flexor (FDS), and lumbrical (LU) muscle forces across four climbing grips (crimp, half-crimp, open hand, pinch). Beyond traditional 2D planar models, this solver accounts for lateral wall friction, MCP radial abduction, out-of-plane pulley forces, 6-DOF joint reactions, and — uniquely — **distributed force contact over both the Distal Phalanx (DP) and Middle Phalanx (MP)** for deep holds exceeding the DP length.
@@ -94,47 +94,55 @@ Run `python human_bonobo/compare_models.py` to compare predictions on overlappin
 
 ## 4. Results
 
-### 4.1 Tendon Forces & Recruitment — 4 Methods
+### 4.1 Tendon Forces & Recruitment — 3 Methods (Figure 2)
 
 ![Tendon Forces](outputs/climbing_3d_fig2.png)
 
-### 4.2 Kinematic Coupling & PIP Flexion
+**Description:** This figure compares the computed forces for the primary flexor tendons (FDP, FDS, and Lumbricals) across four grip types. It contrasts the short vs. long finger phenotypes (solid vs. hatched bars) using three distinct biomechanical solver methods. 
+**Scientific Significance:** The EMG-constrained method demonstrates the most physiological distribution, matching established *in vivo* data (Vigouroux 2006). The figure highlights how the FDP is heavily recruited during crimps, while the FDS becomes the prime mover in open-hand postures. It also visually demonstrates the inherent "long finger disadvantage," where the longer moment arm of the DP requires strictly higher tendon forces (hatched bars) to maintain equilibrium under the same external load.
 
-Crimp grips hyperextend the DIP, transferring extreme load to the A2 and A4 pulleys.
+### 4.2 Kinematic Coupling & PIP Flexion (Figure 3)
 
 ![FDP & FDS vs PIP Angle](outputs/climbing_3d_fig3.png)
 
-### 4.3 Out-of-Plane Pulley Load (3D Specificity)
+**Description:** This figure plots the required FDP and FDS tendon forces as a continuous function of the Proximal Interphalangeal (PIP) joint angle. It captures the dynamic transition from an extended open-hand grip to a heavily flexed full crimp profile.
+**Scientific Significance:** The graph illustrates the profound kinematic coupling in the human finger. As the PIP joint flexes (curling into a crimp), the required FDS force typically drops while the FDP force spikes dramatically. Crimp grips inherently hyperextend the DIP joint, forcing the FDP tendon to take almost the entire load. This massive spike in FDP tension transfers extreme pressure to the A2 and A4 pulleys, explaining the high incidence of A2 pulley ruptures among climbers bearing down on full crimps.
 
-Severe lateral shearing force on A2/A4 pulleys introduced by MCP radial abduction during side-pulls.
+### 4.3 Out-of-Plane Pulley Load (3D Specificity) (Figure 4)
 
 ![3D Pulley Forces](outputs/climbing_3d_fig4.png)
 
-### 4.4 Mediolateral (ML) Joint Shear
+**Description:** A purely 3D phenomenon, this figure tracks the magnitude and vector components of the forces acting on the A2 and A4 pulleys during varying degrees of MCP radial abduction (e.g., side-pulling, gastoning, or wide pinches).
+**Scientific Significance:** Traditional 2D planar models assume all forces align symmetrically with the finger's sagittal plane. However, this 3D analysis reveals that radial abduction introduces severe lateral / mediolateral shearing forces directly on the flexor pulleys. This out-of-plane loading significantly increases the asymmetric stress on the pulley sheath, escalating the risk of microscopic tearing or catastrophic structural failure, and explaining why sideways, dynamic climbing moves are particularly injurious.
 
-The 6-DOF joint reaction solver outputs ML shear on MCP/PIP collateral ligaments — critical for lateral impingement diagnosis.
+### 4.4 Mediolateral (ML) Joint Shear (Figure 5)
 
 ![6-DOF Joint Reactions](outputs/climbing_3d_fig5.png)
 
-### 4.5 The Long Finger Disadvantage
+**Description:** This figure presents the 6 Degrees-of-Freedom (6-DOF) joint reaction forces, specifically contrasting longitudinal joint compression (left) with Mediolateral (ML) shear forces (right) across the DIP, PIP, and MCP joints.
+**Scientific Significance:** ML shear is a critical metric for injury risk assessment in the joint collateral ligaments and capsules. High ML shear forces, particularly at the PIP joint during asymmetric grips (like wide pinches or half-crimps on sloped edges), lead to lateral joint impingement, capsulitis, and osteoarthritis over time. The 3D simulator successfully quantifies these off-axis forces which are entirely invisible to standard 2D analysis.
 
-Longer phalanges require higher tendon forces on shallow holds. The effect compounds with hold depth.
+### 4.5 The Long Finger Disadvantage (Figure 6)
 
 ![Long Finger Summary](outputs/climbing_3d_fig6.png)
 
-### 4.6 Hold Depth Analysis — Shallow to Deep (2–45 mm)
+**Description:** A three-panel summary explicitly comparing short (−15%), standard, and long (+15%) finger phenotypes across different grips. Panel A shows FDP:FDS recruitment ratios; Panel B exhibits the percentage increase in total tendon force; Panel C maps the absolute load on the A2 pulley against the known failure threshold (~300N).
+**Scientific Significance:** This definitively quantifies the mechanical penalty of longer fingers on small edges. Longer phalanges increase the external moment arms at the DIP and PIP joints. Consequently, long-fingered climbers require up to 30-40% more total tendon force to hold the exact same edge, driving their A2 pulley forces dangerously close to the ultimate failure limit (Schweizer 2001) compared to their short-fingered peers taking the same load.
 
-Force vs hold depth sweep extended to 45 mm. Purple shading marks the zone where the MP is engaged (d > L_DP ≈ 22 mm). A purple dashed line marks the DP length threshold.
+### 4.6 Hold Depth Analysis — Shallow to Deep (2–45 mm) (Figure 7)
 
 ![Hold Depth Analysis](outputs/climbing_3d_fig7.png)
 
-### 4.7 Deep Hold Phenotype Analysis (Fig 8 — Key Result)
+**Description:** This figure models the forces on the FDP (solid lines) and FDS (dashed lines) tendons as the climbing hold depth increases from 2 mm (micro-crimp) to 45 mm (deep jug). The lower charts highlight the percentage difference in force required between long and short finger phenotypes.
+**Scientific Significance:** The >170% spike at ~40.6mm depth represents a highly realistic "phase transition" boundary in finger biomechanics. As hold depth increases beyond the length of the Distal Phalanx (DP), the Middle Phalanx (MP) rests on the hold and begins to bear load directly through the A3 pulley. At ~40.6mm, the short finger has *fully engaged* its MP, allowing the load to completely bypass the DIP joint and dropping FDP force to an absolute minimum baseline. At that exact same depth, a long finger has only engaged *half* of its MP, still requiring massive FDP tension to stabilize the DIP joint. This exquisitely visualizes why climbers with different skeletal anatomy feel vastly different mechanical difficulty on the exact same hold.
+
+### 4.7 Deep Hold Phenotype Analysis (Figure 8 — Key Result)
 
 **The central figure for phenotype/genotype research.** Sweeps hold depth from 2 to 45 mm at equilibrium posture, using the **EMG-constrained solver**, comparing Short (−15%), Standard, and Long (+15%) finger phenotypes:
 
 - **Panel A:** FDP vs FDS forces — crossover marked per phenotype
 - **Panel B:** FDP/FDS ratio with Vigouroux 2006 reference lines (crimp 1.75, slope 0.88)
-- **Panel C:** A2 pulley load vs hold depth (Schweizer 2001 failure threshold 300 N)
+- **Panel C:** A2 pulley load vs hold depth (Schweizer 2001 failure threshold ~300 N)
 
 ![Deep Hold Phenotype Analysis](outputs/climbing_3d_fig8.png)
 

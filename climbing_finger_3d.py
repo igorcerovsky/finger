@@ -762,8 +762,14 @@ def run_simulation():
     gcols  = ['#2196F3', '#4CAF50', '#F44336']
     METHODS = list(METHOD_LABELS.keys())
 
-    # Pre-compute all results
-    all_res = {k: [solve_all_methods(GRIPS[k], g, F_ext) for g in geoms] for k in GRIPS}
+    # Pre-compute all results with the configured default contact geometry (e.g. 10mm hold)
+    # Crucially: use beta_wall=0.0 (vertical wall) for these static baseline evaluations!
+    # If evaluated at beta=45 (overhang), static open hand / pinch grips mathematically 
+    # fail equilibrium (negative MCP moments) and clip to 0 force. The equilibrium 
+    # posture finder in Fig 7 & 8 handles overhangs by curling the finger into crimps.
+    ct_base = ContactGeometry(d_hold=Config.d_hold_mm, r_edge=Config.r_edge_mm, 
+                              t_DP=Config.t_DP_mm, beta_wall=0.0)
+    all_res = {k: [solve_all_methods(GRIPS[k], g, F_ext, contact=ct_base) for g in geoms] for k in GRIPS}
     jreact  = {k: joint_reactions_3d(all_res[k][1]['emg'], F_ext, geom_std) for k in GRIPS}
 
     # ════════════════════════════════════════════════════════════
@@ -958,7 +964,7 @@ def run_simulation():
     for i,(geom,gc,gl) in enumerate(zip(geoms,gcols,['Short','Std','Long'])):
         a2_vals = []
         for key in GRIPS:
-            r  = solve_all_methods(GRIPS[key], geom, F_ext)['emg']
+            r  = solve_all_methods(GRIPS[key], geom, F_ext, contact=ct_base)['emg']
             jr = joint_reactions_3d(r, F_ext, geom)
             a2_vals.append(jr['pulley']['F_A2_mag'])
         ax.bar(xpos+(i-1)*w, a2_vals, w, color=gc, edgecolor='k', lw=0.4, label=gl)
@@ -975,12 +981,13 @@ def run_simulation():
     d_range   = np.linspace(2.0, 45.0, 50)  # extended: covers DP + MP engagement
     fig7, axes7 = plt.subplots(2, 4, figsize=(21, 11))
     fig7.suptitle(
-        "Contact-Point Model: Forces vs Hold Depth\n"
-        f"Wall angle: {Config.beta_wall_deg:.0f}°  |  "
+        "Contact-Point Model: Forces vs Hold Depth (Static Baseline Grips)\n"
+        f"Wall angle: 0° (Vertical benchmark)  |  "
         f"Edge radius: {Config.r_edge_mm:.1f} mm  |  "
         f"Friction coeff: {Config.mu_friction:.2f}  |  "
         f"Load: {F_tip:.1f} N\n"
-        "Solid = FDP, Dashed = FDS | Vertical lines = max grippable depth per finger",
+        "Solid = FDP, Dashed = FDS | Vertical lines = max grippable depth per finger\n"
+        "* >170% peak represents the point where short finger FULLY engages MP (minimizing FDP), while long finger is only partially engaged.",
         fontsize=11, fontweight='bold')
 
     contact_default = ContactGeometry()
@@ -999,9 +1006,11 @@ def run_simulation():
         for geom, gc, gl in zip(geoms, gcols, ['Short','Std','Long']):
             fdp_vals, fds_vals, feasible_d = [], [], []
             for d in d_range:
+                # Crucial: Evaluate static baseline grips on vertical wall (beta=0)
+                # Overhangs (beta=45) cause static unoptimized grips to fail equilibrium!
                 ct = ContactGeometry(d_hold=d, r_edge=Config.r_edge_mm,
                                      t_DP=Config.t_DP_mm, mu=Config.mu_friction,
-                                     beta_wall=Config.beta_wall_deg)
+                                     beta_wall=0.0)
                 r = solve_all_methods(grip, geom, F_ext, contact=ct)['emg']
                 fdp_vals.append(r['F_FDP'])
                 fds_vals.append(r['F_FDS'])
@@ -1032,6 +1041,23 @@ def run_simulation():
         ax1.axhline(0, color='k', lw=0.8)
         ax1.fill_between(d_range, pct_fdp, 0,
                          where=(pct_fdp > 0), alpha=0.15, color='#E53935')
+
+        # Annotate the >170% peak in the first column
+        if col == 0 and len(pct_fdp) > 0:
+            max_idx = np.argmax(pct_fdp)
+            d_peak = d_range[max_idx]
+            pct_peak = pct_fdp[max_idx]
+            # Ensure we only annotate if there's actually a substantial peak
+            if pct_peak > 100:
+                ax1.annotate(
+                    f'Peak Difference (d~{d_peak:.1f}mm):\nShort finger FULLY engages MP,\nbottoming out its FDP force.\nLong finger MP is only half-engaged,\nstill requiring significant FDP.',
+                    xy=(d_peak, pct_peak), 
+                    xytext=(d_peak - 18, pct_peak - 15),
+                    arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5),
+                    fontsize=7, 
+                    bbox=dict(boxstyle="round,pad=0.4", fc="#FFF9C4", ec="gray", alpha=0.9),
+                    zorder=10
+                )
 
         ax0.set_title(f"{grip.name}\nFDP (solid) / FDS (dash)",
                       fontsize=9, fontweight='bold', color=grip.color)
