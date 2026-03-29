@@ -200,9 +200,8 @@ Edit `Config` in `climbing_finger_3d.py`:
 
 While the current 3D biomechanical model represents a significant step up from planar 2D assumptions, it currently possesses a few limitations identified for future iterations:
 
-- **Lack of Extensor Muscles & Passive Capsular Constraints**: The equilibrium posture optimizer relies on algorithmic residual penalties to penalize mechanically unviable poses (such as the finger hyperextending backward). Physiologically, stabilization forces are provided by the extensor hood mechanism and passive capsular ligaments. Incorporating at least a lumped dorsal extensor or passive elastic joint boundaries would improve accuracy—especially for "open" grips on shallow holds.
-- **Simplistic Pulley Geometry**: The A2 and A4 pulleys are currently modeled as discrete point anchors (bow-stringing). Real physiological pulleys are broad fibrous sheaths that direct the tendon along a continuous radiused skeletal pathway. Incorporating capstan friction and distributed compressive profiles over the pulleys could yield more accurate spatial injury modeling.
 - **Friction Feasibility Uncoupled from Optimizer**: While the model evaluates whether a static friction coefficient ($\mu$) is violated by out-of-plane or shear configurations, this feasibility flag doesn't dynamically feed back into the posture optimizer's constraints.
+- **Joint Displacements (Instantaneous Centers of Rotation)**: The finger bones are currently modeled structurally as rigid lines between fixed hinge pins. In real human joints, the articular surfaces are cam-shaped, meaning the instantaneous center of rotation (ICR) shifts slightly palmar/dorsal as the joint flexes, altering moment arms dynamically.
 
 ---
 

@@ -84,6 +84,12 @@ class Config:
 
     wrist_pos     = np.array([-50.0, 0.0, 0.0])   # mm
 
+    # ── Capstan Pulley Properties ─────────────────────────────
+    mu_tendon     = 0.08   # tendon-sheath friction coefficient (Schweizer 2003)
+    w_tendon_mm   = 4.0    # average flexor tendon width
+    L_A2_mm       = 15.0   # A2 pulley band length
+    L_A4_mm       = 8.0    # A4 pulley band length
+
     # ── Contact geometry defaults ─────────────────────────────
     # DP palmar-dorsal thickness: Butz et al. 2012 (adult male middle finger)
     t_DP_mm       = 9.0    # mm
@@ -518,10 +524,16 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         # protecting against solver collapse on overhangs/weird configurations
         from scipy.optimize import nnls
         r_emg = get_emg_ratio(grip_base.emg_ratio, d_eff, geom.L3, geom.L2)
+        
+        # Apply Capstan friction mechanical advantage
+        theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
+        C_A2 = np.exp(Config.mu_tendon * theta_A2)
+        C_A4 = np.exp(Config.mu_tendon * theta_A4)
+        
         A3e = np.array([
-            [r_emg*ma['FDP_DIP'],                    ma['LU_DIP'], ma['EDC_DIP']],
-            [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP'], ma['EDC_PIP']],
-            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP'], ma['EDC_MCP']],
+            [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'], ma['EDC_DIP']],
+            [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'], ma['EDC_PIP']],
+            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'], ma['EDC_MCP']],
         ])
         b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
         
@@ -649,11 +661,16 @@ def solve_all_methods(grip: GripAngles,
     from scipy.optimize import nnls
     r_emg = get_emg_ratio(grip.emg_ratio, c_info['d_eff'] if contact else None, geom.L3, geom.L2)
     
+    # Capstan multipliers
+    theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
+    C_A2 = np.exp(Config.mu_tendon * theta_A2)
+    C_A4 = np.exp(Config.mu_tendon * theta_A4)
+
     # Solve 3x3 system with nnls to enforce physiological bounds and recruit EDC if needed
     A3e = np.array([
-        [r_emg*ma['FDP_DIP'],                    ma['LU_DIP'], ma['EDC_DIP']],
-        [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP'], ma['EDC_PIP']],
-        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP'], ma['EDC_MCP']],
+        [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'], ma['EDC_DIP']],
+        [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'], ma['EDC_PIP']],
+        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'], ma['EDC_MCP']],
     ])
     b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
     sol2, _ = nnls(A3e, b3e)
@@ -666,9 +683,9 @@ def solve_all_methods(grip: GripAngles,
     # ── Method 3: LU-minimising ───────────────────────────────
     # Set F_LU = 0; solve for FDS and EDC using nnls
     A3_lu = np.array([
-        [r_emg*ma['FDP_DIP'],                    ma['EDC_DIP']],
-        [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['EDC_PIP']],
-        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['EDC_MCP']],
+        [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['EDC_DIP']],
+        [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['EDC_PIP']],
+        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['EDC_MCP']],
     ])
     sol3, _ = nnls(A3_lu, b3e)
     F_FDS3 = sol3[0]
@@ -694,15 +711,10 @@ def solve_all_methods(grip: GripAngles,
 
 
 # ─────────────────────────────────────────────────────────────
-#  3D PULLEY FORCES  (bow-string model)
+#  3D PULLEY FORCES  (Capstan model & joint limits)
 # ─────────────────────────────────────────────────────────────
 
-def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
-    """
-    F_pulley = T * (d_hat_in + d_hat_out).
-    A2: FDP + FDS. A4: FDP only.
-    Out-of-plane (z) component appears when phi_MCP != 0.
-    """
+def compute_pulley_angles(kin, geom):
     ex    = np.array([1.,0.,0.])
     R_MCP = kin['R_MCP']
     R_PIP = kin['R_PIP']
@@ -711,20 +723,47 @@ def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
     d_in_A2  = Config.wrist_pos - p_A2
     d_in_A2 /= np.linalg.norm(d_in_A2)
     d_out_A2 = R_MCP @ ex
-    F_A2_vec = (F_FDP+F_FDS) * (d_in_A2 + d_out_A2)
+    
+    # Capstan wrap angles
+    dot_A2 = np.clip(np.dot(d_in_A2, d_out_A2), -1.0, 1.0)
+    theta_A2 = np.arccos(dot_A2)
 
     p_A4     = kin['p_PIP'] + R_PIP @ (0.20*geom.L2*ex)
     d_in_A4  = R_MCP @ ex
     d_out_A4 = R_PIP @ ex
-    F_A4_vec = F_FDP * (d_in_A4 + d_out_A4)
+    
+    dot_A4 = np.clip(np.dot(d_in_A4, d_out_A4), -1.0, 1.0)
+    theta_A4 = np.arccos(dot_A4)
+    
+    return theta_A2, theta_A4, d_in_A2, d_out_A2, d_in_A4, d_out_A4, p_A2, p_A4
+
+def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
+    """
+    Computes spatially distributed capstan tissue limits for A2/A4.
+    F_pulley = T * (d_hat_in + d_hat_out).
+    Out-of-plane (z) component appears when phi_MCP != 0.
+    """
+    theta_A2, theta_A4, d_in_A2, d_out_A2, d_in_A4, d_out_A4, p_A2, p_A4 = compute_pulley_angles(kin, geom)
+    
+    # Track the distributed maximum limits across sliding tendons
+    T_A2 = (F_FDP + F_FDS) * np.exp(Config.mu_tendon * theta_A2)
+    F_A2_vec = T_A2 * (d_in_A2 + d_out_A2)
+    F_A2_mag = float(np.linalg.norm(F_A2_vec))
+    
+    T_A4 = F_FDP * np.exp(Config.mu_tendon * (theta_A2 + theta_A4))
+    F_A4_vec = T_A4 * (d_in_A4 + d_out_A4)
+    F_A4_mag = float(np.linalg.norm(F_A4_vec))
+
+    # Pressure distribution mappings
+    P_A2_MPa = F_A2_mag / (Config.L_A2_mm * Config.w_tendon_mm)
+    P_A4_MPa = F_A4_mag / (Config.L_A4_mm * Config.w_tendon_mm)
 
     return dict(
-        p_A2=p_A2, F_A2_vec=F_A2_vec,
-        F_A2_mag=float(np.linalg.norm(F_A2_vec)),
-        F_A2_lat=abs(float(F_A2_vec[2])),
-        p_A4=p_A4, F_A4_vec=F_A4_vec,
-        F_A4_mag=float(np.linalg.norm(F_A4_vec)),
-        F_A4_lat=abs(float(F_A4_vec[2])),
+        p_A2=p_A2, theta_A2=theta_A2, theta_A4=theta_A4,
+        F_A2_vec=F_A2_vec, F_A2_mag=F_A2_mag, F_A2_lat=abs(float(F_A2_vec[2])),
+        P_A2_MPa=P_A2_MPa,
+        p_A4=p_A4, F_A4_vec=F_A4_vec, F_A4_mag=F_A4_mag, F_A4_lat=abs(float(F_A4_vec[2])),
+        P_A4_MPa=P_A4_MPa,
     )
 
 
@@ -1238,7 +1277,7 @@ def print_summary(all_res, jreact, F_tip):
     print(f'  Load: {F_tip:.1f} N')
     print('='*W)
     print(f"{'Grip':<13} {'Method':<25} {'F_FDP':>8} {'F_FDS':>8} {'F_LU':>7} {'F_EDC':>7} "
-          f"{'Total':>8} {'Ratio':>7} {'A2 3D':>8}")
+          f"{'Total':>8} {'Ratio':>7} {'A2(MPa)':>8}")
     print('-'*W)
     for key in GRIPS:
         for mname in ['direct', 'emg', 'lu_min']:
@@ -1250,7 +1289,7 @@ def print_summary(all_res, jreact, F_tip):
                 note = '  ⚠ DIP hyperext — use EMG'
             print(f"{GRIPS[key].name:<13} {METHOD_LABELS[mname]:<25} "
                   f"{r['F_FDP']:>8.1f} {r['F_FDS']:>8.1f} {r['F_LU']:>7.1f} {r['F_EDC']:>7.1f} "
-                  f"{r['F_total']:>8.1f} {rat:>7} {jr['pulley']['F_A2_mag']:>8.1f}{note}")
+                  f"{r['F_total']:>8.1f} {rat:>7} {jr['pulley']['P_A2_MPa']:>8.1f}{note}")
         print()
     print('  Notes: Direct (3×3) crimp: DIP hyperextension makes FDS near-zero (artifact).')
     print('         EMG method (Vigouroux 2006) is the physiological reference.')

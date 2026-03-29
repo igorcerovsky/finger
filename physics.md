@@ -94,9 +94,17 @@ $$ J = F_{FDP} + F_{FDS} + F_{LU} + F_{EDC} + \Phi(\text{Residual}) + \Phi(\text
 where $\Phi$ are severe geometric penalty functions. The inclusion of EDC permits natural physiological stabilization against un-holdable flexion-collapsing moments (such as on steep open-hand overhangs), removing artificially forced mathematical artifacts.
 
 ## 5. Pulley Forces and Joint Reactions
-### 5.1 Flexor Tendon Pulleys (Bow-Stringing)
-Forces exerted by tendons over pulleys (e.g., A2, A4) are calculated using unit direction vectors mapping the tendon path deviation around the joint:
-$$ \vec{F}_{pulley} = T (\hat{d}_{in} + \hat{d}_{out}) $$
+### 5.1 Capstan Friction and Distributed Pulley Pressure
+Forces exerted by tendons over pulleys (A2, A4) are calculated using unit direction vectors mapping the tendon path deviation around the joint:
+$$ \theta_{wrap} = \arccos(\hat{d}_{in} \cdot \hat{d}_{out}) $$
+
+Due to tendon-sheath friction ($\mu_t$), the required proximal muscle tension is reduced as the localized tension builds distally across the wraps:
+$$ T_{distal} = T_{proximal} \cdot e^{\mu_t \theta_{wrap}} $$
+The total integrated vector force on the pulley is derived using this distally amplified tension:
+$$ \vec{F}_{pulley} = T_{local} (\hat{d}_{in} + \hat{d}_{out}) $$
+
+This raw vector is then transformed into a distributed peak physiological tissue pressure to represent actual injury risk over the sheath bandwidth:
+$$ P_{MPa} = \frac{\|\vec{F}_{pulley}\|}{L_{pulley} \cdot w_{tendon}} $$
 Radial abduction ($\phi \neq 0$) generates substantial out-of-plane lateral shearing forces on the pulleys ($\hat{z}$-component $F_{A2,lat}$ and $F_{A4,lat}$).
 
 ### 5.2 6-DOF Joint Reaction Wrenches
