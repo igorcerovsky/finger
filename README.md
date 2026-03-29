@@ -196,7 +196,17 @@ Edit `Config` in `climbing_finger_3d.py`:
 
 ---
 
-## 6. References
+## 6. Discussion and Model Weak Points
+
+While the current 3D biomechanical model represents a significant step up from planar 2D assumptions, it currently possesses a few limitations identified for future iterations:
+
+- **Lack of Extensor Muscles & Passive Capsular Constraints**: The equilibrium posture optimizer relies on algorithmic residual penalties to penalize mechanically unviable poses (such as the finger hyperextending backward). Physiologically, stabilization forces are provided by the extensor hood mechanism and passive capsular ligaments. Incorporating at least a lumped dorsal extensor or passive elastic joint boundaries would improve accuracy—especially for "open" grips on shallow holds.
+- **Simplistic Pulley Geometry**: The A2 and A4 pulleys are currently modeled as discrete point anchors (bow-stringing). Real physiological pulleys are broad fibrous sheaths that direct the tendon along a continuous radiused skeletal pathway. Incorporating capstan friction and distributed compressive profiles over the pulleys could yield more accurate spatial injury modeling.
+- **Friction Feasibility Uncoupled from Optimizer**: While the model evaluates whether a static friction coefficient ($\mu$) is violated by out-of-plane or shear configurations, this feasibility flag doesn't dynamically feed back into the posture optimizer's constraints.
+
+---
+
+## 7. References
 
 1. **Vigouroux L, Quaine F, Labarre-Vila A, Moutet F.** Estimation of finger muscle tendon tensions and pulley forces during specific sport-climbing grip techniques. *Journal of Biomechanics*, 39:2583–2592 (2006).
 2. **Schweizer A.** Biomechanical properties of the crimp grip position in rock climbers. *Journal of Biomechanics*, 34(2):217–223 (2001).

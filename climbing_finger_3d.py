@@ -238,6 +238,10 @@ def moment_arms(grip):
         FDP_abd=-2.1,   # ulnar side
         FDS_abd=-1.5,
         LU_abd = 3.5,   # radial side
+        EDC_DIP=-4.0,   # extends DIP
+        EDC_PIP=-6.0,   # extends PIP
+        EDC_MCP=-10.0,  # extends MCP
+        EDC_abd=0.0,    # assumed neutral
     )
 
 
@@ -288,18 +292,30 @@ def compute_contact_point(grip, geom, contact: ContactGeometry, kin, F_mag: floa
       Doyle J.R. & Blythe W. (1984) Hand 16:419-426.
       Moutet F. (2003) Hand Clinics 19(2):168-175.
     """
-    e_DP   = kin['R_DIP'] @ np.array([1., 0., 0.])
+    e_DP = kin['R_DIP'] @ np.array([1., 0., 0.])
     n_palm = kin['R_DIP'] @ np.array([0., -1., 0.])
-    y_hat  = np.array([0., 1., 0.])
+    e_MP = kin['R_PIP'] @ np.array([1., 0., 0.])
+    n_palm_MP = kin['R_PIP'] @ np.array([0., -1., 0.])
 
-    correction = contact.r_edge * abs(float(np.dot(e_DP, y_hat)))
-    # NOTE: clamping to geom.L3 removed — deep holds are captured explicitly below
-    d_eff = contact.d_hold + correction
+    # Hold normal derived from the expected external force direction
+    # assuming vertical wall beta=0 maps to F_ext=x_hat, etc.
+    b = np.radians(contact.beta_wall)
+    n_hold = np.array([np.cos(b), -np.sin(b), 0.0])
+
+    # Angle projection:
+    cos_alpha3 = max(float(np.linalg.norm(np.cross(e_DP, n_hold))), 0.05)
+    cos_alpha2 = max(float(np.linalg.norm(np.cross(e_MP, n_hold))), 0.05)
+
+    correction = contact.r_edge * abs(float(np.dot(e_DP, n_hold)))
+    proj_d_hold = contact.d_hold + correction
+
+    max_d_hold_DP = geom.L3 * cos_alpha3
 
     p_TIP_palmar = kin['p_TIP'] + (contact.t_DP / 2.0) * n_palm
 
-    if d_eff <= geom.L3:
+    if proj_d_hold <= max_d_hold_DP:
         # ── Shallow hold: all force on DP ──────────────────────────────────
+        d_eff = proj_d_hold / cos_alpha3
         # Triangular distribution on DP: centroid at 1/3 from tip
         s_centroid = d_eff / 3.0   # weighted centroid within engaged region
         p_C_DP = p_TIP_palmar - s_centroid * e_DP
@@ -307,9 +323,14 @@ def compute_contact_point(grip, geom, contact: ContactGeometry, kin, F_mag: floa
 
     else:
         # ── Deep hold: force splits across DP (full) + MP (partial) ────────
+        remain_d_hold = proj_d_hold - max_d_hold_DP
+        engaged_MP = remain_d_hold / cos_alpha2
+        
         # Cap MP engagement at MP length (minus small margin for numerical safety)
-        engaged_MP   = min(d_eff - geom.L3, geom.L2 - 0.5)
-        total        = geom.L3 + engaged_MP
+        engaged_MP = min(engaged_MP, geom.L2 - 0.5)
+        
+        d_eff = geom.L3 + engaged_MP
+        total = geom.L3 + engaged_MP
 
         # Triangular pressure areas (proportional to integral of pressure profile)
         area_DP = geom.L3 / 2.0                           # ∫(1-s/L3)ds from 0→L3
@@ -322,9 +343,6 @@ def compute_contact_point(grip, geom, contact: ContactGeometry, kin, F_mag: floa
         # DP centroid: at 1/3 of full DP length from tip (triangular load)
         p_C_DP = p_TIP_palmar - (geom.L3 / 3.0) * e_DP
 
-        # MP geometry
-        e_MP        = kin['R_PIP'] @ np.array([1., 0., 0.])
-        n_palm_MP   = kin['R_PIP'] @ np.array([0., -1., 0.])
         p_DIP_palmar = kin['p_DIP'] + (contact.t_DP / 2.0) * n_palm_MP
 
         # Geometric centroid of MP contact: at 2/3 of engaged_MP from DIP
@@ -495,31 +513,27 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
                                p_contact_DP=p_C_DP, p_contact_MP=p_C_MP,
                                F_mag_DP=F_DP, F_mag_MP=F_MP)
 
-        # Use EMG method (3×2 lstsq) for scoring — same as Fig 8 plots.
-        # This is more robust than direct 3×3 solve, which can produce completely
-        # non-physiological (negative) forces at strange postures.
-        # To guide the optimizer, we calculate the continuous unclipped forces,
-        # and apply a smooth quadratic penalty for any negative values. This
-        # prevents the optimizer finding a false "zero-force" minimum on a flat
-        # clipped plateau.
+        # Use EMG-constrained solver with Non-Negative Least Squares (nnls)
+        # We explicitly include EDC to provide physiological extensor limits 
+        # protecting against solver collapse on overhangs/weird configurations
+        from scipy.optimize import nnls
         r_emg = get_emg_ratio(grip_base.emg_ratio, d_eff, geom.L3, geom.L2)
         A3e = np.array([
-            [r_emg*ma['FDP_DIP'],                    ma['LU_DIP']],
-            [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP']],
-            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP']],
+            [r_emg*ma['FDP_DIP'],                    ma['LU_DIP'], ma['EDC_DIP']],
+            [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP'], ma['EDC_PIP']],
+            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP'], ma['EDC_MCP']],
         ])
         b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
-        sol, _, _, _ = np.linalg.lstsq(A3e, b3e, rcond=None)
         
-        # Muscle forces can only pull (>= 0)
-        x_clip = np.array([max(sol[0], 0.0), max(sol[1], 0.0)])
+        # Muscle forces can only pull (>= 0), nnls strictly enforces this
+        x_clip, residual_error = nnls(A3e, b3e)
+        
         F_FDS_clip = x_clip[0]
         F_LU_clip  = x_clip[1]
+        F_EDC_clip = x_clip[2]
         F_FDP_clip = r_emg * F_FDS_clip
         
-        raw_total = F_FDP_clip + F_FDS_clip + F_LU_clip
-        
-        # Calculate how badly the non-negative muscles fail to balance the external load
+        raw_total = F_FDP_clip + F_FDS_clip + F_LU_clip + F_EDC_clip
         # If the joints would collapse (e.g. at degenerate straight-finger postures),
         # this residual will be massive. We heavily penalise it.
         M_muscle = A3e.dot(x_clip)
@@ -626,47 +640,50 @@ def solve_all_methods(grip: GripAngles,
     except np.linalg.LinAlgError:
         f1 = np.linalg.lstsq(A3, b3, rcond=None)[0]
     f1 = np.maximum(f1, 0.0)
+    # Direct method remains 3-DOF pure flexor. Append 0.0 for EDC.
+    f1 = np.array([f1[0], f1[1], f1[2], 0.0])
 
     # ─────────────────────────────────────────────────────────────
-    # Method 2: EMG-constrained (Vigouroux 2006)
+    # Method 2: EMG-constrained (Vigouroux 2006) + EDC
     # ─────────────────────────────────────────────────────────────
+    from scipy.optimize import nnls
     r_emg = get_emg_ratio(grip.emg_ratio, c_info['d_eff'] if contact else None, geom.L3, geom.L2)
     
-    # Solve 3x2 overdetermined system (include DIP, PIP, MCP)
-    # Allows physiological balance without direct 3x3 artifact
+    # Solve 3x3 system with nnls to enforce physiological bounds and recruit EDC if needed
     A3e = np.array([
-        [r_emg*ma['FDP_DIP'],                    ma['LU_DIP']],   # DIP row
-        [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP']],   # PIP row
-        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP']],   # MCP row
+        [r_emg*ma['FDP_DIP'],                    ma['LU_DIP'], ma['EDC_DIP']],
+        [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['LU_PIP'], ma['EDC_PIP']],
+        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['LU_MCP'], ma['EDC_MCP']],
     ])
     b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
-    sol2, _, _, _ = np.linalg.lstsq(A3e, b3e, rcond=None)   # min-norm LS
-    F_FDS2 = max(sol2[0], 0.0)
-    F_LU2  = max(sol2[1], 0.0)
+    sol2, _ = nnls(A3e, b3e)
+    F_FDS2 = sol2[0]
+    F_LU2  = sol2[1]
+    F_EDC2 = sol2[2]
     F_FDP2 = r_emg * F_FDS2
-    f2     = np.array([F_FDP2, F_FDS2, F_LU2])
+    f2     = np.array([F_FDP2, F_FDS2, F_LU2, F_EDC2])
 
     # ── Method 3: LU-minimising ───────────────────────────────
-    # Set F_LU = 0; solve for FDS from PIP row, get FDP from ratio
-    denom_PIP = r_emg*ma['FDP_PIP'] + ma['FDS_PIP']
-    denom_MCP = r_emg*ma['FDP_MCP'] + ma['FDS_MCP']
-    if denom_PIP > 0.1 and denom_MCP > 0.1:
-        F_FDS3 = max(0.5*(ext['PIP']/denom_PIP + ext['MCP']/denom_MCP), 0.0)
-        F_FDP3 = r_emg * F_FDS3
-        # Any DIP residual absorbed by small LU correction
-        dip_resid = ext['DIP'] - F_FDP3*ma['FDP_DIP']
-        F_LU3 = max(-dip_resid / abs(ma['LU_DIP']), 0.0) if abs(ma['LU_DIP']) > 0.1 else 0.0
-        f3 = np.array([F_FDP3, F_FDS3, F_LU3])
-    else:
-        f3 = f2.copy()
+    # Set F_LU = 0; solve for FDS and EDC using nnls
+    A3_lu = np.array([
+        [r_emg*ma['FDP_DIP'],                    ma['EDC_DIP']],
+        [r_emg*ma['FDP_PIP'] + ma['FDS_PIP'],    ma['EDC_PIP']],
+        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],    ma['EDC_MCP']],
+    ])
+    sol3, _ = nnls(A3_lu, b3e)
+    F_FDS3 = sol3[0]
+    F_LU3  = 0.0
+    F_EDC3 = sol3[1]
+    F_FDP3 = r_emg * F_FDS3
+    f3 = np.array([F_FDP3, F_FDS3, F_LU3, F_EDC3])
 
     results = {}
     for mname, f in [('direct', f1), ('emg', f2), ('lu_min', f3)]:
-        FDP, FDS, LU = f
+        FDP, FDS, LU, EDC = f
         ratio = FDP/FDS if FDS > 0.1 else np.inf
         results[mname] = dict(
-            F_FDP=float(FDP), F_FDS=float(FDS), F_LU=float(LU),
-            F_total=float(FDP+FDS+LU),
+            F_FDP=float(FDP), F_FDS=float(FDS), F_LU=float(LU), F_EDC=float(EDC),
+            F_total=float(FDP+FDS+LU+EDC),
             ratio=ratio,
             f_vec=f, kin=kin, ext=ext,
             # Contact geometry info (None if no contact model used)
@@ -1215,12 +1232,12 @@ def run_simulation():
 # ─────────────────────────────────────────────────────────────
 
 def print_summary(all_res, jreact, F_tip):
-    W = 100
+    W = 110
     print('\n' + '='*W)
     print('  3D CLIMBING FINGER BIOMECHANICS  (Standard geometry)')
     print(f'  Load: {F_tip:.1f} N')
     print('='*W)
-    print(f"{'Grip':<13} {'Method':<25} {'F_FDP':>8} {'F_FDS':>8} {'F_LU':>7} "
+    print(f"{'Grip':<13} {'Method':<25} {'F_FDP':>8} {'F_FDS':>8} {'F_LU':>7} {'F_EDC':>7} "
           f"{'Total':>8} {'Ratio':>7} {'A2 3D':>8}")
     print('-'*W)
     for key in GRIPS:
@@ -1232,7 +1249,7 @@ def print_summary(all_res, jreact, F_tip):
             if key == 'crimp' and mname == 'direct' and r['F_FDS'] < 50.0:
                 note = '  ⚠ DIP hyperext — use EMG'
             print(f"{GRIPS[key].name:<13} {METHOD_LABELS[mname]:<25} "
-                  f"{r['F_FDP']:>8.1f} {r['F_FDS']:>8.1f} {r['F_LU']:>7.1f} "
+                  f"{r['F_FDP']:>8.1f} {r['F_FDS']:>8.1f} {r['F_LU']:>7.1f} {r['F_EDC']:>7.1f} "
                   f"{r['F_total']:>8.1f} {rat:>7} {jr['pulley']['F_A2_mag']:>8.1f}{note}")
         print()
     print('  Notes: Direct (3×3) crimp: DIP hyperextension makes FDS near-zero (artifact).')
