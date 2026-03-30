@@ -98,6 +98,12 @@ class Config:
     # ── Contact geometry defaults ─────────────────────────────
     # DP palmar-dorsal thickness: Butz et al. 2012 (adult male middle finger)
     t_DP_mm       = 9.0    # mm
+    
+    # Non-linear Skin Pulp Compression (Serina et al. 1997)
+    use_pulp_compression = True
+    pulp_compress_k      = 1.15
+    pulp_compress_F0     = 10.0
+    pulp_compress_max    = 4.0
     # Skin-on-rock friction coefficient: Quaine et al. 2000 (0.4-0.8 range)
     mu_friction   = 0.5
     # Wall overhang angle from vertical: 0 = vertical wall, 90 = horizontal roof
@@ -334,7 +340,16 @@ def compute_contact_point(grip, geom, contact: ContactGeometry, kin, F_mag: floa
 
     max_d_hold_DP = geom.L3 * cos_alpha3
 
-    p_TIP_palmar = kin['p_TIP'] + (contact.t_DP / 2.0) * n_palm
+    # ── Non-linear Pulp Compression ────────────────────────────────────
+    compression = 0.0
+    if getattr(Config, 'use_pulp_compression', False):
+        compression = Config.pulp_compress_k * np.log(1.0 + F_mag / Config.pulp_compress_F0)
+        compression = min(compression, Config.pulp_compress_max)
+        
+    # Minimum safe padding so the bone axis doesn't punch through the mathematical skin
+    r_palmar = max((contact.t_DP / 2.0) - compression, 1.0)
+    
+    p_TIP_palmar = kin['p_TIP'] + r_palmar * n_palm
 
     if proj_d_hold <= max_d_hold_DP:
         # ── Shallow hold: all force on DP ──────────────────────────────────
@@ -366,7 +381,7 @@ def compute_contact_point(grip, geom, contact: ContactGeometry, kin, F_mag: floa
         # DP centroid: at 1/3 of full DP length from tip (triangular load)
         p_C_DP = p_TIP_palmar - (geom.L3 / 3.0) * e_DP
 
-        p_DIP_palmar = kin['p_DIP'] + (contact.t_DP / 2.0) * n_palm_MP
+        p_DIP_palmar = kin['p_DIP'] + r_palmar * n_palm_MP
 
         # Geometric centroid of MP contact: at 2/3 of engaged_MP from DIP
         geom_centroid_MP = p_DIP_palmar - (2.0 * engaged_MP / 3.0) * e_MP
@@ -374,7 +389,7 @@ def compute_contact_point(grip, geom, contact: ContactGeometry, kin, F_mag: floa
         # A3 pulley position: ~15% of MP length from PIP (i.e. near the PIP-MP junction)
         # Force transfer to skeleton is dominated by A3 + volar plate (Moutet 2003).
         p_A3_MP = kin['p_PIP'] + kin['R_PIP'] @ (0.15 * geom.L2 * np.array([1., 0., 0.]))
-        p_A3_MP_palmar = p_A3_MP + (contact.t_DP / 2.0) * n_palm_MP
+        p_A3_MP_palmar = p_A3_MP + r_palmar * n_palm_MP
 
         # Pulley-weighted centroid: 40% geometric + 60% A3 skeletal anchor
         p_C_MP = 0.40 * geom_centroid_MP + 0.60 * p_A3_MP_palmar

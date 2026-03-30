@@ -52,6 +52,13 @@ $$ proj\_d_{hold} = d_{hold} + r_{edge} |\hat{e}_{DP} \cdot \hat{n}_{hold}| $$
 ### 2.2 Force Distribution (Hertz-Like)
 Pressure distributes based on a triangular profile tapering towards the DIP crease, and a rising ramp profile on the MP.
 
+### 2.3 Tissue Pulp Compression (Skin Deformation)
+Human fingertip pulp acts as a hyper-elastic pad that compresses non-linearly under mechanical load, dynamically reducing the geometric contact radius separating the bone from the outer rock surface. According to compressive loading tests (Serina et al. 1997), the deformation $\delta$ can be modeled logarithmically:
+$$ \delta(F) = k \cdot \ln\left(1 + \frac{F}{F_0}\right) $$
+Where $k \approx 1.15$ mm and $F_0 \approx 10.0$ N. The palmar radius of the contact point is subsequently updated dynamically:
+$$ r_{palmar} = \max\left( \frac{t_{DP}}{2} - \delta(F), \delta_{min} \right) $$
+This continuous structural translation effectively shortens the external moment displacement vector ($\vec{p}_{contact} - \vec{p}_{joint}$) under heavy dynamic loading, simulating how climbers instinctively sink bone-deep into micro-holds to maximize their mechanical advantage.
+
 - **Shallow Hold**: If $proj\_d_{hold} \le L_{DP} \cos(\alpha_{DP})$, the force acts entirely on the DP. The engaged arc length is $d_{eff} = proj\_d_{hold} / \cos(\alpha_{DP})$. The centroid $p_{C,DP}$ is $d_{eff}/3$ from the tip.
 - **Deep Hold**: If $proj\_d_{hold} > L_{DP} \cos(\alpha_{DP})$, the force partitions between DP and MP based on area integrals:
   - $Area_{DP} = L_{DP} / 2$
