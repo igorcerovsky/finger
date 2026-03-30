@@ -1,20 +1,53 @@
-# Code Review: Non-Linear Skin Pulp Compression
+# Code Review: Iteration 6 — Antagonist EDC Co-Contraction
 
 ## Objective
-Convert the purely geometric static pad thickness ($t_{DP} = 9.0$ mm) into a functional variable that compresses according to Serina et al.'s exponential models under high force. This structurally simulates how the phalanges sink closer to the rock surface as weight increases, consequently altering the external moment lever arm.
+
+Replace the `nnls` (non-negative least squares) solver — which only enforces $F \ge 0$ — with `scipy.optimize.lsq_linear` throughout all three solution methods, allowing an explicit lower-bound floor on the Extensor Digitorum Communis (EDC) force based on joint hyperextension state.
 
 ## Changes Verified
-### 1. `climbing_finger_3d.py` Configuration Injection
-- Modified `Config`: Embedded `use_pulp_compression = True`, $k=1.15$, $F_0=10.0$ N, and $max = 4.0$ mm limits.
-- The `compute_contact_point` successfully applies the localized translation factor $\delta(F)$ strictly across the palmar vector `n_palm`. Wait... wait, does the palmar vector perfectly map the normal of the contact? Yes; `n_palm` originates from $R_{DIP}$ corresponding to palmar/dorsal height relative to the bone segment, which precisely evaluates how "thick" the skin pad acts.
 
-### 2. Output Metric Review
-- **Previous Constant Run**: Crimp Total Tensor Force previously calculated at $986.4$ N under the $172$ N load constraint.
-- **Tissue Compression Result**: Crimp Total Tensor dropping minutely to $983.0$ N exactly matching the hypothesis. 
-  - As the pad compresses by roughly $\approx 3.3$ mm, the geometric moment shifts closer to the DIP joint. The required force slightly subsides, proving mathematically why heavier climbers instinctively compress harder onto micro-edges: squishier tips provide a marginally improved lever ratio around the external fulcrum.
-- **Half-Crimp Phenomenon**: The load surprisingly *increased* from $1129.1 \to 1151.2$ N. Why? As the skin compressed on the $10$mm deep hold, the structural tip sank downward, slightly re-projecting the triangular contact patch further proximally *towards the DIP crease*. The slight change in the load centroid relative to the internal axes altered the force distribution cross-product slightly. The optimizer then required more active engagement to balance the joint. This highlights extreme mechanical sensitivity!
+### 1. `Config` Class
 
-## Outcome
-The simulation dynamically mirrors soft-tissue structural interactions directly mapped to climber physics now. It correctly models that skin is not a static 9.0mm unyielding block, increasing both the bio-fidelity and output dimensionality of the equations.
+Added:
 
-**Status: APPROVED**
+- `use_edc_stiffness = True` — toggle for the feature
+- `k_EDC_stiff = 1.5` N — exponential gain constant
+- `theta_dip_max = 25.0` deg — normalisation ROM for the exponent
+
+These are cleanly scoped inside the existing `Config` pattern, consistent with previous iterations.
+
+### 2. `get_min_EDC_force(dip_deg)`
+
+New module-level helper. Returns 0.0 whenever `dip_deg >= 0` (no hyperextension) or when the config flag is off. For hyperextension:
+
+```python
+F_EDC_min = k_EDC_stiff * exp(|dip_deg| / theta_dip_max)
+```
+
+Simple, stateless, and easily unit-testable. No side effects.
+
+### 3. Solver Refactor: `nnls` → `lsq_linear`
+
+All three places (posture optimizer, EMG method, LU-minimising method) now use `scipy.optimize.lsq_linear` with `bounds=([0, 0, F_EDC_min], [inf, inf, inf])`. This is a strict upgrade:
+
+- `nnls` enforces $\ge 0$ only (equivalent to `bounds=([0,0,0],[inf,inf,inf])`)
+- `lsq_linear` generalises this to arbitrary lower/upper bounds with the same computational cost
+
+The Direct (3×3) method subtracts the EDC stiffness moment from the RHS vector before inversion, which is mathematically equivalent and avoids a 4-variable overdetermined system.
+
+## Simulation Results (70 kg, 10 mm, 45° wall)
+
+| Grip | Method | F_FDP | F_FDS | F_LU | **F_EDC** | Total |
+|------|--------|-------|-------|------|-----------|-------|
+| **Crimp** | EMG | 421.5 | 240.9 | 324.8 | **3.7** | 990.9 |
+| Half-Crimp | EMG | 396.0 | 330.0 | 425.1 | **0.0** | 1151.2 |
+| Open Hand | EMG | 373.0 | 423.8 | 325.9 | **0.0** | 1122.7 |
+
+**Key finding**: EDC fires exclusively for the full Crimp, where DIP hyperextension is $-22.6°$. At $e^{22.6/25} \approx 2.46$, the floor is $1.5 \times 2.46 = 3.7$ N — exactly matching the printed output. The other postures (DIP > 0°) correctly remain at zero.
+
+## Risks / Open Questions
+
+- The $k_{stiff} = 1.5$ N coefficient is empirically calibrated rather than directly measured. Vigouroux (2011) reports co-contraction indices of 5–15% of maximal EDC — at the loads modelled here ($\approx 170$ N reaction), this is physiologically plausible but a sensitivity analysis against published EMG data would strengthen confidence.
+- The `Direct` method now produces $F_{EDC} = F_{EDC,min}$ exactly (no freedom to increase). This is intentional — it shows the minimum cost; the EMG and LU-min methods may solve for higher EDC if warranted by the moment balance.
+
+**Status: APPROVED — improves physiological fidelity, no regressions observed.**

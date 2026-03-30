@@ -193,6 +193,12 @@ Edit `Config` in `climbing_finger_3d.py`:
 | `F_lateral_N` | 0.0 | Side-pull force |
 | `r_edge_mm` | 2.0 | Hold edge radius |
 | `mu_friction` | 0.5 | Skin-rock friction coefficient |
+| `use_pulp_compression` | True | Enable non-linear tissue deformation |
+| `pulp_compress_k` | 1.15 | Compression rate constant (mm) |
+| `pulp_compress_F0` | 10.0 | Reference force for compression (N) |
+| `use_edc_stiffness` | True | Enable antagonist extensor co-contraction |
+| `k_EDC_stiff` | 1.5 | EDC stiffness gain (N) |
+| `theta_dip_max` | 25.0 | DIP ROM limit for stiffness scaling (deg) |
 
 ---
 
@@ -200,8 +206,12 @@ Edit `Config` in `climbing_finger_3d.py`:
 
 While the current 3D biomechanical model represents a significant step up from planar 2D assumptions, it currently possesses a few limitations identified for future iterations:
 
-- **Friction Feasibility Uncoupled from Optimizer**: While the model evaluates whether a static friction coefficient ($\mu$) is violated by out-of-plane or shear configurations, this feasibility flag doesn't dynamically feed back into the posture optimizer's constraints.
-- **Joint Displacements (Instantaneous Centers of Rotation)**: The finger bones are currently modeled structurally as rigid lines between fixed hinge pins. In real human joints, the articular surfaces are cam-shaped, meaning the instantaneous center of rotation (ICR) shifts slightly palmar/dorsal as the joint flexes, altering moment arms dynamically.
+- **Friction Feasibility Uncoupled from Optimizer**: While the model evaluates whether a static friction coefficient ($\mu$) is violated by out-of-plane or shear configurations, this feasibility flag doesn't dynamically feed back into the posture optimizer's constraints. This is a priority target for the next iteration.
+- **Antagonist EDC Co-Contraction (Implemented, Iteration 6)**: The full Crimp posture forces the DIP into hyperextension ($\approx -22.6°$), triggering a mandatory passive/active extensor (EDC) stiffness floor modelled as an exponential joint-limit spring. This translates to $\approx 3.7$ N mandatory EDC demand which propagates into additional flexor requirements to maintain equilibrium, raising the Crimp's total tendon demand. This realistically captures the well-known metabolic fatigue cost of full crimping.
+- **Tissue Pulp Compression (Implemented, Iteration 5)**: Non-linear skin deformation under load dynamically shifts the palmar contact point toward the bone axis, shortening the external moment arm and producing a grip-dependent mechanical advantage that varies with load magnitude.
+- **Pinch Grip Removed (Iteration 4)**: Pinch is an emergent function of thumb opposition, not a distinct property of the isolated finger ray. It reduces to Open Hand or Half-Crimp depending on block width and thumb engagement.
+- **Joint Displacements (Instantaneous Centers of Rotation, Implemented)**: ICR palmar translation under flexion is modelled via an affine shift proportional to joint angle, capturing the cam-shaped articular surface effect without full joint surface geometry.
+- **Dynamic Body COM Vectoring (Planned, Iteration 7)**: Currently the wall angle and force vector are set manually via `beta_wall_deg`. A full climber Centre-of-Mass torque balance would resolve the 3D force vector from foot placement and hip position geometry, enabling wall-angle-dependent posture prediction without manual configuration.
 
 ---
 
@@ -217,3 +227,4 @@ While the current 3D biomechanical model represents a significant step up from p
 8. **Doyle JR, Blythe W.** The finger flexor tendon sheath and pulleys: anatomy and reconstruction. *Hand*, 16:419–426 (1984).
 9. **Serina ER, Mote CD, Rempel D.** Force response of the fingertip pulp to repeated compression. *Journal of Biomechanics*, 30(2):111–118 (1997).
 10. **Uno Y, Kawato M, Suzuki R.** Formation and control of optimal trajectory in human multijoint arm movement. *Biological Cybernetics*, 61(2):89–101 (1989).
+11. **Johansson RS, Flanagan JR.** Coding and use of tactile signals from the fingertips in object manipulation tasks. *Nature Reviews Neuroscience*, 10(5):345–359 (2009).

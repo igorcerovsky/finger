@@ -104,6 +104,12 @@ class Config:
     pulp_compress_k      = 1.15
     pulp_compress_F0     = 10.0
     pulp_compress_max    = 4.0
+    
+    # ── Extensor (EDC) Stiffness / Co-Contraction ─────────────
+    use_edc_stiffness = True
+    k_EDC_stiff       = 1.5     # N per exponential joint limit modifier
+    theta_dip_max     = 25.0    # deg (baseline full ROM for hyperextension)
+
     # Skin-on-rock friction coefficient: Quaine et al. 2000 (0.4-0.8 range)
     mu_friction   = 0.5
     # Wall overhang angle from vertical: 0 = vertical wall, 90 = horizontal roof
@@ -489,6 +495,20 @@ def external_moments(kin, F_ext_dir, grip, passive_frac=None,
     return dict(DIP=M_DIP, PIP=M_PIP, MCP=M_MCP, abd=M_abd)
 
 
+def get_min_EDC_force(dip_deg: float) -> float:
+    """
+    Empirical antagonist stiffness. As the joint approaches extreme hyperextension,
+    passive/active extensor structures exponentially stiffen to protect the capsule.
+    """
+    if not getattr(Config, 'use_edc_stiffness', False):
+        return 0.0
+    if dip_deg >= 0.0:
+        return 0.0
+    # Exponential rise based on how close we are to maximum ROM
+    val = Config.k_EDC_stiff * np.exp(abs(dip_deg) / Config.theta_dip_max)
+    return float(val)
+
+
 def get_emg_ratio(r_base, d_eff, L_DP, L_MP):
     """
     Interpolate the FDP/FDS ratio based on hold depth relative to finger anatomy.
@@ -551,10 +571,10 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
                                p_contact_DP=p_C_DP, p_contact_MP=p_C_MP,
                                F_mag_DP=F_DP, F_mag_MP=F_MP)
 
-        # Use EMG-constrained solver with Non-Negative Least Squares (nnls)
-        # We explicitly include EDC to provide physiological extensor limits 
-        # protecting against solver collapse on overhangs/weird configurations
-        from scipy.optimize import nnls
+        # Use EMG-constrained solver with bounded Least Squares (lsq_linear)
+        # We explicitly enforce physiological extensor limits 
+        # protecting against solver collapse on severe hyperextensions
+        from scipy.optimize import lsq_linear
         r_emg = get_emg_ratio(grip_base.emg_ratio, d_eff, geom.L3, geom.L2)
         
         # Apply Capstan friction mechanical advantage
@@ -569,8 +589,12 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         ])
         b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
         
-        # Muscle forces can only pull (>= 0), nnls strictly enforces this
-        x_clip, residual_error = nnls(A3e, b3e)
+        F_EDC_min = get_min_EDC_force(float(dip))
+        bounds = ([0.0, 0.0, F_EDC_min], [np.inf, np.inf, np.inf])
+        
+        # Muscle forces can only pull (>= 0), lsq_linear strictly enforces this with bounds
+        res = lsq_linear(A3e, b3e, bounds=bounds)
+        x_clip = res.x
         
         F_FDS_clip = x_clip[0]
         F_LU_clip  = x_clip[1]
@@ -679,18 +703,21 @@ def solve_all_methods(grip: GripAngles,
     b3 = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
 
     # ── Method 1: Direct 3x3 solve ────────────────────────────
+    F_EDC_min = get_min_EDC_force(grip.theta_DIP)
+    b3_direct = b3 - F_EDC_min * np.array([ma['EDC_DIP'], ma['EDC_PIP'], ma['EDC_MCP']])
+    
     try:
-        f1 = np.linalg.solve(A3, b3)
+        f1 = np.linalg.solve(A3, b3_direct)
     except np.linalg.LinAlgError:
-        f1 = np.linalg.lstsq(A3, b3, rcond=None)[0]
+        f1 = np.linalg.lstsq(A3, b3_direct, rcond=None)[0]
     f1 = np.maximum(f1, 0.0)
-    # Direct method remains 3-DOF pure flexor. Append 0.0 for EDC.
-    f1 = np.array([f1[0], f1[1], f1[2], 0.0])
+    # Direct method enforces EDC min instead of 0
+    f1 = np.array([f1[0], f1[1], f1[2], F_EDC_min])
 
     # ─────────────────────────────────────────────────────────────
     # Method 2: EMG-constrained (Vigouroux 2006) + EDC
     # ─────────────────────────────────────────────────────────────
-    from scipy.optimize import nnls
+    from scipy.optimize import lsq_linear
     r_emg = get_emg_ratio(grip.emg_ratio, c_info['d_eff'] if contact else None, geom.L3, geom.L2)
     
     # Capstan multipliers
@@ -698,31 +725,37 @@ def solve_all_methods(grip: GripAngles,
     C_A2 = np.exp(Config.mu_tendon * theta_A2) if getattr(Config, 'use_capstan', True) else 1.0
     C_A4 = np.exp(Config.mu_tendon * theta_A4) if getattr(Config, 'use_capstan', True) else 1.0
 
-    # Solve 3x3 system with nnls to enforce physiological bounds and recruit EDC if needed
+    # Solve 3x3 system with lsq_linear to enforce bounded EDC limit
     A3e = np.array([
         [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'], ma['EDC_DIP']],
         [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'], ma['EDC_PIP']],
         [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'], ma['EDC_MCP']],
     ])
     b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
-    sol2, _ = nnls(A3e, b3e)
-    F_FDS2 = sol2[0]
-    F_LU2  = sol2[1]
-    F_EDC2 = sol2[2]
+    
+    bounds2 = ([0.0, 0.0, F_EDC_min], [np.inf, np.inf, np.inf])
+    sol2 = lsq_linear(A3e, b3e, bounds=bounds2)
+    
+    F_FDS2 = sol2.x[0]
+    F_LU2  = sol2.x[1]
+    F_EDC2 = sol2.x[2]
     F_FDP2 = r_emg * F_FDS2
     f2     = np.array([F_FDP2, F_FDS2, F_LU2, F_EDC2])
 
     # ── Method 3: LU-minimising ───────────────────────────────
-    # Set F_LU = 0; solve for FDS and EDC using nnls
+    # Set F_LU = 0; solve for FDS and EDC using bounded least squares
     A3_lu = np.array([
         [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['EDC_DIP']],
         [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['EDC_PIP']],
         [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['EDC_MCP']],
     ])
-    sol3, _ = nnls(A3_lu, b3e)
-    F_FDS3 = sol3[0]
+    
+    bounds3 = ([0.0, F_EDC_min], [np.inf, np.inf])
+    sol3 = lsq_linear(A3_lu, b3e, bounds=bounds3)
+    
+    F_FDS3 = sol3.x[0]
     F_LU3  = 0.0
-    F_EDC3 = sol3[1]
+    F_EDC3 = sol3.x[1]
     F_FDP3 = r_emg * F_FDS3
     f3 = np.array([F_FDP3, F_FDS3, F_LU3, F_EDC3])
 

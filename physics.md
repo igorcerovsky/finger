@@ -96,15 +96,31 @@ For equilibrium, $ \vec{M}_{muscle} = \vec{M}_{ext\_required} $.
 To enforce the physiological reality that muscles can only pull ($F \ge 0$), the computational solver resolves this primarily by analyzing the 3 flexion moments.
 
 ### 3.3 Solution Implementations
-- **Direct (Pure Flexor baseline)**: $3 \times 3$ analytical inversion using only FDP, FDS, LU. Yields theoretical bounds but fails physiologically on extreme overhangs.
-- **EMG-Constrained**: Forces FDP/FDS to hold an empirically determined ratio $r_{emg}$ based on hold depth. Solves a $3 \times 3$ bounding system involving FDS, LU, and EDC using Non-Negative Least Squares (NNLS) to robustly enforce proper muscle boundary recruitment without matrix collapse.
-- **LU-Minimizing**: Assumes $F_{LU} = 0$, solving a $3 \times 2$ NNLS limit boundary matching FDS to EDC.
+
+All three solvers now use `scipy.optimize.lsq_linear` with explicit bounds to enforce both non-negativity ($F \ge 0$) and the mandatory antagonist EDC floor (Section 3.4):
+
+- **Direct (Pure Flexor baseline)**: Subtracts the EDC stiffness moment from the external demand vector $\vec{b}$, then performs a $3 \times 3$ analytical solve for FDP, FDS, LU. EDC is manually appended at $F_{EDC,min}$.
+- **EMG-Constrained**: Forces FDP/FDS to hold an empirically determined ratio $r_{emg}$ based on hold depth. Solves a $3 \times 3$ bounded least-squares system with $F_{EDC} \ge F_{EDC,min}$.
+- **LU-Minimizing**: Assumes $F_{LU} = 0$, solving a $3 \times 2$ bounded system with the same EDC floor.
+
+### 3.4 Antagonist Extensor Co-Contraction (EDC Stiffness)
+
+When the DIP joint enters hyperextension ($\theta_{DIP} < 0°$), passive capsular ligaments and active extensor structures stiffen exponentially to prevent capsuloligamentous injury. The mandatory minimum extensor force is modeled as:
+
+$$ F_{EDC,min}(\theta_{DIP}) = \begin{cases} k_{stiff} \cdot e^{|\theta_{DIP}| / \theta_{DIP,max}} & \text{if } \theta_{DIP} < 0 \\ 0 & \text{otherwise} \end{cases} $$
+
+Where $k_{stiff} = 1.5\ \mathrm{N}$ and $\theta_{DIP,max} = 25°$. At full hyperextension ($\theta_{DIP} = -22.6°$ in Crimp posture), this produces:
+
+$$ F_{EDC,min} = 1.5 \cdot e^{22.6/25} \approx 3.7\ \mathrm{N} $$
+
+This antagonist force opposes the net flexor torque, requiring the FDP/FDS system to produce additional effort to maintain equilibrium. The physiological consequence is an increased total tension demand in the Crimp posture versus postures where the DIP is not hyperextended, accurately modeling the known metabolic cost of the full crimp grip.
 
 ## 4. Posture Optimization
-The biological system dynamically adopts joint angles (PIP, DIP) that minimize total tendon tension. 
+
+The biological system dynamically adopts joint angles (PIP, DIP) that minimize total tendon tension.
 This is achieved by minimizing an objective function $J$:
 $$ J = F_{FDP} + F_{FDS} + F_{LU} + F_{EDC} + \Phi(\text{Residual}) + \Phi(\text{Joint Limits}) $$
-where $\Phi$ are severe geometric penalty functions. The inclusion of EDC permits natural physiological stabilization against un-holdable flexion-collapsing moments (such as on steep open-hand overhangs), removing artificially forced mathematical artifacts.
+where $\Phi$ are severe geometric penalty functions. The EDC stiffness floor is incorporated during optimization, ensuring that the posture solver never settles on mechanically impossible hyperextended states without physiological cost.
 
 ## 5. Pulley Forces and Joint Reactions
 ### 5.1 Capstan Friction and Distributed Pulley Pressure
