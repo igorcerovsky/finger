@@ -63,12 +63,12 @@ p_C_MP = 0.40 × geometric_centroid + 0.60 × A3_pulley_position
 
 ### 3.3 Solution Algorithms
 
-Three methods solve the system (3 flexion moments + 1 abduction moment) for 3 muscle forces [FDP, FDS, LU]:
+Three methods solve the system (3 flexion moments + 1 abduction moment) for 3 muscle forces [FDP, FDS, LU]. All three use `scipy.optimize.lsq_linear` with explicit bounds enforcing $F \ge 0$ and a mandatory EDC floor under DIP hyperextension:
 
 | # | Method | Key limitation |
 | --- | --- | --- |
 | 1 | **Direct (3×3 exact)** — linear algebra on DIP/PIP/MCP rows only | Ignores abduction; crimp FDS near-zero (DIP hyperext artifact: `FDS_DIP=0`) |
-| 2 | **EMG-constrained** — FDP/FDS = Vigouroux 2006 *in vivo* ratio, dynamically interpolated with depth; 3×2 overdetermined lstsq for \[FDS, LU\] | **Physiological reference** |
+| 2 | **EMG-constrained** — FDP/FDS = Vigouroux 2006 *in vivo* ratio, dynamically interpolated with depth; bounded least-squares for \[FDS, LU, EDC\] | **Physiological reference** |
 | 3 | **LU-minimising** — EMG ratio + lumbricals zeroed; prime-mover-only test | Not physiological for all grips |
 
 ### 3.4 Equilibrium Posture Finder
@@ -98,7 +98,7 @@ Run `python human_bonobo/compare_models.py` to compare predictions on overlappin
 
 ![Tendon Forces](outputs/climbing_3d_fig2.png)
 
-**Description:** This figure compares the computed forces for the primary flexor tendons (FDP, FDS, and Lumbricals) across four grip types. It contrasts the short vs. long finger phenotypes (solid vs. hatched bars) using three distinct biomechanical solver methods. 
+**Description:** This figure compares the computed forces for the primary flexor tendons (FDP, FDS, and Lumbricals) across three grip types. It contrasts the short vs. long finger phenotypes (solid vs. hatched bars) using three distinct biomechanical solver methods. 
 **Scientific Significance:** The EMG-constrained method demonstrates the most physiological distribution, matching established *in vivo* data (Vigouroux 2006). The figure highlights how the FDP is heavily recruited during crimps, while the FDS becomes the prime mover in open-hand postures. It also visually demonstrates the inherent "long finger disadvantage," where the longer moment arm of the DP requires strictly higher tendon forces (hatched bars) to maintain equilibrium under the same external load.
 
 ### 4.2 Kinematic Coupling & PIP Flexion (Figure 3)
@@ -199,6 +199,9 @@ Edit `Config` in `climbing_finger_3d.py`:
 | `use_edc_stiffness` | True | Enable antagonist extensor co-contraction |
 | `k_EDC_stiff` | 1.5 | EDC stiffness gain (N) |
 | `theta_dip_max` | 25.0 | DIP ROM limit for stiffness scaling (deg) |
+| `use_com_vectoring` | True | Enable body-COM-derived force direction |
+| `h_below_hold_mm` | 150.0 | COM vertical distance below hold (mm) |
+| `d_com_mm` | 300.0 | COM perpendicular distance from wall (mm) |
 
 ---
 
@@ -206,7 +209,9 @@ Edit `Config` in `climbing_finger_3d.py`:
 
 While the current 3D biomechanical model represents a significant step up from planar 2D assumptions, it currently possesses a few limitations identified for future iterations:
 
-- **Friction Feasibility Uncoupled from Optimizer**: While the model evaluates whether a static friction coefficient ($\mu$) is violated by out-of-plane or shear configurations, this feasibility flag doesn't dynamically feed back into the posture optimizer's constraints. This is a priority target for the next iteration.
+- **Dynamic Body COM Vectoring (Implemented, Iteration 7)**: The static `beta_wall_deg` scalar is replaced by a COM-derived force vector. The climber's COM is parameterised by its vertical distance below the hold ($h_{below\_hold}$) and perpendicular distance from the wall ($d_{COM}$), giving a geometrically self-consistent force direction that varies with wall angle. On roofs, unmodelled body tension limits accuracy — see `physics.md` §3.1.
+- **Angle-Dependent MCP Moment Arms (Implemented, Iteration 7)**: FDP and FDS moment arms at the MCP joint now follow an angle-dependent linear fit from An et al. 1983, replacing fixed mid-range values that caused systematic errors at the extreme postures used in climbing.
+- **Friction Feasibility Uncoupled from Optimizer**: The friction flag doesn't dynamically feed back into the posture optimizer. Planned for a future iteration.
 - **Antagonist EDC Co-Contraction (Implemented, Iteration 6)**: The full Crimp posture forces the DIP into hyperextension ($\approx -22.6°$), triggering a mandatory passive/active extensor (EDC) stiffness floor modelled as an exponential joint-limit spring. This translates to $\approx 3.7$ N mandatory EDC demand which propagates into additional flexor requirements to maintain equilibrium, raising the Crimp's total tendon demand. This realistically captures the well-known metabolic fatigue cost of full crimping.
 - **Tissue Pulp Compression (Implemented, Iteration 5)**: Non-linear skin deformation under load dynamically shifts the palmar contact point toward the bone axis, shortening the external moment arm and producing a grip-dependent mechanical advantage that varies with load magnitude.
 - **Pinch Grip Removed (Iteration 4)**: Pinch is an emergent function of thumb opposition, not a distinct property of the isolated finger ray. It reduces to Open Hand or Half-Crimp depending on block width and thumb engagement.
@@ -227,4 +232,4 @@ While the current 3D biomechanical model represents a significant step up from p
 8. **Doyle JR, Blythe W.** The finger flexor tendon sheath and pulleys: anatomy and reconstruction. *Hand*, 16:419–426 (1984).
 9. **Serina ER, Mote CD, Rempel D.** Force response of the fingertip pulp to repeated compression. *Journal of Biomechanics*, 30(2):111–118 (1997).
 10. **Uno Y, Kawato M, Suzuki R.** Formation and control of optimal trajectory in human multijoint arm movement. *Biological Cybernetics*, 61(2):89–101 (1989).
-11. **Johansson RS, Flanagan JR.** Coding and use of tactile signals from the fingertips in object manipulation tasks. *Nature Reviews Neuroscience*, 10(5):345–359 (2009).
+11. **Esteki A, Mansour JM.** An experimentally based nonlinear viscoelastic model of joint passive moment. *Journal of Biomechanics*, 29(4):443–450 (1996).

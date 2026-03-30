@@ -37,6 +37,23 @@ The true 3D positions of the joint centers ($L_1, L_2, L_3$ represent $L_{PP}, L
 
 This translation structurally reduces the effective external contact moment arm against the fingertip proportionally as the flexor angle increases inside a crimp, yielding a biologically accurate mechanical footprint not captured by purely rigid link definitions.
 
+### 1.3 Angle-Dependent MCP Moment Arms
+
+Flexor moment arms at the MCP joint are not constant. An et al. 1983 (Table 2) report a linear increase with MCP flexion angle:
+
+| $\theta_{MCP}$ (deg) | FDP (mm) | FDS (mm) |
+|----------------------|----------|----------|
+| 0 | 8.0 | 6.8 |
+| 30 | 9.5 | 7.8 |
+| 60 | 11.2 | 9.0 |
+| 90 | 12.8 | 10.0 |
+
+Linear fits used in the model:
+$$ma_{FDP,MCP}(\theta) = \max(8.0 + 0.053 \cdot \text{clip}(\theta_{MCP}, 0, 90),\ 6.0)$$
+$$ma_{FDS,MCP}(\theta) = \max(6.8 + 0.036 \cdot \text{clip}(\theta_{MCP}, 0, 90),\ 5.0)$$
+
+The previous fixed values ($10.4$ and $8.6$ mm) were mid-range ($\approx 45°$) approximations that introduced systematic errors at the extreme postures most relevant to climbing (Crimp at $\theta_{MCP}\approx 3°$ and Open Hand at $\theta_{MCP}\approx 20°$).
+
 ## 2. Distributed Contact Model
 
 Unlike point-load models, deep climbing grips distribute skin contact pressure over both the Distal Phalanx (DP) and Middle Phalanx (MP).
@@ -50,7 +67,21 @@ Additionally, the effective available depth accounts for the rounded edge wrappi
 $$ proj\_d_{hold} = d_{hold} + r_{edge} |\hat{e}_{DP} \cdot \hat{n}_{hold}| $$
 
 ### 2.2 Force Distribution (Hertz-Like)
-Pressure distributes based on a triangular profile tapering towards the DIP crease, and a rising ramp profile on the MP.
+
+Skin contact pressure is non-uniform. Consistent with Hertz contact mechanics (Johnson 1985), pressure peaks at the fingertip and tapers toward the DIP crease. On the MP, pressure rises from the DIP crease proximally.
+
+**DP pressure profile** ($s$ measured from tip, $s \in [0, L_{DP}]$):
+$$p_{DP}(s) \propto 1 - s/L_{DP} \implies
+\text{Area}_{DP} = \int_0^{L_{DP}} p\,ds = \frac{L_{DP}}{2},\quad
+\text{centroid at } s = \frac{L_{DP}}{3} \text{ from tip}$$
+
+**MP pressure profile** ($s$ measured from DIP crease, $s \in [0, x_{MP}]$, $x_{total} = L_{DP} + x_{MP}$):
+$$p_{MP}(s) \propto s/x_{total} \implies
+\text{Area}_{MP} = \frac{x_{MP}^2}{2\, x_{total}},\quad
+\text{centroid at } s = \frac{2\,x_{MP}}{3} \text{ from DIP}$$
+
+The fraction of total normal force on each phalanx is proportional to its area:
+$$f_{DP} = \frac{\text{Area}_{DP}}{\text{Area}_{DP} + \text{Area}_{MP}}, \qquad f_{MP} = 1 - f_{DP}$$
 
 ### 2.3 Tissue Pulp Compression (Skin Deformation)
 Human fingertip pulp acts as a hyper-elastic pad that compresses non-linearly under mechanical load, dynamically reducing the geometric contact radius separating the bone from the outer rock surface. According to compressive loading tests (Serina et al. 1997), the deformation $\delta$ can be modeled logarithmically:
@@ -74,11 +105,19 @@ $$ p_{C,MP} = 0.4 \cdot (\text{Geometric Centroid}_{MP}) + 0.6 \cdot p_{A3} $$
 An equilibrium state implies that the sum of external moments is perfectly balanced by internal muscular moments.
 
 ### 3.1 External Load Vector
-The external applied force $F_{ext}$ depends on the wall angle $\beta_{wall}$ and lateral load $F_{lateral}$:
-$$ \vec{F}_{ext} = F_{mag} \cos(\beta_{wall})\hat{x} - F_{mag} \sin(\beta_{wall})\hat{y} + F_{lateral}\hat{z} $$
 
-This external force produces a reaction moment at each joint:
-$$ \vec{M}_{ext, J} = (\vec{p}_{C,DP} - \vec{p}_J) \times \vec{F}_{DP} + (\vec{p}_{C,MP} - \vec{p}_J) \times \vec{F}_{MP} $$
+The external applied force derives from the climber's body geometry. The COM is located at perpendicular distance $d_{COM}$ from the wall and vertically $h_{below}$ below the hold. The reaction force direction at the hold is:
+
+$$\hat{u} = \frac{1}{\sqrt{(d_{COM}\cos\beta)^2 + h_{below}^2}}
+\begin{pmatrix} d_{COM}\cos\beta \\ -h_{below} \\ 0 \end{pmatrix}$$
+
+where $\beta_{wall}$ is the wall angle from vertical. The full force vector is:
+$$\vec{F}_{ext} = F_{mag}\, \hat{u} + F_{lateral}\,\hat{z}$$
+
+> **Limitation**: On steep roofs ($\beta > 70°$), active body tension from core and hip flexors redirects the effective force vector and cannot be estimated without full-body kinematics. The above formula provides a lower-bound estimate of finger load on roofs.
+
+This force produces a reaction moment at each joint:
+$$\vec{M}_{ext, J} = (\vec{p}_{C,DP} - \vec{p}_J) \times \vec{F}_{DP} + (\vec{p}_{C,MP} - \vec{p}_J) \times \vec{F}_{MP}$$
 The sagittal plane bending moment is the projection of this general 3D moment onto the flexion axis ($\hat{z}_{local}$), and the abduction moment is projected onto the true abduction axis.
 
 ### 3.2 Muscular System Formulation
@@ -92,8 +131,10 @@ ma_{FDP,MCP} & ma_{FDS,MCP} & ma_{LU,MCP} & ma_{EDC,MCP}
 \end{pmatrix} 
 \begin{pmatrix} F_{FDP} \\ F_{FDS} \\ F_{LU} \\ F_{EDC} \end{pmatrix} $$
 
-For equilibrium, $ \vec{M}_{muscle} = \vec{M}_{ext\_required} $. 
+For equilibrium, $\vec{M}_{muscle} = \vec{M}_{ext\_required}$.
 To enforce the physiological reality that muscles can only pull ($F \ge 0$), the computational solver resolves this primarily by analyzing the 3 flexion moments.
+
+> **Note**: FDS has **zero moment arm at the DIP joint** ($ma_{FDS,DIP} = 0$). The FDS tendon inserts on the base of the middle phalanx (MP), not the distal phalanx (DP), and therefore cannot generate a flexion moment at the DIP. The DIP row of matrix $A$ therefore has entries only for FDP, LU, and EDC.
 
 ### 3.3 Solution Implementations
 

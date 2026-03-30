@@ -6,6 +6,7 @@ description: iterate physics
 
 The goal of the project is to create a simulation of finger biomechanics related to climbing and use the simulation to estimate the advantages and disadvantages of long vs short finger on different grip types.
 The project shall rely on scientific methods from physics, climbing, biomechanics and related fields.
+Remember, you're scientist, only results which are checked and agree with observation and theory could be accepted.
 
 # Iteration loop
 

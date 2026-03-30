@@ -119,6 +119,20 @@ class Config:
     # Hold depth (mm): how far the DP palmar surface is engaged from TIP toward DIP
     d_hold_mm     = 10.0
 
+    # ── Climber COM Geometry ─────────────────────────────────────
+    # Derives the 3D force vector from body geometry rather than a fixed wall
+    # angle. The angle is determined by:
+    #   h_below_hold_mm: vertical distance COM is BELOW the hold (mm)
+    #     ~0: hold at same height as COM (arms at side)
+    #     ~150: hold at shoulder level, COM near chin  (default, typical crimp)
+    #     ~600: hold high overhead
+    #   d_com_mm: perpendicular COm distance from wall surface (mm)
+    # Model valid for beta_wall <= ~50 deg. On roofs, unmodelled body tension
+    # (core/hip flexors) acts as a lower-bound estimate. See physics.md §3.1.
+    use_com_vectoring  = True
+    h_below_hold_mm    = 150.0   # COM vertical distance below hold (mm)
+    d_com_mm           = 300.0   # COM perpendicular distance from wall (mm)
+
     save_figures  = True
     output_prefix = "climbing_3d"
 
@@ -259,21 +273,31 @@ def kinematics_3d(grip, geom):
 # ─────────────────────────────────────────────────────────────
 
 def moment_arms(grip):
-    """Scalar moment arms (mm). Positive = flexion or radial abduction."""
-    tp, td = grip.theta_PIP, grip.theta_DIP
+    """Scalar moment arms (mm). Positive = flexion or radial abduction.
+    
+    FDP and FDS DIP/PIP moment arms: linear fit to An et al. 1983 Table 2.
+    FDP and FDS MCP moment arms: angle-dependent linear fit to An et al. 1983
+      Table 2 (values ~8-13 mm across 0-90 deg). Previous fixed values of 10.4
+      and 8.6 mm were mid-range approximations, introducing systematic error.
+    
+    Note: FDS has zero moment arm at DIP — it inserts on the MP (middle
+      phalanx), not the DP. The DIP row of the A matrix therefore has no FDS
+      column entry (documented explicitly to avoid reconstruction errors).
+    """
+    tp, td, tm = grip.theta_PIP, grip.theta_DIP, grip.theta_MCP
     return dict(
         FDP_DIP=max(6.0 + 0.045*np.clip(td,-30,90),  2.0),
         FDP_PIP=max(9.0 + 0.033*np.clip(tp,  0,120), 4.0),
-        FDP_MCP=10.4,
+        FDP_MCP=max(8.0 + 0.053*np.clip(tm,  0,90),  6.0),   # An et al. 1983
         FDS_PIP=max(7.5 + 0.020*np.clip(tp,  0,120), 3.0),
-        FDS_MCP=8.6,
+        FDS_MCP=max(6.8 + 0.036*np.clip(tm,  0,90),  5.0),   # An et al. 1983
         LU_DIP =-4.0,   # extends DIP
         LU_PIP =-5.0,   # extends PIP
         LU_MCP = 6.0,   # flexes MCP
         FDP_abd=-2.1,   # ulnar side
         FDS_abd=-1.5,
         LU_abd = 3.5,   # radial side
-        EDC_DIP=-4.0,   # extends DIP
+        EDC_DIP=-4.0,   # extends DIP (FDS_DIP=0: FDS inserts on MP, not DP)
         EDC_PIP=-6.0,   # extends PIP
         EDC_MCP=-10.0,  # extends MCP
         EDC_abd=0.0,    # assumed neutral
@@ -405,18 +429,40 @@ def compute_contact_point(grip, geom, contact: ContactGeometry, kin, F_mag: floa
 
 def contact_force_vector(F_mag: float, contact: ContactGeometry) -> np.ndarray:
     """
-    Build the 3D external force vector from wall angle and lateral load.
+    Build the 3D external force vector from body geometry or wall angle.
 
-    beta_wall = 0  -> F_ext = F_mag * x_hat   (horizontal, Vigouroux)
-    beta_wall = 45 -> combined
-    beta_wall = 90 -> F_ext = -F_mag * y_hat  (vertical down, roof)
+    COM mode (use_com_vectoring=True):
+        Direction derived from climber COM position relative to hold:
+            dx = d_com_mm * cos(beta)   (wall-normal offset)
+            dy = h_below_hold_mm        (vertical: COM below hold)
+        Reaction force at hold:
+            ux =  dx / norm  (into wall, positive x)
+            uy = -dy / norm  (downward, negative y)
+        On a vertical wall (beta=0) with default h=150mm, d=300mm:
+            angle = atan(150/300) = 26.6 deg below horizontal.
+        Model valid for beta_wall <= ~50 deg. On roofs, body tension
+        (core/hip flexors) is unmodelled — force is a lower-bound estimate.
 
-    Lateral component from Config.F_lateral_N is added along z.
+    Legacy mode (use_com_vectoring=False):
+        beta_wall = 0  -> F_ext = F_mag * x_hat   (horizontal, Vigouroux)
+        beta_wall = 45 -> combined
+        beta_wall = 90 -> F_ext = -F_mag * y_hat  (vertical down, roof)
+
+    Lateral component from Config.F_lateral_N is always added along z.
     """
     b = np.radians(contact.beta_wall)
-    return np.array([F_mag * np.cos(b),
-                     -F_mag * np.sin(b),
-                     Config.F_lateral_N])
+    if getattr(Config, 'use_com_vectoring', False):
+        dx = Config.d_com_mm * np.cos(b)      # wall-normal component
+        dy = Config.h_below_hold_mm            # COM below hold (positive = below)
+        norm = np.sqrt(dx**2 + dy**2)
+        ux =  dx / norm   # into wall (positive x)
+        uy = -dy / norm   # downward (negative y)
+        return np.array([F_mag * ux, F_mag * uy, Config.F_lateral_N])
+    else:
+        # Legacy: static beta angle
+        return np.array([F_mag * np.cos(b),
+                         -F_mag * np.sin(b),
+                         Config.F_lateral_N])
 
 
 def check_friction_feasibility(F_ext: np.ndarray,
@@ -528,10 +574,16 @@ def get_emg_ratio(r_base, d_eff, L_DP, L_MP):
 
 def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
                              F_ext: np.ndarray,
-                             contact: 'ContactGeometry') -> GripAngles:
+                             contact: 'ContactGeometry',
+                             pip0: float = None, dip0: float = None) -> GripAngles:
     """
     Find the finger posture (DIP, PIP angles) that minimises total tendon force
     for a given hold depth and grip type.
+
+    pip0, dip0: optional warm-start angles (deg). When provided (e.g. from the
+    previous depth in a sweep), the grid search is skipped in favour of a local
+    Nelder-Mead optimisation seeded from the warm-start. This enforces posture
+    continuity along the depth sweep and eliminates basin-hopping artefacts.
 
     Biological rationale:
       For a given grip constraint (hold depth and grip style), the nervous system
@@ -556,8 +608,8 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
       Schweizer A. (2001) J Biomechanics 34(2):217-223.
       Uno Y. et al. (1989) Biological Cybernetics 61(2):89-101.
     """
-    theta_PIP_0 = grip_base.theta_PIP
-    theta_DIP_0 = grip_base.theta_DIP
+    theta_PIP_0 = pip0 if pip0 is not None else grip_base.theta_PIP
+    theta_DIP_0 = dip0 if dip0 is not None else grip_base.theta_DIP
 
     def total_force_for_angles(pip, dip):
         g = GripAngles(grip_base.name, grip_base.theta_MCP, grip_base.phi_MCP,
@@ -619,23 +671,34 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
             
         return float(raw_total + penalty)
 
-    # ── 1. Grid search ───────────────────────────────────────────────
+    # ── 1. Grid search (skipped when warm-start provided) ────────────
     # Search over the entire biological range — do not restrict to grip base.
     # On steep walls/shallow holds, climbers are mechanically forced out of
     # open hand into steep crimps to avoid joint collapse (negative moments).
-    pip_grid = np.linspace(0.0, 110.0, 12)   # 12 points for PIP
-    dip_grid = np.linspace(-25.0, 90.0, 12)  # 12 points for DIP
+    pip_grid = np.linspace(0.0, 110.0, 16)   # 16 pts (~7 deg step)
+    dip_grid = np.linspace(-25.0, 90.0, 16)  # 16 pts (7.7 deg step)
     best_f   = np.inf
-
     best_pip, best_dip = theta_PIP_0, theta_DIP_0
-    for pip in pip_grid:
-        for dip in dip_grid:
-            try:
-                f = total_force_for_angles(pip, dip)
-                if f < best_f:
-                    best_f, best_pip, best_dip = f, pip, dip
-            except Exception:
-                pass
+
+    if pip0 is None:   # full grid search only without warm-start
+        for pip in pip_grid:
+            for dip in dip_grid:
+                try:
+                    f = total_force_for_angles(pip, dip)
+                    if f < best_f:
+                        best_f, best_pip, best_dip = f, pip, dip
+                except Exception:
+                    pass
+    else:
+        # Warm-start: evaluate a tight grid around the previous solution
+        for pip in np.linspace(theta_PIP_0 - 15.0, theta_PIP_0 + 15.0, 7):
+            for dip in np.linspace(theta_DIP_0 - 15.0, theta_DIP_0 + 15.0, 7):
+                try:
+                    f = total_force_for_angles(pip, dip)
+                    if f < best_f:
+                        best_f, best_pip, best_dip = f, pip, dip
+                except Exception:
+                    pass
 
     # ── 2. Local refinement ───────────────────────────────────────────
     try:
@@ -1216,7 +1279,7 @@ def run_simulation():
     # FIG 8 — Deep Hold Sweep: Equilibrium Posture × Phenotype
     #         The key figure for phenotype / genotype analysis
     # ════════════════════════════════════════════════════════════
-    d_sweep   = np.linspace(2.0, 45.0, 35)
+    d_sweep   = np.linspace(2.0, 45.0, 60)  # extended: 60 pts for smooth transitions
     L_DP_std  = geom_std.L3   # ~22 mm DP length threshold
 
     fig8, axes8 = plt.subplots(3, 1, figsize=(14, 16), sharex=True)
@@ -1234,11 +1297,16 @@ def run_simulation():
     for geom, gc, gl in zip(geoms, gcols, ['Short (−15%)', 'Standard', 'Long (+15%)']):
         fdp_eq, fds_eq, lu_eq, a2_eq = [], [], [], []
         pip_eq, dip_eq = [], []
+        prev_pip, prev_dip = None, None   # warm-start state per phenotype
         for d in d_sweep:
             ct = ContactGeometry(d_hold=d, r_edge=Config.r_edge_mm,
                                  t_DP=Config.t_DP_mm, mu=Config.mu_friction,
                                  beta_wall=Config.beta_wall_deg)
-            eq_grip = find_equilibrium_posture(base_grip, geom, F_ext, ct)
+            # Pass previous depth's posture as warm-start: enforces continuous
+            # posture trajectory and eliminates basin-hopping artefacts.
+            eq_grip = find_equilibrium_posture(base_grip, geom, F_ext, ct,
+                                              pip0=prev_pip, dip0=prev_dip)
+            prev_pip, prev_dip = eq_grip.theta_PIP, eq_grip.theta_DIP
             r = solve_all_methods(eq_grip, geom, F_ext, contact=ct)['emg']
             pf = pulley_forces_3d(r['F_FDP'], r['F_FDS'], r['kin'], geom)
             fdp_eq.append(r['F_FDP'])
