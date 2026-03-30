@@ -25,11 +25,17 @@ The rotation matrices of each phalanx relative to the global frame are:
 - $R_{PIP} = R_{MCP} R_{flex}(\theta_{PIP})$
 - $R_{DIP} = R_{PIP} R_{flex}(\theta_{DIP})$
 
-The 3D positions of the joint centers ($L_1, L_2, L_3$ represent $L_{PP}, L_{MP}, L_{DP}$):
+#### Instantaneous Centers of Rotation (ICR)
+Due to the cam-shape of articular human joints, the fulcrum point translates across the condyle during flexion rather than acting as a static rigid door hinge. An affine palmar translation vector $\vec{\delta}$ dynamically adjusts bone pivot length proportional to flexion depth:
+- $\vec{\delta}(\theta) = \left[ 0, -c_{max} \cdot \left(\frac{\theta}{90^\circ}\right), 0 \right]^T$
+
+The true 3D positions of the joint centers ($L_1, L_2, L_3$ represent $L_{PP}, L_{MP}, L_{DP}$) are modeled as:
 - $p_{MCP} = \vec{0}$
-- $p_{PIP} = p_{MCP} + R_{MCP} (L_1 \hat{e}_x)$
-- $p_{DIP} = p_{PIP} + R_{PIP} (L_2 \hat{e}_x)$
-- $p_{TIP} = p_{DIP} + R_{DIP} (L_3 \hat{e}_x)$
+- $p_{PIP} = p_{MCP} + R_{MCP} \left( L_1 \hat{e}_x + \vec{\delta}_{PIP} \right)$
+- $p_{DIP} = p_{PIP} + R_{PIP} \left( L_2 \hat{e}_x + \vec{\delta}_{DIP} \right)$
+- $p_{TIP} = p_{DIP} + R_{DIP} \left( L_3 \hat{e}_x \right)$
+
+This translation structurally reduces the effective external contact moment arm against the fingertip proportionally as the flexor angle increases inside a crimp, yielding a biologically accurate mechanical footprint not captured by purely rigid link definitions.
 
 ## 2. Distributed Contact Model
 

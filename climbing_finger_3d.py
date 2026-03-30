@@ -85,10 +85,16 @@ class Config:
     wrist_pos     = np.array([-50.0, 0.0, 0.0])   # mm
 
     # ── Capstan Pulley Properties ─────────────────────────────
+    use_capstan   = True
     mu_tendon     = 0.08   # tendon-sheath friction coefficient (Schweizer 2003)
     w_tendon_mm   = 4.0    # average flexor tendon width
     L_A2_mm       = 15.0   # A2 pulley band length
     L_A4_mm       = 8.0    # A4 pulley band length
+
+    # ── Instantaneous Centers of Rotation (ICR) ───────────────
+    use_icr_shifting   = True
+    icr_shift_max_PIP  = 2.0  # mm palmar translation at 90 deg flexion
+    icr_shift_max_DIP  = 1.5  # mm palmar translation at 90 deg flexion
 
     # ── Contact geometry defaults ─────────────────────────────
     # DP palmar-dorsal thickness: Butz et al. 2012 (adult male middle finger)
@@ -215,10 +221,23 @@ def kinematics_3d(grip, geom):
     R_PIP = R_MCP @ R_flex(grip.theta_PIP)
     R_DIP = R_PIP @ R_flex(grip.theta_DIP)
     ex    = np.array([1.,0.,0.])
+
+    # ── Instantaneous Centers of Rotation (ICR) Offsets ──
+    # Map the palmar translation based on the flexion angle normalized to 90 degrees.
+    shift_y_PIP = 0.0
+    shift_y_DIP = 0.0
+    if getattr(Config, 'use_icr_shifting', False):
+        shift_y_PIP = -Config.icr_shift_max_PIP * (grip.theta_PIP / 90.0)
+        shift_y_DIP = -Config.icr_shift_max_DIP * (grip.theta_DIP / 90.0)
+        
+    delta_PIP = np.array([0.0, shift_y_PIP, 0.0])
+    delta_DIP = np.array([0.0, shift_y_DIP, 0.0])
+
     p_MCP = np.zeros(3)
-    p_PIP = p_MCP + R_MCP @ (geom.L1 * ex)
-    p_DIP = p_PIP + R_PIP @ (geom.L2 * ex)
+    p_PIP = p_MCP + R_MCP @ (geom.L1 * ex + delta_PIP)
+    p_DIP = p_PIP + R_PIP @ (geom.L2 * ex + delta_DIP)
     p_TIP = p_DIP + R_DIP @ (geom.L3 * ex)
+
     return dict(p_MCP=p_MCP, p_PIP=p_PIP, p_DIP=p_DIP, p_TIP=p_TIP,
                 R_MCP=R_MCP, R_PIP=R_PIP, R_DIP=R_DIP,
                 flex_axis=np.array([0.,0.,1.]),
@@ -527,8 +546,8 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         
         # Apply Capstan friction mechanical advantage
         theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
-        C_A2 = np.exp(Config.mu_tendon * theta_A2)
-        C_A4 = np.exp(Config.mu_tendon * theta_A4)
+        C_A2 = np.exp(Config.mu_tendon * theta_A2) if getattr(Config, 'use_capstan', True) else 1.0
+        C_A4 = np.exp(Config.mu_tendon * theta_A4) if getattr(Config, 'use_capstan', True) else 1.0
         
         A3e = np.array([
             [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'], ma['EDC_DIP']],
@@ -663,8 +682,8 @@ def solve_all_methods(grip: GripAngles,
     
     # Capstan multipliers
     theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
-    C_A2 = np.exp(Config.mu_tendon * theta_A2)
-    C_A4 = np.exp(Config.mu_tendon * theta_A4)
+    C_A2 = np.exp(Config.mu_tendon * theta_A2) if getattr(Config, 'use_capstan', True) else 1.0
+    C_A4 = np.exp(Config.mu_tendon * theta_A4) if getattr(Config, 'use_capstan', True) else 1.0
 
     # Solve 3x3 system with nnls to enforce physiological bounds and recruit EDC if needed
     A3e = np.array([

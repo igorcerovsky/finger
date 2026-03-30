@@ -105,7 +105,7 @@ def run_comparison():
             # Our predicted fingertip force (reaction = -(tendon resultant along finger))
             # Newton-Euler: the fingertip reaction balances all tendon insertions
             # Here we compare total predicted muscle force with applied tendon magnitude
-            for method in ('emg', 'min_effort', 'direct'):
+            for method in ('emg', 'lu_min', 'direct'):
                 r = r_all[method]
                 pred_total = r['F_total']
                 pred_fdp   = r['F_FDP']
