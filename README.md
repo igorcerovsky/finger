@@ -4,7 +4,7 @@
 *(Figure 1: **3D Finger Kinematics Model**. Displays the spatial geometry of the four standard climbing grips. Red arrows represent the external contact force vector applied to the distal phalanx. Blue/green/orange spheres denote joint centers, and diamonds represent the A2 and A4 pulleys. This 3D visualization captures critical out-of-plane radial abduction that planar models miss.)*
 ## 1. Abstract
 
-The **3D Climbing Finger Biomechanics Model** is a full three-dimensional spatial analysis of human finger biomechanics during climbing. It provides a static equilibrium framework to evaluate deep flexor (FDP), superficial flexor (FDS), and lumbrical (LU) muscle forces across four climbing grips (crimp, half-crimp, open hand, pinch). Beyond traditional 2D planar models, this solver accounts for lateral wall friction, MCP radial abduction, out-of-plane pulley forces, 6-DOF joint reactions, and — uniquely — **distributed force contact over both the Distal Phalanx (DP) and Middle Phalanx (MP)** for deep holds exceeding the DP length.
+The **3D Climbing Finger Biomechanics Model** is a full three-dimensional spatial analysis of human finger biomechanics during climbing. It provides a static equilibrium framework to evaluate deep flexor (FDP), superficial flexor (FDS), and lumbrical (LU) muscle forces across three climbing grips (crimp, half-crimp, open hand). Beyond traditional 2D planar models, this solver accounts for lateral wall friction, MCP radial abduction, out-of-plane pulley forces, 6-DOF joint reactions, and — uniquely — **distributed force contact over both the Distal Phalanx (DP) and Middle Phalanx (MP)** for deep holds exceeding the DP length.
 
 The model is designed to answer hard questions about **phenotypic and genotypic climbing constraints**: how finger bone proportions, moment arm ratios, and pulley anatomy create measurable advantages or disadvantages across grip types and hold depths.
 
@@ -112,7 +112,7 @@ Run `python human_bonobo/compare_models.py` to compare predictions on overlappin
 
 ![3D Pulley Forces](outputs/climbing_3d_fig4.png)
 
-**Description:** A purely 3D phenomenon, this figure tracks the magnitude and vector components of the forces acting on the A2 and A4 pulleys during varying degrees of MCP radial abduction (e.g., side-pulling, gastoning, or wide pinches).
+**Description:** A purely 3D phenomenon, this figure tracks the magnitude and vector components of the forces acting on the A2 and A4 pulleys during varying degrees of MCP radial abduction (e.g., side-pulling or gastoning).
 **Scientific Significance:** Traditional 2D planar models assume all forces align symmetrically with the finger's sagittal plane. However, this 3D analysis reveals that radial abduction introduces severe lateral / mediolateral shearing forces directly on the flexor pulleys. This out-of-plane loading significantly increases the asymmetric stress on the pulley sheath, escalating the risk of microscopic tearing or catastrophic structural failure, and explaining why sideways, dynamic climbing moves are particularly injurious.
 
 ### 4.4 Mediolateral (ML) Joint Shear (Figure 5)
@@ -120,7 +120,7 @@ Run `python human_bonobo/compare_models.py` to compare predictions on overlappin
 ![6-DOF Joint Reactions](outputs/climbing_3d_fig5.png)
 
 **Description:** This figure presents the 6 Degrees-of-Freedom (6-DOF) joint reaction forces, specifically contrasting longitudinal joint compression (left) with Mediolateral (ML) shear forces (right) across the DIP, PIP, and MCP joints.
-**Scientific Significance:** ML shear is a critical metric for injury risk assessment in the joint collateral ligaments and capsules. High ML shear forces, particularly at the PIP joint during asymmetric grips (like wide pinches or half-crimps on sloped edges), lead to lateral joint impingement, capsulitis, and osteoarthritis over time. The 3D simulator successfully quantifies these off-axis forces which are entirely invisible to standard 2D analysis.
+**Scientific Significance:** ML shear is a critical metric for injury risk assessment in the joint collateral ligaments and capsules. High ML shear forces, particularly at the PIP joint during asymmetric grips (like half-crimps on sloped edges), lead to lateral joint impingement, capsulitis, and osteoarthritis over time. The 3D simulator successfully quantifies these off-axis forces which are entirely invisible to standard 2D analysis.
 
 ### 4.5 The Long Finger Disadvantage (Figure 6)
 

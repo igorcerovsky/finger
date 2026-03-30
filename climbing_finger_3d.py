@@ -79,7 +79,6 @@ class Config:
         'crimp':      1.75,
         'half_crimp': 1.20,
         'open_hand':  0.88,
-        'pinch':      1.50,
     }
 
     wrist_pos     = np.array([-50.0, 0.0, 0.0])   # mm
@@ -145,8 +144,7 @@ class GripAngles:
 GRIPS = {
     "crimp":      GripAngles("Crimp",      2.6,  5.0, 106.5, -22.6, "#E53935", 1.75),
     "half_crimp": GripAngles("Half-Crimp", 15.0, 5.0,  90.0,  10.0, "#FB8C00", 1.20),
-    "open_hand":  GripAngles("Open Hand",  21.0, 5.0,  25.9,  38.8, "#43A047", 0.88),
-    "pinch":      GripAngles("Pinch",      25.0, 10.0, 15.0,  10.0, "#8E24AA", 1.50),
+    "open_hand":  GripAngles("Open Hand",  20.0,  0.0, 30.0,  30.0, "#0277BD", 0.88),
 }
 
 @dataclass
@@ -880,7 +878,7 @@ def run_simulation():
     # ════════════════════════════════════════════════════════════
     # FIG 2 — Forces per grip × method × geometry
     # ════════════════════════════════════════════════════════════
-    fig2, axes2 = plt.subplots(3, 4, figsize=(20, 12))
+    fig2, axes2 = plt.subplots(3, 3, figsize=(20, 12))
     fig2.suptitle(f"Tendon Forces — 3 Methods  |  Load: {F_tip:.1f} N\n"
                   "Standard (solid) vs Long (hatch)", fontsize=13, fontweight='bold')
     muscles = ['FDP','FDS','LU']
@@ -903,14 +901,14 @@ def run_simulation():
             ax.set_title(f"{grip.name}\n{METHOD_LABELS[mname]}", fontsize=8,
                          fontweight='bold', color=grip.color)
             if col==0: ax.set_ylabel('Force (N)', fontsize=8)
-            if col==3 and row==0: ax.legend(fontsize=7)
+            if col==2 and row==0: ax.legend(fontsize=7)
     plt.tight_layout()
 
     # ════════════════════════════════════════════════════════════
     # FIG 3 — FDP & FDS vs PIP angle
     # ════════════════════════════════════════════════════════════
     pip_range = np.linspace(10, 130, 25)
-    fig3, axes3 = plt.subplots(2, 4, figsize=(20, 9))
+    fig3, axes3 = plt.subplots(2, 3, figsize=(20, 9))
     fig3.suptitle("FDP & FDS vs PIP Angle — 3 Methods & Finger Lengths", fontsize=13, fontweight='bold')
     for col, key in enumerate(GRIPS):
         grip = GRIPS[key]
@@ -924,12 +922,10 @@ def run_simulation():
                         # Crimp:     DIP hyperextended, fixed at -22.6°
                         # Half-crimp: DIP nearly straight, small coupling (~0.1)
                         # Open hand:  DIP follows PIP moderately (~0.5 ratio)
-                        # Pinch:      DIP nearly straight (~0.15 ratio)
                         dip_map = {
                             'crimp':      -22.6,
                             'half_crimp': pip * 0.10,
                             'open_hand':  pip * 0.50,
-                            'pinch':      pip * 0.15,
                         }
                         dip = dip_map.get(key, pip * 0.40)
                         g = GripAngles(grip.name, grip.theta_MCP, grip.phi_MCP,
@@ -952,7 +948,7 @@ def run_simulation():
     # FIG 4 — Pulley Forces vs MCP Abduction
     # ════════════════════════════════════════════════════════════
     phi_range = np.linspace(0, 20, 20)
-    fig4, axes4 = plt.subplots(2, 4, figsize=(20, 9))
+    fig4, axes4 = plt.subplots(2, 3, figsize=(20, 9))
     fig4.suptitle("3D Pulley Force vs MCP Abduction — Out-of-plane Component\n"
                   "Dashed = lateral (z) force; unique to 3D model",
                   fontsize=13, fontweight='bold')
@@ -976,13 +972,13 @@ def run_simulation():
             ax.set_xlabel('MCP Abduction (deg)', fontsize=8)
             if col==0: ax.set_ylabel(f'{pname} Force (N)', fontsize=8)
             ax.set_ylim(bottom=0); ax.grid(True, alpha=0.2)
-            if col==3 and row==0: ax.legend(fontsize=7)
+            if col==2 and row==0: ax.legend(fontsize=7)
     plt.tight_layout()
 
     # ════════════════════════════════════════════════════════════
     # FIG 5 — 6-DOF Joint Reactions
     # ════════════════════════════════════════════════════════════
-    fig5, axes5 = plt.subplots(2, 4, figsize=(20, 10))
+    fig5, axes5 = plt.subplots(2, 3, figsize=(20, 10))
     fig5.suptitle("6-DOF Joint Reaction Forces — Injury Risk Assessment\n"
                   "Standard finger, EMG method  |  Shear_ML = mediolateral (3D only)",
                   fontsize=13, fontweight='bold')
@@ -1054,7 +1050,7 @@ def run_simulation():
     #         The core long-finger disadvantage on small holds
     # ════════════════════════════════════════════════════════════
     d_range   = np.linspace(2.0, 45.0, 50)  # extended: covers DP + MP engagement
-    fig7, axes7 = plt.subplots(2, 4, figsize=(21, 11))
+    fig7, axes7 = plt.subplots(2, 3, figsize=(21, 11))
     fig7.suptitle(
         "Contact-Point Model: Forces vs Hold Depth (Static Baseline Grips)\n"
         f"Wall angle: 0° (Vertical benchmark)  |  "
@@ -1165,7 +1161,7 @@ def run_simulation():
                mpatches.Patch(color='#FFE0B2', alpha=0.5, label='Medium (8-15mm)'),
                mpatches.Patch(color='#C8E6C9', alpha=0.5, label='Large (15-22mm)'),
                mpatches.Patch(color='#E1BEE7', alpha=0.5, label='Deep/Jug (>22mm — MP engaged)')]
-    axes7[0, 3].legend(handles=g_lines + zone_p, fontsize=7, loc='upper right')
+    axes7[0, 2].legend(handles=g_lines + zone_p, fontsize=7, loc='upper right')
     plt.tight_layout()
 
     # ════════════════════════════════════════════════════════════
