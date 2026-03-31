@@ -668,37 +668,50 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         if float(pip) > 120.0: penalty += 1000.0 * (float(pip) - 120.0)**2
         if float(dip) < -25.0: penalty += 1000.0 * (float(dip) + 25.0)**2
         if float(dip) > 90.0:  penalty += 1000.0 * (float(dip) - 90.0)**2
+
+        # Grip-mode continuity: penalise leaving the grip's natural DIP regime.
+        # This prevents the optimizer jumping from open-hand into the crimp basin.
+        # Soft ceiling: 20 deg above the nominal grip DIP (open-hand: 30+20=50 deg max).
+        dip_max_grip = grip_base.theta_DIP + 20.0
+        if float(dip) > dip_max_grip:
+            penalty += 500.0 * (float(dip) - dip_max_grip)**2
             
         return float(raw_total + penalty)
 
-    # ── 1. Grid search (skipped when warm-start provided) ────────────
-    # Search over the entire biological range — do not restrict to grip base.
-    # On steep walls/shallow holds, climbers are mechanically forced out of
-    # open hand into steep crimps to avoid joint collapse (negative moments).
-    pip_grid = np.linspace(0.0, 110.0, 16)   # 16 pts (~7 deg step)
-    dip_grid = np.linspace(-25.0, 90.0, 16)  # 16 pts (7.7 deg step)
-    best_f   = np.inf
-    best_pip, best_dip = theta_PIP_0, theta_DIP_0
+    # ── 1. Grid search ─────────────────────────────────────────────────
+    # Always run a full coarse global grid to find the true global basin.
+    # Additionally, if a warm-start is provided (e.g. previous depth in a sweep),
+    # run a fine local grid around it. Take whichever gives the lower total force.
+    # This prevents warm-start from trapping the optimizer in a local minimum
+    # when a genuine posture-mode transition occurs between adjacent depths.
+    pip_grid_g = np.linspace(0.0, 110.0, 16)   # global: 16 pts (~7 deg step)
+    dip_grid_g = np.linspace(-25.0, 90.0, 16)
+    best_f_global, best_pip_g, best_dip_g = np.inf, theta_PIP_0, theta_DIP_0
 
-    if pip0 is None:   # full grid search only without warm-start
-        for pip in pip_grid:
-            for dip in dip_grid:
+    for pip in pip_grid_g:
+        for dip in dip_grid_g:
+            try:
+                f = total_force_for_angles(pip, dip)
+                if f < best_f_global:
+                    best_f_global, best_pip_g, best_dip_g = f, pip, dip
+            except Exception:
+                pass
+
+    best_pip, best_dip, best_f = best_pip_g, best_dip_g, best_f_global
+
+    # If warm-start provided, also search locally — take result only if it beats global
+    if pip0 is not None:
+        best_f_warm, best_pip_w, best_dip_w = np.inf, pip0, dip0
+        for pip in np.linspace(pip0 - 15.0, pip0 + 15.0, 9):
+            for dip in np.linspace(dip0 - 15.0, dip0 + 15.0, 9):
                 try:
                     f = total_force_for_angles(pip, dip)
-                    if f < best_f:
-                        best_f, best_pip, best_dip = f, pip, dip
+                    if f < best_f_warm:
+                        best_f_warm, best_pip_w, best_dip_w = f, pip, dip
                 except Exception:
                     pass
-    else:
-        # Warm-start: evaluate a tight grid around the previous solution
-        for pip in np.linspace(theta_PIP_0 - 15.0, theta_PIP_0 + 15.0, 7):
-            for dip in np.linspace(theta_DIP_0 - 15.0, theta_DIP_0 + 15.0, 7):
-                try:
-                    f = total_force_for_angles(pip, dip)
-                    if f < best_f:
-                        best_f, best_pip, best_dip = f, pip, dip
-                except Exception:
-                    pass
+        if best_f_warm < best_f:
+            best_pip, best_dip, best_f = best_pip_w, best_dip_w, best_f_warm
 
     # ── 2. Local refinement ───────────────────────────────────────────
     try:
