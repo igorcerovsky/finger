@@ -1289,125 +1289,142 @@ def run_simulation():
     plt.tight_layout()
 
     # ════════════════════════════════════════════════════════════
-    # FIG 8 — Deep Hold Sweep: Equilibrium Posture × Phenotype
-    #         The key figure for phenotype / genotype analysis
+    # FIG 8-10: grip depth sweeps — built by plot_grip_depth_sweep() below
     # ════════════════════════════════════════════════════════════
-    d_sweep   = np.linspace(2.0, 45.0, 60)  # extended: 60 pts for smooth transitions
-    L_DP_std  = geom_std.L3   # ~22 mm DP length threshold
 
-    fig8, axes8 = plt.subplots(3, 1, figsize=(14, 16), sharex=True)
-    fig8.suptitle(
-        "Deep Hold Biomechanics: Equilibrium Posture Sweep (Open Hand)\n"
-        "EMG-constrained solver  |  Equilibrium DIP/PIP posture at each depth  |  "
-        f"Load: {F_tip:.1f} N\n"
-        "Shading: Short (−15%) / Std / Long (+15%) finger phenotype\n"
-        "Refs: Crowninshield & Brand 1981; Vigouroux 2006; Schweizer 2001",
-        fontsize=12, fontweight='bold')
+    # ════════════════════════════════════════════════════════════
+    # FIG 8-10: Deep Hold Depth Sweep per grip type
+    # ════════════════════════════════════════════════════════════
 
-    ax8_force, ax8_ratio, ax8_pulley = axes8
-    base_grip = GRIPS['open_hand']
+    def plot_grip_depth_sweep(grip_key: str, d_max: float, fig_label: str):
+        """
+        3-panel depth-sweep figure (force / ratio / A2) for one grip type.
+        grip_key : key into GRIPS ('open_hand', 'crimp', 'half_crimp')
+        d_max    : hold depth upper limit (mm)
+        fig_label: title string
+        """
+        base_grip = GRIPS[grip_key]
+        d_sw      = np.linspace(2.0, d_max, 60)
+        L_DP_ref  = geom_std.L3
 
-    for geom, gc, gl in zip(geoms, gcols, ['Short (−15%)', 'Standard', 'Long (+15%)']):
-        fdp_eq, fds_eq, lu_eq, a2_eq = [], [], [], []
-        pip_eq, dip_eq = [], []
-        prev_pip, prev_dip = None, None   # warm-start state per phenotype
-        for d in d_sweep:
-            ct = ContactGeometry(d_hold=d, r_edge=Config.r_edge_mm,
-                                 t_DP=Config.t_DP_mm, mu=Config.mu_friction,
-                                 beta_wall=Config.beta_wall_deg)
-            # Pass previous depth's posture as warm-start: enforces continuous
-            # posture trajectory and eliminates basin-hopping artefacts.
-            eq_grip = find_equilibrium_posture(base_grip, geom, F_ext, ct,
-                                              pip0=prev_pip, dip0=prev_dip)
-            prev_pip, prev_dip = eq_grip.theta_PIP, eq_grip.theta_DIP
-            r = solve_all_methods(eq_grip, geom, F_ext, contact=ct)['emg']
-            pf = pulley_forces_3d(r['F_FDP'], r['F_FDS'], r['kin'], geom)
-            fdp_eq.append(r['F_FDP'])
-            fds_eq.append(r['F_FDS'])
-            lu_eq.append(r['F_LU'])
-            a2_eq.append(pf['F_A2_mag'])
-            pip_eq.append(eq_grip.theta_PIP)
-            dip_eq.append(eq_grip.theta_DIP)
+        fig, axes = plt.subplots(3, 1, figsize=(14, 16), sharex=True)
+        fig.suptitle(
+            f"Deep Hold Biomechanics: Equilibrium Posture Sweep ({fig_label})\n"
+            "EMG-constrained solver  |  equilibrium DIP/PIP at each depth  |  "
+            f"Load: {F_tip:.1f} N\n"
+            "Shading: Short (\u221215%) / Std / Long (+15%) finger phenotype\n"
+            "Refs: Crowninshield & Brand 1981; Vigouroux 2006; Schweizer 2001",
+            fontsize=12, fontweight='bold')
 
-        fdp_arr = np.array(fdp_eq)
-        fds_arr = np.array(fds_eq)
+        ax_f, ax_r, ax_p = axes
 
-        # Panel 1: FDP and FDS forces
-        ax8_force.plot(d_sweep, fdp_arr, '-',  color=gc, lw=2.5, label=f'{gl} FDP')
-        ax8_force.plot(d_sweep, fds_arr, '--', color=gc, lw=2.0, alpha=0.85, label=f'{gl} FDS')
+        for geom, gc, gl in zip(geoms, gcols, ['Short (\u221215%)', 'Standard', 'Long (+15%)']):
+            fdp_eq, fds_eq, a2_eq = [], [], []
+            prev_pip, prev_dip = None, None
+            for d in d_sw:
+                ct = ContactGeometry(d_hold=d, r_edge=Config.r_edge_mm,
+                                     t_DP=Config.t_DP_mm, mu=Config.mu_friction,
+                                     beta_wall=Config.beta_wall_deg)
+                eq_g = find_equilibrium_posture(base_grip, geom, F_ext, ct,
+                                                pip0=prev_pip, dip0=prev_dip)
+                prev_pip, prev_dip = eq_g.theta_PIP, eq_g.theta_DIP
+                r  = solve_all_methods(eq_g, geom, F_ext, contact=ct)['emg']
+                pf = pulley_forces_3d(r['F_FDP'], r['F_FDS'], r['kin'], geom)
+                fdp_eq.append(r['F_FDP'])
+                fds_eq.append(r['F_FDS'])
+                a2_eq.append(pf['F_A2_mag'])
 
-        # Crossover point
-        cross_idx = np.where(np.diff(np.sign(fdp_arr - fds_arr)))[0]
-        for ci in cross_idx:
-            d_cross = 0.5 * (d_sweep[ci] + d_sweep[ci+1])
-            ax8_force.axvline(d_cross, color=gc, ls=':', lw=1.0, alpha=0.55)
-            ax8_force.annotate(f'{gl[:3]} cross\n{d_cross:.1f}mm',
+            fdp_arr = np.array(fdp_eq)
+            fds_arr = np.array(fds_eq)
+
+            ax_f.plot(d_sw, fdp_arr, '-',  color=gc, lw=2.5, label=f'{gl} FDP')
+            ax_f.plot(d_sw, fds_arr, '--', color=gc, lw=2.0, alpha=0.85, label=f'{gl} FDS')
+
+            cross_idx = np.where(np.diff(np.sign(fdp_arr - fds_arr)))[0]
+            for ci in cross_idx:
+                d_cross = 0.5 * (d_sw[ci] + d_sw[ci+1])
+                ax_f.axvline(d_cross, color=gc, ls=':', lw=1.0, alpha=0.55)
+                ax_f.annotate(f'{gl[:3]}\n{d_cross:.1f}mm',
                                xy=(d_cross, 0.5*(fdp_arr[ci]+fds_arr[ci])),
                                fontsize=7, color=gc, ha='center')
 
-        # Panel 2: FDP/FDS ratio
-        with np.errstate(divide='ignore', invalid='ignore'):
-            ratio_arr = np.where(fds_arr > 1.0, fdp_arr / fds_arr, np.nan)
-        ax8_ratio.plot(d_sweep, ratio_arr, '-', color=gc, lw=2.5, label=gl)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                ratio_arr = np.where(fds_arr > 1.0, fdp_arr / fds_arr, np.nan)
+            ax_r.plot(d_sw, ratio_arr, '-', color=gc, lw=2.5, label=gl)
+            ax_p.plot(d_sw, a2_eq, '-', color=gc, lw=2.5, label=gl)
 
-        # Panel 3: A2 pulley load
-        ax8_pulley.plot(d_sweep, a2_eq, '-', color=gc, lw=2.5, label=gl)
+        ax_r.axhline(1.75, color='#E53935', ls='--', lw=1.5, alpha=0.7, label='Crimp 1.75 (Vigouroux)')
+        ax_r.axhline(1.20, color='#FB8C00', ls='--', lw=1.2, alpha=0.7, label='Half-crimp 1.20')
+        ax_r.axhline(0.88, color='#43A047', ls='--', lw=1.5, alpha=0.7, label='Open-hand 0.88')
+        ax_r.axhline(1.00, color='k',       ls=':',  lw=1.0, alpha=0.6, label='FDP = FDS')
+        ax_p.axhline(300,  color='#B71C1C', ls='--', lw=2.0, label='A2 failure ~300N (Schweizer 2001)')
 
-    # FDP/FDS EMG reference lines (Vigouroux 2006)
-    ax8_ratio.axhline(1.75, color='#E53935', ls='--', lw=1.5, alpha=0.7, label='Crimp 1.75 (Vigouroux 2006)')
-    ax8_ratio.axhline(1.20, color='#FB8C00', ls='--', lw=1.2, alpha=0.7, label='Half-crimp 1.20')
-    ax8_ratio.axhline(0.88, color='#43A047', ls='--', lw=1.5, alpha=0.7, label='Slope/deep 0.88 (Vigouroux 2006)')
-    ax8_ratio.axhline(1.00, color='k',       ls=':',  lw=1.0, alpha=0.6, label='FDS = FDP crossover')
+        for ax in axes:
+            if d_max > L_DP_ref:
+                ax.axvspan(L_DP_ref, d_max, color='#E1BEE7', alpha=0.18, zorder=0,
+                           label='MP engaged' if ax is ax_f else None)
+                ax.axvline(L_DP_ref, color='#6A1B9A', ls='--', lw=1.8,
+                           label=f'L_DP={L_DP_ref:.0f}mm' if ax is ax_f else None)
+            ax.axvspan(d_sw[0],        min(8,       d_max), color='#FFCDD2', alpha=0.15, zorder=0)
+            ax.axvspan(min(8, d_max),  min(15,      d_max), color='#FFE0B2', alpha=0.15, zorder=0)
+            ax.axvspan(min(15, d_max), min(L_DP_ref,d_max), color='#C8E6C9', alpha=0.12, zorder=0)
+            ax.grid(True, alpha=0.25)
 
-    # A2 injury threshold (Schweizer 2001)
-    ax8_pulley.axhline(300, color='#B71C1C', ls='--', lw=2.0, label='A2 failure ~300N (Schweizer 2001)')
+        ax_f.set_ylabel('Tendon Force (N)', fontsize=11)
+        ax_f.set_ylim(bottom=0)
+        ax_f.set_title('A) FDP (solid) vs FDS (dashed) — Equilibrium Posture, Min-Effort Solver',
+                       fontsize=10, fontweight='bold')
+        ax_f.legend(fontsize=8, ncol=2, loc='upper right')
 
-    # DP length marker on all panels
-    for ax in axes8:
-        ax.axvspan(L_DP_std, d_sweep[-1], color='#E1BEE7', alpha=0.18, zorder=0,
-                   label='MP engaged (deep hold)' if ax == ax8_force else None)
-        ax.axvline(L_DP_std, color='#6A1B9A', ls='--', lw=1.8,
-                   label=f'L_DP = {L_DP_std:.0f}mm' if ax == ax8_force else None)
-        ax.axvspan(d_sweep[0], 8,  color='#FFCDD2', alpha=0.15, zorder=0)
-        ax.axvspan(8,          15, color='#FFE0B2', alpha=0.15, zorder=0)
-        ax.axvspan(15, L_DP_std,  color='#C8E6C9', alpha=0.12, zorder=0)
-        ax.grid(True, alpha=0.25)
+        ax_r.set_ylabel('FDP / FDS Force Ratio', fontsize=11)
+        ax_r.set_ylim(0, 3.0)
+        ax_r.set_title('B) FDP:FDS Ratio vs Hold Depth — Phenotype Comparison',
+                       fontsize=10, fontweight='bold')
+        ax_r.legend(fontsize=8, ncol=2, loc='upper right')
 
-    ax8_force.set_ylabel('Tendon Force (N)', fontsize=11)
-    ax8_force.set_ylim(bottom=0)
-    ax8_force.set_title('A) FDP (solid) vs FDS (dashed) Force — Equilibrium Posture, Min-Effort Solver',
-                        fontsize=10, fontweight='bold')
-    ax8_force.legend(fontsize=8, ncol=2, loc='upper right')
+        ax_p.set_ylabel('A2 Pulley Force (N)', fontsize=11)
+        ax_p.set_ylim(bottom=0)
+        ax_p.set_title('C) A2 Pulley Load — Injury Risk Assessment',
+                       fontsize=10, fontweight='bold')
+        ax_p.set_xlabel('Hold Depth d_hold (mm)', fontsize=11)
+        ax_p.legend(fontsize=8, ncol=2, loc='upper right')
 
-    ax8_ratio.set_ylabel('FDP / FDS Force Ratio', fontsize=11)
-    ax8_ratio.set_ylim(0, 2.5)
-    ax8_ratio.set_title('B) FDP:FDS Ratio vs Hold Depth — Phenotype Comparison',
-                        fontsize=10, fontweight='bold')
-    ax8_ratio.legend(fontsize=8, ncol=2, loc='upper right')
+        grip_notes = {
+            'open_hand': (
+                'Short finger (\u221215%):\n'
+                '  \u2192 Earlier FDS dominance on deep/jug holds\n'
+                '  \u2192 Lower A2 pulley stress at depth\n'
+                'Long finger (+15%):\n'
+                '  \u2192 Higher FDP demand across all depths\n'
+                '  \u2192 Greater A2 pulley injury risk\n'
+                '  \u2192 Disadvantage scales with depth'),
+            'crimp': (
+                'Short finger (\u221215%):\n'
+                '  \u2192 Lower FDP on shallow crimps (<15mm)\n'
+                '  \u2192 Shared EDC co-contraction cost at DIP limit\n'
+                'Long finger (+15%):\n'
+                '  \u2192 Higher FDP & A2 load across all crimp depths\n'
+                '  \u2192 Greater passive EDC stiffness cost'),
+            'half_crimp': (
+                'Short finger (\u221215%):\n'
+                '  \u2192 Lower total tendon load on medium holds\n'
+                '  \u2192 Better FDP/FDS balance at depth\n'
+                'Long finger (+15%):\n'
+                '  \u2192 Higher FDP demand\n'
+                '  \u2192 FDS crosses FDP earlier on deep holds'),
+        }
+        ax_r.text(0.72 * d_max, 2.9, grip_notes.get(grip_key, ''),
+                  fontsize=8, verticalalignment='top',
+                  bbox=dict(boxstyle='round,pad=0.5', facecolor='#FFF9C4',
+                            alpha=0.85, edgecolor='#F57F17'))
+        plt.tight_layout()
+        return fig
 
-    ax8_pulley.set_ylabel('A2 Pulley Force (N)', fontsize=11)
-    ax8_pulley.set_ylim(bottom=0)
-    ax8_pulley.set_title('C) A2 Pulley Load — Injury Risk Assessment',
-                         fontsize=10, fontweight='bold')
-    ax8_pulley.set_xlabel('Hold Depth d_hold (mm)', fontsize=11)
-    ax8_pulley.legend(fontsize=8, ncol=2, loc='upper right')
+    fig8  = plot_grip_depth_sweep('open_hand',  d_max=45.0, fig_label='Open Hand')
+    fig9  = plot_grip_depth_sweep('crimp',      d_max=22.0, fig_label='Full Crimp')
+    fig10 = plot_grip_depth_sweep('half_crimp', d_max=35.0, fig_label='Half Crimp')
 
-    # Phenotype annotation box
-    ax8_ratio.text(23, 2.3,
-        'Short finger (−15% bone length):\n'
-        '  → Earlier FDS dominance on deep holds\n'
-        '  → Lower A2 pulley stress\n'
-        '  → Advantage on open-hand / jug grips\n'
-        'Long finger (+15% bone length):\n'
-        '  → Higher FDP demand on all holds\n'
-        '  → Greater A2 pulley risk at any depth\n'
-        '  → Disadvantage scales with hold depth',
-        fontsize=8, verticalalignment='top',
-        bbox=dict(boxstyle='round,pad=0.5', facecolor='#FFF9C4', alpha=0.85, edgecolor='#F57F17'))
-
-    plt.tight_layout()
-
-    return (fig1, fig2, fig3, fig4, fig5, fig6, fig7, fig8), all_res, jreact, geoms, F_tip
+    return (fig1, fig2, fig3, fig4, fig5, fig6, fig7, fig8, fig9, fig10), all_res, jreact, geoms, F_tip
 
 
 # ─────────────────────────────────────────────────────────────
