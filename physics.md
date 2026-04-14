@@ -156,6 +156,23 @@ $$ F_{EDC,min} = 1.5 \cdot e^{22.6/25} \approx 3.7\ \mathrm{N} $$
 
 This antagonist force opposes the net flexor torque, requiring the FDP/FDS system to produce additional effort to maintain equilibrium. The physiological consequence is an increased total tension demand in the Crimp posture versus postures where the DIP is not hyperextended, accurately modeling the known metabolic cost of the full crimp grip.
 
+### 3.5 EMG Ratio Interpolation and the Correct Depth Variable
+
+The FDP:FDS ratio $r_{emg}$ transitions between the grip-specific value and the open-hand baseline as the hold loads progressively more of the MP:
+
+$$r_{emg}(d_{hold}) = \mathrm{interp}\!\left(d_{hold},\;
+[0,\; L_{DP},\; L_{DP}+\tfrac{1}{2}L_{MP},\; L_{DP}+L_{MP}],\;
+[r_{base},\; r_{base},\; 0.45\,r_{base},\; 0.20\,r_{base}]\right)$$
+
+**Critical distinction:** the independent variable is the **raw geometric hold depth** $d_{hold}$ (mm), *not* the arc-length centroid position $d_{eff}$.
+
+$d_{eff}$ is an internal quantity computed in `compute_contact_point` as the engaged arc length along the palmar surface, corrected for phalanx inclination angle. In a crimp posture (DIP ≈ −25°), $d_{eff}$ substantially overestimates the physiological load-sharing frontier because it incorporates:
+
+1. A rounded-edge correction $r_{edge}|\hat{e}_{DP}\cdot\hat{n}_{hold}|$ that increases with wall-parallel phalanx orientation.
+2. A projection ratio $1/\cos\alpha_{DP}$ that amplifies depth when the DP is nearly tangent to the wall.
+
+Using $d_{eff}$ in the interpolation incorrectly triggers the deep-hold FDS-surge regime at shallow crimp depths (as short as $d_{hold} = 11\,\text{mm}$), reducing the computed ratio from 1.75 to ≈ 1.33 — a 24% error. Using $d_{hold}$ directly as the interpolation variable yields the correct physiological sequence: ratio = $r_{base}$ throughout the DP-only regime, transitioning to the open-hand value only when the hold genuinely engages the MP ($d_{hold} > L_{DP}$).
+
 ## 4. Posture Optimization
 
 The biological system dynamically adopts joint angles (PIP, DIP) that minimize total tendon tension.

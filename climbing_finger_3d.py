@@ -555,17 +555,27 @@ def get_min_EDC_force(dip_deg: float) -> float:
     return float(val)
 
 
-def get_emg_ratio(r_base, d_eff, L_DP, L_MP):
+def get_emg_ratio(r_base, d_hold, L_DP, L_MP):
     """
-    Interpolate the FDP/FDS ratio based on hold depth relative to finger anatomy.
-    When load moves past the DP (d_hold > L_DP), FDP demand drops and FDS must surge.
+    Interpolate FDP/FDS ratio from the **raw geometric hold depth** (d_hold, mm)
+    relative to finger anatomy.
+
+    When load moves past the DP (d_hold > L_DP), the DP-bypassing MP force removes
+    the DIP flexion moment — so FDP demand drops and FDS must surge.
+
+    NOTE: The input must be contact.d_hold (the actual edge depth), NOT d_eff
+    (the arc-length centroid position). d_eff is inflated by angle projection
+    and pulley geometry, making it unsuitable as a physiological load-sharing index.
+
+    xs = [0, L_DP, L_DP+0.5*L_MP, L_DP+L_MP] (hold depth breakpoints)
+    ys = [r_base, r_base, 0.45*r_base, 0.20*r_base]
     """
-    if d_eff is None:
+    if d_hold is None:
         return r_base
     
     xs = [0.0, L_DP, L_DP + 0.5*L_MP, L_DP + 1.0*L_MP]
     ys = [r_base, r_base, 0.45*r_base, 0.20*r_base]
-    return float(np.interp(d_eff, xs, ys))
+    return float(np.interp(d_hold, xs, ys))
 
 
 # ─────────────────────────────────────────────────────────────
@@ -627,7 +637,7 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         # We explicitly enforce physiological extensor limits 
         # protecting against solver collapse on severe hyperextensions
         from scipy.optimize import lsq_linear
-        r_emg = get_emg_ratio(grip_base.emg_ratio, d_eff, geom.L3, geom.L2)
+        r_emg = get_emg_ratio(grip_base.emg_ratio, contact.d_hold, geom.L3, geom.L2)
         
         # Apply Capstan friction mechanical advantage
         theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
@@ -756,7 +766,7 @@ def solve_all_methods(grip: GripAngles,
         
         p_C_DP, p_C_MP, F_DP, F_MP, d_eff, s_from_DIP = compute_contact_point(grip, geom, contact, kin, F_mag_total)
         feas = check_friction_feasibility(F_ext_dir * F_mag_total, contact, kin) 
-        c_info = {'d_eff': d_eff} # For get_emg_ratio
+        c_info = {'d_hold': contact.d_hold}   # raw depth for EMG ratio interpolation
     else:
         F_ext_dir  = F_ext / (np.linalg.norm(F_ext)+1e-9)
         F_DP       = float(np.linalg.norm(F_ext))
@@ -766,7 +776,7 @@ def solve_all_methods(grip: GripAngles,
         d_eff      = None
         s_from_DIP = None
         feas       = None
-        c_info     = {'d_eff': None}
+        c_info     = {'d_hold': None}
 
     ext = external_moments(kin, F_ext_dir, grip, p_contact_DP=p_C_DP, p_contact_MP=p_C_MP, F_mag_DP=F_DP, F_mag_MP=F_MP)
 
@@ -794,7 +804,7 @@ def solve_all_methods(grip: GripAngles,
     # Method 2: EMG-constrained (Vigouroux 2006) + EDC
     # ─────────────────────────────────────────────────────────────
     from scipy.optimize import lsq_linear
-    r_emg = get_emg_ratio(grip.emg_ratio, c_info['d_eff'] if contact else None, geom.L3, geom.L2)
+    r_emg = get_emg_ratio(grip.emg_ratio, c_info['d_hold'] if contact else None, geom.L3, geom.L2)
     
     # Capstan multipliers
     theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)

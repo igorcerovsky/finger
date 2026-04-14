@@ -1,80 +1,106 @@
-# Code Review: Iteration 7 — COM Force Vectoring + Angle-Dependent MCP Moment Arms
+# Code Review: Iteration 8 — EMG Ratio Variable Fix + Grip Depth Sweeps
 
-## Objective
+## Summary
 
-Two fixes bundled: (1) replace the static `beta_wall_deg` force direction with a geometrically-derived vector from the climber's COM position, and (2) make the MCP flexor moment arms angle-dependent as reported by An et al. 1983.
+Iteration 8 contains two deliverables:
 
----
-
-## Changes Verified
-
-### Part A: COM Force Vectoring
-
-#### `Config` additions
-```python
-use_com_vectoring  = True
-h_below_hold_mm    = 150.0  # COM below hold (mm)
-d_com_mm           = 300.0  # COM distance from wall (mm)
-```
-
-#### `contact_force_vector()` refactor
-- When `use_com_vectoring=True`: derives direction from $[d_{COM}\cos\beta,\ -h_{below},\ 0]$, normalised.
-- When `False`: legacy static $[\cos\beta,\ -\sin\beta,\ 0]$ — exactly matches previous output.
-
-**Bug found and fixed during implementation**: Initial default `h_hold_mm=1500` (intended as hold above feet) caused the force vector to point nearly vertically (78–82°) instead of physically reasonable ~27° for a vertical wall crimp. Root cause: the model coordinate origin is at the MCP joint, not the feet — so the relevant height is COM relative to **hold**, not feet. Corrected parameter renamed to `h_below_hold_mm=150` mm (shoulder-height hold, COM at chin level), giving 26.6° below horizontal on a vertical wall — physically accurate for a typical crimp.
-
-**Verification** (vertical wall, default params):
-```
-ux = 300*cos(0) / sqrt(300²+150²) = 0.894  (into wall)
-uy = -150 / sqrt(300²+150²) = -0.447        (downward)
-angle = arctan(150/300) = 26.6 deg below horizontal ✅
-```
-
-**Roof limit** (beta=90°): `dx=0`, force = `[0, -1, 0]` — pure downward. ✅
-
-#### Regression test
-Ran with `use_com_vectoring=False` and confirmed identical output to pre-iteration baseline.
-
-### Part B: Angle-Dependent MCP Moment Arms
-
-Replaced in `moment_arms()`:
-```python
-# Before:
-FDP_MCP = 10.4   # fixed
-FDS_MCP = 8.6    # fixed
-
-# After:
-FDP_MCP = max(8.0 + 0.053 * clip(theta_MCP, 0, 90), 6.0)
-FDS_MCP = max(6.8 + 0.036 * clip(theta_MCP, 0, 90), 5.0)
-```
-
-Impact at key postures:
-| Grip | θ_MCP | Old FDP_MCP | New FDP_MCP | Δ |
-|------|-------|-------------|-------------|---|
-| Crimp | 2.6° | 10.4 mm | 8.1 mm | −22% |
-| Half-Crimp | 15.0° | 10.4 mm | 8.8 mm | −15% |
-| Open Hand | 20.0° | 10.4 mm | 9.1 mm | −13% |
-
-The previous 10.4 mm was systematically *overestimating* MCP moment at all 3 grips, causing the solver to underestimate the FDP required per unit MCP moment. The corrected values reduce this bias.
+1. **Bug Fix** — `get_emg_ratio()` receives `d_hold` (raw hold depth) instead of `d_eff`
+   (arc-length centroid). This is a correctness fix with no physics model change.
+2. **Feature** — Per-grip depth-sweep figures (Figs 9 and 10) for Full Crimp and Half Crimp,
+   using a shared `plot_grip_depth_sweep()` helper refactored from the old Fig 8 code.
 
 ---
 
-## Simulation Results (70 kg, 10 mm, 45° wall, COM defaults)
+## Bug Fix: `get_emg_ratio` incorrect variable
 
-| Grip | Method | F_FDP | F_FDS | F_LU | F_EDC | Total | Ratio |
-|------|--------|-------|-------|------|-------|-------|-------|
-| **Crimp** | EMG | 358.8 | 205.0 | 111.8 | 13.6 | 689.1 | 1.75 |
-| Half-Crimp | EMG | 360.5 | 300.4 | 184.9 | 0.0 | 845.8 | 1.20 |
-| Open Hand | EMG | 210.0 | 238.6 | 8.8 | 0.0 | 457.4 | 0.88 |
+### Root cause
 
-- EMG ratios are exactly on target (1.75, 1.20, 0.88) ✅
-- EDC fires only for Crimp ✅
-- All 8 figures generated without errors ✅
-- Total force magnitudes changed significantly from previous baseline — primarily due to the COM model rotating the force vector 26° below horizontal (vs. 45° in the previous default). This is a **physically more realistic** configuration, not a regression.
+`compute_contact_point` returns two quantities:
 
-## Open Issues
+| Variable | Meaning |
+|----------|---------|
+| `d_hold` | Raw geometric hold depth (mm) — what the climber grips |
+| `d_eff` | Arc-length centroid of pressure distribution along palmar surface |
 
-- `h_below_hold_mm` is scenario-dependent (different for a high reach vs. a low traverse). Users should tune it to their scenario. The default of 150 mm represents a typical crimp at shoulder level.
-- Body tension on roofs remains unmodelled (documented in `physics.md §3.1`).
+In a **crimp posture** (DIP ≈ −25°, PIP ≈ 120°), the DP is nearly parallel to the wall
+surface. The angle-projection formula amplifies `d_eff` relative to `d_hold`:
 
-**Status: APPROVED**
+```
+d_eff = proj_d_hold / cos_alpha3
+      = (d_hold + r_edge·|dot(e_DP, n_hold)|) / cos_alpha3
+```
+
+At crimp with `cos_alpha3 ≈ 0.4` and `r_edge = 2 mm`:
+
+```
+d_hold = 11 mm → proj_d_hold ≈ 12 mm → max_d_hold_DP ≈ 22 × 0.4 = 8.8 mm
+```
+
+So at `d_hold = 11 mm` the deep-hold code path is triggered, setting
+`d_eff = L_DP + engaged_MP = 22 + 6 = 28 mm`. The interpolation
+`get_emg_ratio(r_base=1.75, d_eff=28, L_DP=22)` then returned **1.33** — a 24% error.
+
+### Fix
+
+```python
+# Before (wrong):
+r_emg = get_emg_ratio(grip_base.emg_ratio, d_eff, geom.L3, geom.L2)
+c_info = {'d_eff': d_eff}
+r_emg = get_emg_ratio(grip.emg_ratio, c_info['d_eff'] if contact else None, ...)
+
+# After (correct):
+r_emg = get_emg_ratio(grip_base.emg_ratio, contact.d_hold, geom.L3, geom.L2)
+c_info = {'d_hold': contact.d_hold}
+r_emg = get_emg_ratio(grip.emg_ratio, c_info['d_hold'] if contact else None, ...)
+```
+
+Also updated function signature: `get_emg_ratio(r_base, d_hold, ...)`.
+
+### Verification
+
+```
+CRIMP ratio at d_hold=12mm:  was 1.327 → now 1.750  ✓
+CRIMP ratio at d_hold=22mm:  was 1.108 → now 1.750  ✓  (DP-only regime)
+CRIMP ratio at d_hold=28mm:  1.337                   ✓  (MP engaged, transition)
+CRIMP ratio at d_hold=35mm:  0.856                   ✓  (FDS dominates)
+OPEN HAND at d_hold=10mm:    0.880                   ✓  (no regression)
+Main table (contact=None):   all ratios unchanged    ✓  (code path unaffected)
+```
+
+---
+
+## Feature: Grip Depth Sweeps Figs 9 and 10
+
+### Design
+
+Old inline Fig 8 code (~120 lines) replaced with `plot_grip_depth_sweep()` helper:
+
+```python
+fig8  = plot_grip_depth_sweep('open_hand',  d_max=45.0, fig_label='Open Hand')
+fig9  = plot_grip_depth_sweep('crimp',      d_max=22.0, fig_label='Full Crimp')
+fig10 = plot_grip_depth_sweep('half_crimp', d_max=35.0, fig_label='Half Crimp')
+```
+
+Crimp capped at 22 mm (= L_DP): beyond this the crimp posture degrades into open-hand
+geometry — a full-crimp hold deeper than the DP is anatomically inconsistent.
+
+Each figure: 3 panels (force / FDP:FDS ratio / A2 pulley load), 3 phenotypes
+(Short −15% / Standard / Long +15%), warm-start depth continuation, global grid fallback.
+
+### Grip-mode DIP ceiling
+
+A soft DIP ceiling of `grip_base.theta_DIP + 20°` prevents the optimizer from jumping
+from open-hand into the crimp basin during a sweep. For crimp (nominal DIP = −25°),
+the ceiling = −5°, which correctly blocks the optimizer from flipping to high-DIP postures
+while sweeping crimp hold depths.
+
+---
+
+## Files Changed
+
+- `climbing_finger_3d.py` — `get_emg_ratio()`, `find_equilibrium_posture()` inner solver,
+  `solve_all_methods()`, Fig 8 refactored to helper, Figs 9–10 added
+- `physics.md` — §3.5 added (EMG ratio variable derivation)
+- `README.md` — Figure count updated (8→10), Discussion entries added for Iter 8
+
+**Status: APPROVED — all 10 figures generated, EMG ratios verified**
