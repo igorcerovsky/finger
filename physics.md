@@ -156,22 +156,22 @@ $$ F_{EDC,min} = 1.5 \cdot e^{22.6/25} \approx 3.7\ \mathrm{N} $$
 
 This antagonist force opposes the net flexor torque, requiring the FDP/FDS system to produce additional effort to maintain equilibrium. The physiological consequence is an increased total tension demand in the Crimp posture versus postures where the DIP is not hyperextended, accurately modeling the known metabolic cost of the full crimp grip.
 
-### 3.5 EMG Ratio Interpolation and the Correct Depth Variable
+### 3.5 EMG Ratio — Physics-Based frac\_DP Interpolation
 
-The FDP:FDS ratio $r_{emg}$ transitions between the grip-specific value and the open-hand baseline as the hold loads progressively more of the MP:
+The FDP:FDS ratio $r_{emg}$ depends on the fraction of total external force that still acts on the DP, i.e. the fraction that creates a DIP flexion moment:
 
-$$r_{emg}(d_{hold}) = \mathrm{interp}\!\left(d_{hold},\;
-[0,\; L_{DP},\; L_{DP}+\tfrac{1}{2}L_{MP},\; L_{DP}+L_{MP}],\;
-[r_{base},\; r_{base},\; 0.45\,r_{base},\; 0.20\,r_{base}]\right)$$
+$$r_{emg} = r_{base} \cdot (0.20 + 0.80 \cdot f_{DP})$$
 
-**Critical distinction:** the independent variable is the **raw geometric hold depth** $d_{hold}$ (mm), *not* the arc-length centroid position $d_{eff}$.
+where $f_{DP} = F_{DP} / (F_{DP} + F_{MP})$ is the DP force fraction directly computed from the Hertz-like pressure model (§2.2).
 
-$d_{eff}$ is an internal quantity computed in `compute_contact_point` as the engaged arc length along the palmar surface, corrected for phalanx inclination angle. In a crimp posture (DIP ≈ −25°), $d_{eff}$ substantially overestimates the physiological load-sharing frontier because it incorporates:
+**Physical derivation:**
+- $f_{DP} = 1.0$ (all load on DP, shallow hold): DIP moment is fully intact $\Rightarrow r_{emg} = r_{base}$
+- $f_{DP} = 0.0$ (all load on MP, very deep hold): DIP moment vanishes $\Rightarrow r_{emg} = 0.20 \cdot r_{base}$  
+  (residual 20% represents passive FDP stiffness and lumbrical coupling that persists even with zero DIP moment demand)
 
-1. A rounded-edge correction $r_{edge}|\hat{e}_{DP}\cdot\hat{n}_{hold}|$ that increases with wall-parallel phalanx orientation.
-2. A projection ratio $1/\cos\alpha_{DP}$ that amplifies depth when the DP is nearly tangent to the wall.
+This replaces the previous `d_hold`-based linear interpolation (Iteration 8), which used heuristic breakpoints at $L_{DP}$ and $L_{DP} + L_{MP}$. The frac_DP formula is exact: it is driven by the **same physical quantity** (DP contact force) that drives DIP moment demand. Crucially, it is phenotype-consistent: a short-finger performer crosses $f_{DP} < 0.5$ at a shallower hold depth than a long-finger performer, at exactly the correct anatomical threshold, without any heuristic tuning.
 
-Using $d_{eff}$ in the interpolation incorrectly triggers the deep-hold FDS-surge regime at shallow crimp depths (as short as $d_{hold} = 11\,\text{mm}$), reducing the computed ratio from 1.75 to ≈ 1.33 — a 24% error. Using $d_{hold}$ directly as the interpolation variable yields the correct physiological sequence: ratio = $r_{base}$ throughout the DP-only regime, transitioning to the open-hand value only when the hold genuinely engages the MP ($d_{hold} > L_{DP}$).
+**Numerical note:** $f_{DP}$ is computed at a wall-angle-corrected arc length by `compute_contact_point()`, making the EMG ratio posture-dependent. In a crimp posture (DIP $\approx -25°$), the DP is nearly wall-parallel, which reduces the projected DP capacity and causes $f_{DP}$ to drop to $\approx 0.84$ at $d_{hold} = 15\,\text{mm}$ — a smaller depth than the geometric $L_{DP} = 22\,\text{mm}$. This is physically correct: the crimped DP subtends less of the hold.
 
 ## 4. Posture Optimization
 

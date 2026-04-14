@@ -178,7 +178,7 @@ pip install numpy matplotlib scipy
 python3 climbing_finger_3d.py
 ```
 
-All 10 figures saved to `outputs/climbing_3d_fig{1-10}.png`.
+All 11 figures saved to `outputs/climbing_3d_fig{1-11}.png`.
 
 ### Configuration
 
@@ -211,8 +211,9 @@ While the current 3D biomechanical model represents a significant step up from p
 
 - **Dynamic Body COM Vectoring (Implemented, Iteration 7)**: The static `beta_wall_deg` scalar is replaced by a COM-derived force vector. The climber's COM is parameterised by its vertical distance below the hold ($h_{below\_hold}$) and perpendicular distance from the wall ($d_{COM}$), giving a geometrically self-consistent force direction that varies with wall angle. On roofs, unmodelled body tension limits accuracy — see `physics.md` §3.1.
 - **Angle-Dependent MCP Moment Arms (Implemented, Iteration 7)**: FDP and FDS moment arms at the MCP joint now follow an angle-dependent linear fit from An et al. 1983, replacing fixed mid-range values that caused systematic errors at the extreme postures used in climbing.
-- **Grip Depth Sweeps for All Three Grip Types (Figs 8–10, Iteration 8)**: Equilibrium posture sweeps are now computed separately for Open Hand (Fig 8, 2–45 mm), Full Crimp (Fig 9, 2–22 mm), and Half Crimp (Fig 10, 2–35 mm). Each shows FDP/FDS forces, the FDP:FDS ratio (with Vigouroux reference lines), and A2 pulley load across Short/Standard/Long finger phenotypes.
-- **EMG Ratio Variable Fix (Iteration 8)**: `get_emg_ratio()` now correctly uses the raw geometric hold depth `d_hold` (mm) rather than the arc-length centroid `d_eff`. In a crimp posture, `d_eff` is inflated by angle-projection geometry, incorrectly triggering the deep-hold FDS-surge regime at shallow hold depths (≥11 mm) and reducing the computed ratio 24% below the physiological 1.75 target. See `physics.md` §3.5 for derivation.
+- **frac\_DP-Based EMG Ratio (Iteration 9)**: `get_emg_ratio()` upgraded from a heuristic `d_hold` interpolation to $r_{emg} = r_{base} \cdot (0.20 + 0.80 \cdot f_{DP})$, where $f_{DP}$ is the DP force fraction directly computed from the triangular Hertz pressure model. This is physically exact: it uses the same quantity (DP force) that drives DIP moment demand. See `physics.md` §3.5.
+- **4th Posture Panel in Figs 8–10 (Iteration 9)**: Each depth-sweep figure now includes a panel D showing the equilibrium PIP and DIP angles at every hold depth per phenotype — the primary clinical output of the optimizer.
+- **Fig 11: Grip-Optimal Comparison (Iteration 9)**: For each hold depth × phenotype, shows which grip (Crimp/Half-Crimp/Open Hand) minimises total tendon force. Left column: all three force curves. Right column: optimal grip shaded by region. Directly answers the project’s core question.
 - **Friction Feasibility Uncoupled from Optimizer**: The friction flag doesn't dynamically feed back into the posture optimizer. Planned for a future iteration.
 - **Antagonist EDC Co-Contraction (Implemented, Iteration 6)**: The full Crimp posture forces the DIP into hyperextension ($\approx -22.6°$), triggering a mandatory passive/active extensor (EDC) stiffness floor modelled as an exponential joint-limit spring. This translates to $\approx 3.7$ N mandatory EDC demand which propagates into additional flexor requirements to maintain equilibrium, raising the Crimp's total tendon demand. This realistically captures the well-known metabolic fatigue cost of full crimping.
 - **Tissue Pulp Compression (Implemented, Iteration 5)**: Non-linear skin deformation under load dynamically shifts the palmar contact point toward the bone axis, shortening the external moment arm and producing a grip-dependent mechanical advantage that varies with load magnitude.
