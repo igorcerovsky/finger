@@ -687,7 +687,21 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         dip_max_grip = grip_base.theta_DIP + 20.0
         if float(dip) > dip_max_grip:
             penalty += 500.0 * (float(dip) - dip_max_grip)**2
-            
+
+        # Friction feasibility: soft penalty when friction cone is approached/violated.
+        # ratio = |F_friction| / (mu * F_normal):  ratio > 1 → slip (physically impossible).
+        # Penalty activates above 0.8 (10% safety margin) and stiffens past 1.0.
+        # Scale: 200 N^2 per unit ratio squared — comparable to the residual error term
+        # but not so stiff that it overrides the primary force minimisation.
+        try:
+            feas = check_friction_feasibility(F_ext_dir * F_mag, contact, kin)
+            fr = float(feas.get('friction_ratio', 0.0))
+            if fr > 0.8:
+                k_fr = 200.0 if fr <= 1.0 else 2000.0   # stiffen past cone violation
+                penalty += k_fr * (fr - 0.8) ** 2
+        except Exception:
+            pass   # never let friction check crash the optimizer
+
         return float(raw_total + penalty)
 
     # ── 1. Grid search ─────────────────────────────────────────────────

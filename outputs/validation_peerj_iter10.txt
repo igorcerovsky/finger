@@ -1,0 +1,67 @@
+================================================================================
+  VALIDATION: Our 3D Model vs PeerJ 7470 Cadaver Measurements
+  Postures: MinorFlex / MajorFlex / HyperExt / Hook
+================================================================================
+
+Posture      Load   Method      Applied(N)      FDP     FDS    Total   Ratio
+--------------------------------------------------------------------------------
+MinorFlex    low    emg         4.9            12.4    10.3     39.0    1.20
+MinorFlex    low    lu_min      4.9            11.4     9.5     21.0    1.20
+MinorFlex    low    direct      4.9            15.9     8.9     37.4    1.78
+
+MinorFlex    high   emg         15.6           39.1    32.6    123.5    1.20
+MinorFlex    high   lu_min      15.6           36.2    30.2     66.4    1.20
+MinorFlex    high   direct      15.6           50.3    28.2    118.5    1.78
+
+MajorFlex    low    emg         4.9            12.1    10.1     39.2    1.20
+MajorFlex    low    lu_min      4.9            11.4     9.5     20.8    1.20
+MajorFlex    low    direct      4.9            16.6     6.8     37.5    2.46
+
+MajorFlex    high   emg         15.6           38.3    31.9    124.0    1.20
+MajorFlex    high   lu_min      15.6           36.0    30.0     66.0    1.20
+MajorFlex    high   direct      15.6           52.7    21.4    118.7    2.46
+
+HyperExt     low    emg         4.9             7.8     4.5     12.5    1.75
+HyperExt     low    lu_min      4.9             7.8     4.5     12.5    1.75
+HyperExt     low    direct      4.9             9.8     3.9     13.7    2.51
+
+HyperExt     high   emg         15.6           24.7    14.1     39.4    1.75
+HyperExt     high   lu_min      15.6           24.7    14.1     39.4    1.75
+HyperExt     high   direct      15.6           31.0    12.4     43.4    2.51
+
+Hook         low    emg         4.9            10.1     8.4     28.2    1.20
+Hook         low    lu_min      4.9             9.2     7.7     16.9    1.20
+Hook         low    direct      4.9            12.9     8.6     27.4    1.50
+
+Hook         high   emg         15.6           32.0    26.7     89.3    1.20
+Hook         high   lu_min      15.6           29.1    24.3     53.4    1.20
+Hook         high   direct      15.6           40.8    27.2     86.6    1.50
+
+================================================================================
+  KEY: HyperExt posture (DIP=45°, PIP=50°, MCP=-20°) ≈ crimp hyperextension
+  PeerJ EMG reference: FDP/FDS_crimp = 1.75 (Vigouroux 2006)
+
+  emg         : FDP=7.8N  FDS=4.5N  ratio=1.75  ← EMG reference
+  lu_min      : FDP=7.8N  FDS=4.5N  ratio=1.75
+  direct      : FDP=9.8N  FDS=3.9N  ratio=2.51
+  emg         : FDP=24.7N  FDS=14.1N  ratio=1.75  ← EMG reference
+  lu_min      : FDP=24.7N  FDS=14.1N  ratio=1.75
+  direct      : FDP=31.0N  FDS=12.4N  ratio=2.51
+
+  MinorFlex posture (DIP=35°, PIP=55°, MCP=40°) ≈ half-crimp
+  emg         : FDP=12.4N  FDS=10.3N  ratio=1.20  ← EMG reference
+  lu_min      : FDP=11.4N  FDS=9.5N  ratio=1.20
+  direct      : FDP=15.9N  FDS=8.9N  ratio=1.78
+  emg         : FDP=39.1N  FDS=32.6N  ratio=1.20  ← EMG reference
+  lu_min      : FDP=36.2N  FDS=30.2N  ratio=1.20
+  direct      : FDP=50.3N  FDS=28.2N  ratio=1.78
+
+  Interpretation:
+  - EMG method uses measured FDP/FDS ratio from Vigouroux 2006 (physiological reference)
+  - min-effort (NNLS 4×3) distributes forces to minimise ||F||² with x≥0
+    across DIP/PIP/MCP flexion + MCP abduction constraints simultaneously
+  - direct (3×3) gives algebraic exact solution ignoring abduction;
+    can produce FDS≈0 for HyperExt/crimp (DIP hyperextension artifact)
+  - PeerJ Fingermodel.py validated against cadaver force plates in these
+    exact postures — use it as ground-truth reference for moment arm tuning
+================================================================================
