@@ -136,27 +136,32 @@ Run `python human_bonobo/compare_models.py` to compare predictions on overlappin
 **Description:** This figure models the forces on the FDP (solid lines) and FDS (dashed lines) tendons as the climbing hold depth increases from 2 mm (micro-crimp) to 45 mm (deep jug). The lower charts highlight the percentage difference in force required between long and short finger phenotypes.
 **Scientific Significance:** The >170% spike at ~40.6mm depth represents a highly realistic "phase transition" boundary in finger biomechanics. As hold depth increases beyond the length of the Distal Phalanx (DP), the Middle Phalanx (MP) rests on the hold and begins to bear load directly through the A3 pulley. At ~40.6mm, the short finger has *fully engaged* its MP, allowing the load to completely bypass the DIP joint and dropping FDP force to an absolute minimum baseline. At that exact same depth, a long finger has only engaged *half* of its MP, still requiring massive FDP tension to stabilize the DIP joint. This exquisitely visualizes why climbers with different skeletal anatomy feel vastly different mechanical difficulty on the exact same hold.
 
-### 4.7 Deep Hold Phenotype Analysis (Figure 8 — Key Result)
+### 4.7 Deep Hold Phenotype Analysis (Figs 8–10 — Key Result)
 
-**The central figure for phenotype/genotype research.** Sweeps hold depth from 2 to 45 mm at equilibrium posture, using the **EMG-constrained solver**, comparing Short (−15%), Standard, and Long (+15%) finger phenotypes:
+**The central figures for phenotype/genotype research.** Three per-grip depth sweeps — Fig 8: Open Hand 2–45 mm, Fig 9: Full Crimp 2–22 mm, Fig 10: Half-Crimp 2–35 mm — each with 4 panels:
 
-- **Panel A:** FDP vs FDS forces — crossover marked per phenotype
-- **Panel B:** FDP/FDS ratio with Vigouroux 2006 reference lines (crimp 1.75, slope 0.88)
-- **Panel C:** A2 pulley load vs hold depth (Schweizer 2001 failure threshold ~300 N)
+- **Panel A:** FDP vs FDS forces — crossover annotated per phenotype where present
+- **Panel B:** FDP/FDS ratio with Vigouroux 2006 reference lines
+- **Panel C:** A2 pulley load vs hold depth (Schweizer failure threshold ~300 N)
+- **Panel D:** Equilibrium PIP and DIP angles — optimizer posture output
 
 ![Deep Hold Phenotype Analysis](outputs/climbing_3d_fig8.png)
 
-**Key findings:**
+**Key findings (Iteration 11 — frac\_DP EMG model):**
 
-1. **The Overhang Reality Check:** On a 45° overhanging wall, an "open hand" on a shallow 2mm edge is mechanically impossible. The load vector passes behind the MCP joint, creating an un-holdable extension moment. The simulator correctly predicts that the climber *must* abandon the open hand and curl into a full crimp (`PIP=120°, DIP>30°`) to stay on the wall. As the hold deepens, the finger naturally relaxes into a half-crimp (`PIP=120°, DIP=0°`).
-2. **Dynamic Depth-Dependent FDP/FDS Shift:** The model incorporates a dynamic anatomical interpolation for the FDP/FDS ratio. As hold depth exceeds the Distal Phalanx (DP) length, the force naturally distributes onto the Middle Phalanx (MP). Mechanically, the DIP moment requirement drops relative to PIP and MCP. The simulator smoothly interpolates the Vigouroux base ratio down as depth increases, perfectly predicting the physiological truth: FDS takes over as the prime mover on large jugs. Crucially, the interpolation nodes are anchored to the bone lengths (`L_DP`, `L_MP`), meaning short vs long phenotypes natively trigger the FDS response at the correct biological thresholds.
-3. **Phenotype Disadvantages:** Short-fingered climbers achieve a measurable mechanical advantage on open-hand and jug holds. Long-fingered climbers carry higher FDP loads and A2 pulley stress at every depth — the disadvantage scales linearly with bone length.
+1. **Open Hand: FDS dominates across all depths.** Because the Open Hand EMG baseline ratio is 0.88 (< 1.0), FDS exceeds FDP from the very shallowest hold. There is **no FDP/FDS crossover** in open-hand posture — FDS is the prime mover regardless of depth. This matches Vigouroux (2006) slope-grip EMG data exactly.
 
-| Phenotype | FDP/FDS crossover depth | Clinical implication |
-|-----------|------------------------|----------------------|
-| Short finger (−15%) | Earlier (~19 mm) | FDS dominance sooner; lower A2 risk on open-hand holds |
-| Standard | ~22 mm (= L_DP) | Baseline |
-| Long finger (+15%) | Later (~25 mm) | Higher FDP demand; greater A2 pulley risk across all depths |
+2. **Half-Crimp: crossover only at hold depth well beyond L\_DP.** With r_base = 1.20, FDP leads FDS at shallow depths. As the hold deepens and frac\_DP drops, the ratio decreases through 1.0:
+
+| Phenotype | Half-Crimp crossover | L\_DP | Clinical implication |
+|-----------|---------------------|--------|----------------------|
+| Short (−15%) | **26.3 mm** | 18.7 mm | FDS dominance ~7 mm past DP boundary |
+| Standard | **31.9 mm** | 22.0 mm | Crossover well into MP-engagement zone |
+| Long (+15%) | **No crossover** (≤35 mm) | 25.3 mm | FDP maintains dominance; higher A2 injury risk |
+
+3. **Full Crimp: FDP dominant throughout.** With r_base = 1.75, crossover would require frac\_DP ≈ 0.46 — not reached within the physiological crimp range (≤ L\_DP = 22 mm). FDP is always the dominant tendon in full crimp.
+
+4. **Phenotype self-consistency:** The frac\_DP formula is phenotype-aware without hard-coded corrections. A short finger crosses frac\_DP thresholds at smaller absolute depths because its L\_DP is smaller — so relative depth d/L\_DP governs the transition, not absolute depth.
 
 ### 4.8 EMG Validation vs Biological Reality
 

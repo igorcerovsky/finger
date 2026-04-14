@@ -1460,7 +1460,7 @@ def run_simulation():
         return fig
 
     fig8  = plot_grip_depth_sweep('open_hand',  d_max=45.0, fig_label='Open Hand')
-    fig9  = plot_grip_depth_sweep('crimp',      d_max=22.0, fig_label='Full Crimp')
+    fig9  = plot_grip_depth_sweep('crimp',      d_max=30.0, fig_label='Full Crimp')
     fig10 = plot_grip_depth_sweep('half_crimp', d_max=35.0, fig_label='Half Crimp')
 
     # ════════════════════════════════════════════════════════════
