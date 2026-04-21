@@ -228,16 +228,32 @@ The model is validated against the Vigouroux et al. (2019) cadaver tendon-loadin
 | HyperExt | 45°/50°/−20° | Full crimp | 1.75 |
 | Hook | 50°/65°/0° | Hook grip | 1.20 |
 
-**Iteration 10 results** (EMG-constrained method, `outputs/validation_peerj_iter10.txt`):
+### 7.1 Iteration 13 improvements
 
-| Posture | FDP/FDS ratio | Match |
-|---|---|---|
-| HyperExt | 1.75 | ✓ exact (Vigouroux crimp) |
-| MinorFlex | 1.20 | ✓ exact (Vigouroux half-crimp) |
-| MajorFlex | 1.20 | ✓ exact |
-| Hook | 1.20 | ✓ exact |
+Two corrections to the validation methodology:
 
-The EMG ratio constraint reproduces the Vigouroux reference exactly by construction. The direct solver (3×3) shows elevated FDP/FDS in HyperExt (2.51) and MajorFlex (2.46), consistent with the known DIP-hyperextension artifact where FDS approaches zero when the FDS moment arm at the DIP is zero.
+1. **Posture-dependent external force direction**: The fingertip reaction force is now oriented perpendicular to the DP pad (normal to the palmar surface), rather than always along +x. The force direction angle (measured from +x in sagittal plane) is:
+   - HyperExt: 15° (force directed slightly dorsally — MCP hyperextension tips the DP)
+   - MinorFlex: −40° (force directed palmarly — significant total flexion)
+   - Hook: −25°, MajorFlex: −47°
 
-**Force magnitude note**: The comparison script sets external load to total applied tendon force from PeerJ (FDP_applied + FDS_applied), then asks our model to balance it. This approximates the PeerJ cadaver fixture (where known tendon forces drive fingertip reaction) but is not an exact load-matching — therefore absolute force magnitudes are not directly comparable. The operationally validated quantities are the FDP/FDS ratios and the qualitative force ordering across postures.
+2. **PeerJ-exact geometry**: The comparison geometry now uses the PeerJ segment ratios directly (`segRatios` from `peerj_model.py`), yielding PP=47.0mm, MP=28.8mm, DP=19.0mm instead of the previous approximate scaling.
+
+### 7.2 Results (EMG-constrained method)
+
+| Posture | FDP/FDS ratio | F_dir (°) | Direct ratio | Match |
+|---|---|---|---|---|
+| HyperExt | 1.75 | 15° | 1.58 | ✓ exact |
+| MinorFlex | 1.20 | −40° | 1.49 | ✓ exact |
+| MajorFlex | 1.20 | −47° | 1.70 | ✓ exact |
+| Hook | 1.20 | −25° | 1.28 | ✓ exact |
+
+The EMG ratio constraint reproduces the Vigouroux reference exactly by construction. The direct solver (3×3) now shows more moderate FDP/FDS elevation in HyperExt (1.58 vs 2.51 in Iter 10) because the posture-dependent force direction distributes the external moment more evenly across DIP/PIP joints. This is a validation that the force direction correction improves the unconstrained solver's behaviour.
+
+### 7.3 Limitations
+
+**Force magnitude**: The external load magnitude is set to the total applied tendon force (FDP + FDS), which overestimates the true fingertip reaction force. The cadaver fixture applies known tendon forces and measures the resulting fingertip reaction, which is typically 30–60% of the tendon sum depending on the mechanical advantage of the finger configuration. Absolute force magnitudes in the validation table are therefore upper bounds. For exact absolute force validation, the cadaver force plate CSV data from the PeerJ repository would be needed.
+
+**Full T_mus matrix**: Our model uses simplified moment arms (3-DOF per joint) while the PeerJ model uses optimized path points with 6 muscles × 4 DOF, including extensor mechanism ratios. The T_mus matrix differences affect absolute force predictions but not the FDP/FDS ratio (which is set by the EMG constraint).
+
 

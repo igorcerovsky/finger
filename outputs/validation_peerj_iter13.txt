@@ -1,0 +1,77 @@
+mkdir -p failed for path /Users/igorcerovsky/.matplotlib: [Errno 1] Operation not permitted: '/Users/igorcerovsky/.matplotlib'
+Matplotlib created a temporary cache directory at /var/folders/t_/tzxm6p192rv7znh616mbyhxw0000gn/T/matplotlib-f_pl3vgs because there was an issue with the default path (/Users/igorcerovsky/.matplotlib); it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+
+Fontconfig error: No writable cache directories
+	/opt/homebrew/var/cache/fontconfig
+	/Users/igorcerovsky/.cache/fontconfig
+	/Users/igorcerovsky/.fontconfig
+Matplotlib is building the font cache; this may take a moment.
+================================================================================
+  VALIDATION: Our 3D Model vs PeerJ 7470 Cadaver Measurements
+  Postures: MinorFlex / MajorFlex / HyperExt / Hook
+  Geometry: PP=47.0mm  MP=28.8mm  DP=19.0mm
+================================================================================
+
+Posture      Load   Method      Applied(N)  F_dir(°)      FDP     FDS    Total   Ratio
+------------------------------------------------------------------------------------------
+MinorFlex    low    emg         4.9         -40.0       10.9     9.0     25.2    1.20
+MinorFlex    low    lu_min      4.9         -40.0       10.6     8.8     19.4    1.20
+MinorFlex    low    direct      4.9         -40.0       13.2     8.9     23.8    1.49
+
+MinorFlex    high   emg         15.6        -40.0       34.4    28.6     79.9    1.20
+MinorFlex    high   lu_min      15.6        -40.0       33.4    27.9     61.3    1.20
+MinorFlex    high   direct      15.6        -40.0       41.9    28.2     75.4    1.49
+
+MajorFlex    low    emg         4.9         -47.0       12.0    10.0     28.8    1.20
+MajorFlex    low    lu_min      4.9         -47.0       11.7     9.7     21.4    1.20
+MajorFlex    low    direct      4.9         -47.0       15.0     8.8     27.1    1.70
+
+MajorFlex    high   emg         15.6        -47.0       37.9    31.5     91.3    1.20
+MajorFlex    high   lu_min      15.6        -47.0       36.9    30.8     67.7    1.20
+MajorFlex    high   direct      15.6        -47.0       47.5    28.0     86.0    1.70
+
+HyperExt     low    emg         4.9         15.0        14.0     8.0     36.7    1.75
+HyperExt     low    lu_min      4.9         15.0        10.9     6.3     17.2    1.75
+HyperExt     low    direct      4.9         15.0        13.2     8.4     24.7    1.58
+
+HyperExt     high   emg         15.6        15.0        44.5    25.4    116.3    1.75
+HyperExt     high   lu_min      15.6        15.0        34.6    19.8     54.4    1.75
+HyperExt     high   direct      15.6        15.0        41.8    26.5     78.3    1.58
+
+Hook         low    emg         4.9         -25.0        8.4     7.0     17.2    1.20
+Hook         low    lu_min      4.9         -25.0        8.4     7.0     17.2    1.20
+Hook         low    direct      4.9         -25.0        9.2     7.2     16.4    1.28
+
+Hook         high   emg         15.6        -25.0       26.6    22.2     54.4    1.20
+Hook         high   lu_min      15.6        -25.0       26.6    22.2     54.4    1.20
+Hook         high   direct      15.6        -25.0       29.2    22.7     51.9    1.28
+
+==========================================================================================
+  KEY: HyperExt posture (DIP=45°, PIP=50°, MCP=-20°) ≈ crimp hyperextension
+  PeerJ EMG reference: FDP/FDS_crimp = 1.75 (Vigouroux 2006)
+
+  emg         : FDP=14.0N  FDS=8.0N  ratio=1.75  F_dir=15°  ← EMG reference
+  lu_min      : FDP=10.9N  FDS=6.3N  ratio=1.75  F_dir=15°
+  direct      : FDP=13.2N  FDS=8.4N  ratio=1.58  F_dir=15°
+  emg         : FDP=44.5N  FDS=25.4N  ratio=1.75  F_dir=15°  ← EMG reference
+  lu_min      : FDP=34.6N  FDS=19.8N  ratio=1.75  F_dir=15°
+  direct      : FDP=41.8N  FDS=26.5N  ratio=1.58  F_dir=15°
+
+  MinorFlex posture (DIP=35°, PIP=55°, MCP=40°) ≈ half-crimp
+  emg         : FDP=10.9N  FDS=9.0N  ratio=1.20  F_dir=-40°  ← EMG reference
+  lu_min      : FDP=10.6N  FDS=8.8N  ratio=1.20  F_dir=-40°
+  direct      : FDP=13.2N  FDS=8.9N  ratio=1.49  F_dir=-40°
+  emg         : FDP=34.4N  FDS=28.6N  ratio=1.20  F_dir=-40°  ← EMG reference
+  lu_min      : FDP=33.4N  FDS=27.9N  ratio=1.20  F_dir=-40°
+  direct      : FDP=41.9N  FDS=28.2N  ratio=1.49  F_dir=-40°
+
+  Interpretation (Iteration 13):
+  - F_ext direction is now posture-dependent (perpendicular to DP pad)
+    HyperExt: F_dir = 15° (was 0° in Iter 10)
+    MinorFlex: F_dir = -40° (was 0° in Iter 10)
+  - F_ext magnitude still uses total tendon force as upper-bound proxy
+    (true fingertip reaction ≈ 30-60% of tendon sum, posture-dependent)
+  - EMG method reproduces Vigouroux 2006 ratios exactly by construction
+  - Direct method FDP/FDS elevated in HyperExt (DIP hyperext artifact)
+  - For absolute force validation, cadaver force plate CSVs are needed
+==========================================================================================
