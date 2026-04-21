@@ -1515,13 +1515,19 @@ def run_simulation():
 
         # Plot optimal region as colored background bands
         prev_gk, seg_start = opt_grip_arr[0], 0
+        transition_depths = []   # (depth, from_grip, to_grip) for annotation
         for i in range(1, len(d_cmp) + 1):
             cur_gk = opt_grip_arr[i] if i < len(d_cmp) else None
             if cur_gk != prev_gk:
-                ax_opt.axvspan(d_cmp[seg_start], d_cmp[i-1],
+                d_seg_end = d_cmp[i-1]
+                ax_opt.axvspan(d_cmp[seg_start], d_seg_end,
                                color=grip_color[prev_gk], alpha=0.30,
                                label=grip_label[prev_gk] if seg_start == 0 or
                                opt_grip_arr[seg_start-1] != prev_gk else '')
+                # Record transition point
+                if cur_gk is not None:
+                    d_trans = 0.5 * (d_cmp[i-1] + d_cmp[i]) if i < len(d_cmp) else d_cmp[-1]
+                    transition_depths.append((d_trans, prev_gk, cur_gk))
                 seg_start = i
                 prev_gk = cur_gk
 
@@ -1530,13 +1536,27 @@ def run_simulation():
             ax_opt.plot(d_cmp, all_forces[gk], '--', color=grip_color[gk],
                         lw=1.2, alpha=0.55, label=grip_label[gk])
 
+        # Annotate grip transitions with vertical lines + text
+        for (d_tr, gk_from, gk_to) in transition_depths:
+            ax_opt.axvline(d_tr, color='#333333', ls=':', lw=1.5, alpha=0.7)
+            y_ann = ax_opt.get_ylim()[1] if ax_opt.get_ylim()[1] > 0 else 600
+            ax_opt.annotate(
+                f'{grip_label[gk_from][:1]}\u2192{grip_label[gk_to][:1]}\n{d_tr:.0f}mm',
+                xy=(d_tr, min_force_arr[np.argmin(np.abs(d_cmp - d_tr))]),
+                xytext=(d_tr + 0.8, min_force_arr[np.argmin(np.abs(d_cmp - d_tr))] * 0.85),
+                fontsize=8, color='#333333', ha='left',
+                bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.7,
+                          edgecolor='#333333', lw=0.8))
+
+        # Phenotype-specific L_DP line (NOT geom_std — each row gets its own geom)
+        L_DP_this = geom.L3
         for ax in [ax_tot, ax_opt]:
             ax.set_ylabel('Total Tendon Force (N)', fontsize=10)
             ax.set_ylim(bottom=0)
             ax.grid(True, alpha=0.25)
-            if d_cmp[-1] > geom_std.L3:
-                ax.axvline(geom_std.L3, color='#6A1B9A', ls='--', lw=1.5,
-                           label=f'L_DP={geom_std.L3:.0f}mm' if row == 0 else None)
+            if d_cmp[-1] > L_DP_this:
+                ax.axvline(L_DP_this, color='#6A1B9A', ls='--', lw=1.5,
+                           label=f'L_DP={L_DP_this:.0f}mm ({glabel})')
             ax.legend(fontsize=8, loc='upper right')
 
     for col in range(2):
