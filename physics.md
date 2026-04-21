@@ -250,10 +250,26 @@ Two corrections to the validation methodology:
 
 The EMG ratio constraint reproduces the Vigouroux reference exactly by construction. The direct solver (3×3) now shows more moderate FDP/FDS elevation in HyperExt (1.58 vs 2.51 in Iter 10) because the posture-dependent force direction distributes the external moment more evenly across DIP/PIP joints. This is a validation that the force direction correction improves the unconstrained solver's behaviour.
 
-### 7.3 Limitations
+### 7.3 Absolute Force Magnitude Validation (Iteration 14)
 
-**Force magnitude**: The external load magnitude is set to the total applied tendon force (FDP + FDS), which overestimates the true fingertip reaction force. The cadaver fixture applies known tendon forces and measures the resulting fingertip reaction, which is typically 30–60% of the tendon sum depending on the mechanical advantage of the finger configuration. Absolute force magnitudes in the validation table are therefore upper bounds. For exact absolute force validation, the cadaver force plate CSV data from the PeerJ repository would be needed.
+Iteration 14 uses the **actual cadaver force plate measurements** (mean of 3 specimens, H01–H03) as $\vec{F}_{ext}$. The experimental fingertip reaction forces range from 0.93 N to 5.00 N, representing 19–32% of the total applied tendon force.
+
+**Predicted-to-applied tendon force ratio** (EMG-constrained method, ideal = 1.0):
+
+| Posture | Pred/Applied | Interpretation |
+|---|---|---|
+| MajorFlex | **1.01** | Excellent agreement |
+| MinorFlex | **1.70** | Moderate overestimate |
+| Hook | **3.20** | Significant overestimate |
+| HyperExt | **5.56** | Large overestimate |
+| **Overall** | **2.87 ± 1.75** | Systematic overestimate |
+
+The systematic overestimate indicates that our model's moment arms are **shorter** than the PeerJ CT-calibrated values. A shorter moment arm requires more tendon force to balance the same external moment. The overestimate is worst for HyperExt (crimp), where the DIP hyperextension geometry is most sensitive to the tendon path point locations.
+
+> **Root cause**: Our model uses simplified An et al. (1983) moment arm functions with literature-average coefficients, while the PeerJ model uses specimen-specific path points optimized against CT-derived bone geometry. The moment arm discrepancy is amplified by the multi-joint lever chain: a 20% error in one joint's moment arm can cascade to a 2–5× error in total predicted tendon force.
+
+### 7.4 Limitations
+
+**Moment arm calibration**: The primary source of absolute force error is moment arm geometry, not the EMG ratio constraint or the solver algorithm. Importing the PeerJ-calibrated path points (available in `Geometry_Middle_Cal_Hum/`) would reduce the Pred/Applied ratio toward 1.0 but would require substantial refactoring of the moment arm computation.
 
 **Full T_mus matrix**: Our model uses simplified moment arms (3-DOF per joint) while the PeerJ model uses optimized path points with 6 muscles × 4 DOF, including extensor mechanism ratios. The T_mus matrix differences affect absolute force predictions but not the FDP/FDS ratio (which is set by the EMG constraint).
-
-

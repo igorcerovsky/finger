@@ -1,29 +1,22 @@
 """
-compare_models.py — PeerJ Validation vs Our 3D Climbing Model (Iter 13)
+compare_models.py — PeerJ Validation vs Our 3D Climbing Model (Iter 14)
 ========================================================================
 Compares our climbing_finger_3d.py predictions against the cadaver direct-force
 measurements from the PeerJ 7470 paper (Vigouroux et al. 2019).
 
-Iteration 13 upgrade: Instead of setting F_ext = FDP_applied + FDS_applied
-(which is wrong — tendon force ≠ fingertip reaction), we now compute the
-correct fingertip reaction force using the PeerJ Jacobian formula:
+Iteration 14 upgrade: Uses the actual cadaver force plate measurements
+(mean of 3 specimens) as the external load input, instead of setting
+F_ext = total tendon force. This enables absolute force magnitude validation.
 
-    F_tip = J^{-T} · T_mus · f_tendon
-
-where J is the kinematic Jacobian from the DP fingertip to the 4 DOFs,
-T_mus is the force transmission matrix, and f_tendon is the 6-muscle
-force vector. This gives the correct external load for our model.
-
-PeerJ postures → our model angle mapping:
-  MinorFlex : DIP=35°, PIP=55°, MCP_flex=40°  ≈ half-crimp-like
-  MajorFlex : DIP=25°, PIP=57°, MCP_flex=55°  ≈ deeper half-crimp
-  HyperExt  : DIP=45°, PIP=50°, MCP_flex=-20° ≈ crimp hyperextension
-  Hook      : DIP=50°, PIP=65°, MCP_flex=0°   ≈ hook grip
+The cadaver setup: known tendon forces are applied → fingertip reaction
+is measured on a force plate. We use the measured fingertip reaction as
+F_ext for our model, then compare our predicted tendon forces against
+the known applied tendon forces.
 
 Validation metrics:
-  1. FDP/FDS ratio (should match Vigouroux 2006 EMG references)
-  2. Fingertip reaction force magnitude (our model vs PeerJ Jacobian)
-  3. Force direction angle (sagittal plane)
+  1. FDP/FDS ratio (EMG-constrained: must match Vigouroux 2006)
+  2. Total predicted tendon force vs total applied tendon force
+  3. Force direction angle agreement
 
 Usage:
     cd /Users/igorcerovsky/Documents/finger
@@ -32,6 +25,7 @@ Usage:
 
 import sys, os
 import numpy as np
+import csv
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -48,13 +42,8 @@ PEERJ_POSTURES = {
     'Hook':      {'DIP': 50, 'PIP': 65, 'MCP_flex': 0,   'MCP_abd': 0},
 }
 
-# Tendon loads from PeerJ experiments (gram-force → Newtons, with pulley efficiency)
-# pulley_efficiency = 0.835 from PeerJ paper
+# Pulley efficiency from PeerJ paper
 PULLEY_EFF = 0.835
-PEERJ_LOADS = {
-    'low':  {'gram': 300},
-    'high': {'gram': 950},
-}
 
 # PeerJ postures → Vigouroux 2006 equivalent EMG ratios
 VIGOUROUX_RATIOS = {
@@ -64,220 +53,105 @@ VIGOUROUX_RATIOS = {
     'Hook':      1.20,
 }
 
-# ─── PeerJ geometry (from peerj_model.py) ─────────────────────────────────────
-O2O3 = 23.63e-3   # metres (middle phalanx length = scaling parameter)
-# Segment ratios from peerj_model.py line 137
-SEG_RATIOS = np.array([0.015/O2O3, 0.17, 0.22, 1.62, 0.37])  # O0O1, O1O2, O3O4, O4O5, O5O6
+# ─── PeerJ geometry (exact from peerj_model.py segment ratios) ────────────────
+O2O3 = 23.63e-3   # metres
+SEG_RATIOS = np.array([0.015/O2O3, 0.17, 0.22, 1.62, 0.37])
 O0O1 = SEG_RATIOS[0] * O2O3
 O1O2 = SEG_RATIOS[1] * O2O3
 O3O4 = SEG_RATIOS[2] * O2O3
 O4O5 = SEG_RATIOS[3] * O2O3
 O5O6 = SEG_RATIOS[4] * O2O3
 
-# Fingertip contact point (from peerj_model.py line 182):
-# p_ext is in local DP coordinate system
-P_EXT = np.array([-(SEG_RATIOS[0]*0.5 + SEG_RATIOS[1]) * O2O3, 0, 0])
+PP_mm = (O4O5 + O5O6) * 1000
+MP_mm = (O2O3 + O3O4) * 1000
+DP_mm = (O0O1 + O1O2) * 1000
 
-# Our model: PeerJ-scaled geometry
-# PeerJ physical bone lengths:  PP = O4O5+O5O6, MP = O2O3+O3O4, DP = O0O1+O1O2
-PP_peerj_mm = (O4O5 + O5O6) * 1000   # ≈ 46.97 mm
-MP_peerj_mm = (O2O3 + O3O4) * 1000   # ≈ 28.83 mm
-DP_peerj_mm = (O0O1 + O1O2) * 1000   # ≈ 19.02 mm
-
-PEERJ_GEOM = FingerGeometry(L1=PP_peerj_mm, L2=MP_peerj_mm, L3=DP_peerj_mm,
-                            name='PeerJ-exact')
+PEERJ_GEOM = FingerGeometry(L1=PP_mm, L2=MP_mm, L3=DP_mm, name='PeerJ-exact')
 
 
-def deg2rad(d):
-    return d * np.pi / 180.0
-
-
-def compute_peerj_jacobian(DIP, PIP, MCP_flex, MCP_abd, p_ext):
+def load_experimental_fingertip_forces():
     """
-    Reproduce the PeerJ Fingermodel.computeJacobian() for the DP body.
-    Returns the 3×4 Jacobian mapping 4 DOF torques → fingertip force.
-
-    DOF order: [DIP_flex, PIP_flex, MCP_flex, MCP_abd]
+    Load the cadaver force plate measurements from PeerJ 7470.
+    Returns dict: (posture, load_gram) → mean force vector [Fx, Fy, Fz] in Newtons.
+    Forces are the REACTION on the finger (measured by the force plate).
+    Convention: Fx=proximal-distal, Fy=dorsal-ventral, Fz=radial-ulnar.
     """
-    l1 = O0O1 + O1O2   # DP length
-    l2 = O2O3 + O3O4   # MP length
-    l3 = O4O5 + O5O6   # PP length
+    base = os.path.join(os.path.dirname(__file__), 'Experiments', 'Fingertip_forces')
+    specimens = ['H01', 'H02', 'H03']
 
-    def rotZ3D(v, theta_rad):
-        c, s = np.cos(theta_rad), np.sin(theta_rad)
-        R = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
-        return R @ v
+    all_data = {}
+    for spec in specimens:
+        fname = os.path.join(base, f'{spec}_fingertip_combined.csv')
+        if not os.path.exists(fname):
+            print(f'  WARNING: {fname} not found, skipping')
+            continue
+        with open(fname) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                posture = row['Posture'].strip()
+                load_g = int(row['FDP'])
+                ftip = np.array([float(row['Ftip_PD']),
+                                 float(row['Ftip_DV']),
+                                 float(row['Ftip_RU'])])
+                key = (posture, load_g)
+                if key not in all_data:
+                    all_data[key] = []
+                all_data[key].append(ftip)
 
-    def rotY3D(v, theta_rad):
-        c, s = np.cos(theta_rad), np.sin(theta_rad)
-        R = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
-        return R @ v
-
-    def computeRotation(tx, ty, tz):
-        """Match PeerJ: Rx·Ry·Rz"""
-        cx, sx = np.cos(tx), np.sin(tx)
-        cy, sy = np.cos(ty), np.sin(ty)
-        cz, sz = np.cos(tz), np.sin(tz)
-        Rx = np.array([[1,0,0],[0,cx,-sx],[0,sx,cx]])
-        Ry = np.array([[cy,0,sy],[0,1,0],[-sy,0,cy]])
-        Rz = np.array([[cz,-sz,0],[sz,cz,0],[0,0,1]])
-        return Rx @ Ry @ Rz
-
-    a_MCP_abd_0 = np.array([0, 1, 0])
-    a_MCP_flex_0 = np.array([0, 0, 1])
-    r_PIP_0 = np.array([-l3, 0, 0])
-    a_PIP_0 = np.array([0, 0, 1])
-    r_DIP_0 = np.array([-l2, 0, 0])
-    r_ext_0 = p_ext.copy()
-
-    abd_rad = deg2rad(MCP_abd)
-    mcp_rad = deg2rad(MCP_flex)
-    pip_rad = deg2rad(PIP)
-    dip_rad = deg2rad(DIP)
-
-    # Transform axes and vectors
-    a_MCP_abd_1 = a_MCP_abd_0
-    a_MCP_flex_1 = computeRotation(0, abd_rad, 0) @ a_MCP_flex_0
-
-    r_PIP_1 = computeRotation(0, abd_rad, mcp_rad) @ r_PIP_0
-    a_PIP_1 = computeRotation(0, abd_rad, mcp_rad) @ a_PIP_0
-
-    r_DIP_1 = computeRotation(0, abd_rad, mcp_rad + pip_rad) @ r_DIP_0
-    a_DIP_1 = computeRotation(0, abd_rad, mcp_rad + pip_rad) @ a_PIP_0
-
-    r_ext_1 = computeRotation(0, abd_rad, mcp_rad + pip_rad + dip_rad) @ r_ext_0
-
-    # Build Jacobian (3×4) for DP body
-    J = np.column_stack([
-        np.cross(a_DIP_1, r_ext_1),
-        np.cross(a_PIP_1, r_DIP_1 + r_ext_1),
-        np.cross(a_MCP_flex_1, r_PIP_1 + r_DIP_1 + r_ext_1),
-        np.cross(a_MCP_abd_1, r_PIP_1 + r_DIP_1 + r_ext_1),
-    ])
-    return J
-
-
-def compute_fingertip_reaction(posture_angles, tendon_forces_6):
-    """
-    Compute the PeerJ-predicted fingertip reaction force for given posture
-    and tendon forces, using the same formula as peerj_model.py line 358:
-    
-        F_tip_4D = J_sq_inv^T · T_mus · f_tendon
-    
-    We use a simplified T_mus (4×6 identity-like) for the case where we
-    only have FDP and FDS forces. However, for a proper comparison we need
-    the full T_mus. Since we don't have the PeerJ optimized path points
-    available here, we use the Jacobian-only approach.
-    
-    For validation purposes, the key insight is: with known tendon forces
-    and known posture, the fingertip reaction is uniquely determined by 
-    Newton's 3rd law. The reaction force magnitude is NOT equal to the
-    sum of tendon forces — it depends on moment arms and posture geometry.
-    
-    Simplified approach: use our model's own moment arms to compute the
-    fingertip reaction from the known PeerJ tendon loads. This tests whether
-    our moment arm model produces consistent fingertip forces.
-    """
-    DIP = posture_angles['DIP']
-    PIP = posture_angles['PIP']
-    MCP = posture_angles['MCP_flex']
-    ABD = posture_angles['MCP_abd']
-
-    J = compute_peerj_jacobian(DIP, PIP, MCP, ABD, P_EXT)
-
-    # PeerJ extends J to 4×4 by adding a row [1,1,1,0] to account for
-    # z-axis moments at the DP (line 355 of peerj_model.py)
-    J_sq = np.vstack([J, np.array([1, 1, 1, 0])])
-
-    # The simplified approach: we don't have the full PeerJ T_mus here,
-    # so instead we compute the net external torques from the known
-    # tendon forces using our model's moment arms, then invert J to get
-    # the fingertip force.
-    #
-    # However, the more correct approach is simply to recognise that
-    # the PeerJ experiment applies known tendon forces and measures
-    # the fingertip reaction. The fingertip reaction magnitude for
-    # each posture × load case was measured experimentally.
-    #
-    # For our validation, we USE the PeerJ-measured fingertip reaction forces
-    # directly. These come from the cadaver force plate data.
-    # But since we don't have the CSV files here, we'll use the Jacobian approach.
-
-    # For the Jacobian approach: compute the moment vector from tendon forces
-    # using the simple approximation that FDP acts at DIP+PIP+MCP, FDS acts
-    # at PIP+MCP only, and the moment arms are the PeerJ physical ones.
-    #
-    # Actually, the cleanest approach: use our model to compute the external
-    # moments from the known posture angles, then the fingertip force is
-    # whatever balances those moments at the fingertip contact point.
-
-    # Use our model's kinematics to get the moment arm of the fingertip
-    grip = GripAngles('peerj', theta_MCP=MCP, phi_MCP=ABD,
-                      theta_PIP=PIP, theta_DIP=DIP, emg_ratio=1.0)
-
-    kin = kinematics_3d(grip, PEERJ_GEOM)
-    tip_pos = kin['P_tip']
-
-    # The fingertip force direction in the PeerJ cadaver setup:
-    # force is applied normal to the fingertip pad (perpendicular to DP)
-    # In our sagittal coordinate system, the DP bone direction is given by
-    # the angle sum MCP+PIP+DIP from horizontal.
-    total_angle_rad = deg2rad(MCP + PIP + DIP)
-    # Normal to DP surface (palmar direction): perpendicular to bone axis
-    F_dir = np.array([np.sin(total_angle_rad), np.cos(total_angle_rad), 0.0])
-
-    # Magnitude: computed from moment balance.
-    # The external moments that tendon forces must balance = T_mus · f_tendon
-    # But we need the full T_mus which requires the PeerJ path points.
-    # 
-    # SIMPLEST CORRECT APPROACH: use the PeerJ Jacobian to compute F_tip
-    # magnitude from the net torques. The net torques τ_i at each DOF are
-    # produced by all tendon forces; the fingertip reaction must produce
-    # equal and opposite torques via J: J^T · F_tip = -τ_tendon.
-    # 
-    # Since we don't have the PeerJ T_mus matrix, we fall back to the
-    # physically grounded estimate:
-    #   F_tip ≈ F_tendon_total / mechanical_advantage
-    # where mechanical_advantage = ||r_tip|| / mean_moment_arm ≈ 3.5-5.0
-    # 
-    # For a proper comparison, we simply note the limitations.
-
-    # Return the fingertip force direction and a magnitude estimate
-    F_tip_mag = tendon_forces_6[0] + tendon_forces_6[1]  # FDP + FDS as upper bound
-    return F_dir, F_tip_mag
+    # Compute arithmetic mean across specimens
+    mean_data = {}
+    for key, vecs in all_data.items():
+        arr = np.array(vecs)
+        mean_data[key] = {
+            'mean': arr.mean(axis=0),
+            'std': arr.std(axis=0),
+            'n': len(vecs),
+        }
+    return mean_data
 
 
 def run_comparison():
-    print('=' * 80)
-    print('  VALIDATION: Our 3D Model vs PeerJ 7470 Cadaver Measurements')
-    print('  Postures: MinorFlex / MajorFlex / HyperExt / Hook')
-    print(f'  Geometry: PP={PP_peerj_mm:.1f}mm  MP={MP_peerj_mm:.1f}mm  DP={DP_peerj_mm:.1f}mm')
-    print('=' * 80)
+    print('=' * 95)
+    print('  VALIDATION: Our 3D Model vs PeerJ 7470 Cadaver Measurements (Iteration 14)')
+    print('  Using ACTUAL cadaver force plate data as F_ext (mean of 3 specimens)')
+    print(f'  Geometry: PP={PP_mm:.1f}mm  MP={MP_mm:.1f}mm  DP={DP_mm:.1f}mm')
+    print('=' * 95)
+
+    # Load experimental data
+    exp_data = load_experimental_fingertip_forces()
+    if not exp_data:
+        print('  ERROR: No experimental data found!')
+        return
+
+    # Posture order for display
+    posture_order = ['MinorFlex', 'MajorFlex', 'HyperExt', 'Hook']
+    load_grams = [300, 950]
 
     results = []
 
-    for posture_name, angles in PEERJ_POSTURES.items():
-        for load_name, load_cfg in PEERJ_LOADS.items():
-            gram = load_cfg['gram']
-            # PeerJ: both FDP and FDS loaded equally (same mass on each tendon)
-            F_tendon = gram * 9.81 / 1000.0 * PULLEY_EFF   # N per tendon
-            total_tendon = 2 * F_tendon
+    for posture_name in posture_order:
+        angles = PEERJ_POSTURES[posture_name]
+        for gram in load_grams:
+            key = (posture_name, gram)
+            if key not in exp_data:
+                print(f'  WARNING: No data for {key}')
+                continue
 
-            # Compute fingertip force direction from posture
-            total_angle = angles['DIP'] + angles['PIP'] + angles['MCP_flex']
-            total_rad = deg2rad(total_angle)
-            # In PeerJ cadaver setup, the reaction force on the finger is
-            # perpendicular to the DP palmar surface (normal to the pad).
-            # In our coordinate system: x = distal, y = dorsal
-            F_dir = np.array([np.sin(total_rad), np.cos(total_rad), 0.0])
-            F_dir_norm = F_dir / np.linalg.norm(F_dir)
+            exp = exp_data[key]
+            F_exp_mean = exp['mean']   # [Fx, Fy, Fz] in Newtons (reaction on finger)
+            F_exp_mag = np.linalg.norm(F_exp_mean)
+            F_exp_ang = np.degrees(np.arctan2(F_exp_mean[1], F_exp_mean[0]))
 
-            # External load magnitude: use total tendon force as upper bound.
-            # This is the same as the previous version's approach, but now
-            # documented as an approximation. The actual fingertip reaction
-            # would be smaller (≈ 30-60% of total tendon force depending on
-            # mechanical advantage).
-            F_ext_mag = total_tendon
+            # Applied tendon force per tendon
+            F_tendon_per = gram * 9.81 / 1000.0 * PULLEY_EFF
+            total_tendon = 2 * F_tendon_per  # FDP + FDS equal
+
+            # Map PeerJ force convention to our model:
+            # PeerJ: Fx=PD (negative = toward proximal), Fy=DV (negative = toward ventral)
+            # Our model: x=distal, y=dorsal
+            # The force plate measures the reaction on the finger, so we negate
+            # to get the external force applied TO the finger (Newton's 3rd law)
+            F_ext = -F_exp_mean   # Negate: reaction → applied
 
             grip = GripAngles(
                 name=posture_name,
@@ -288,84 +162,113 @@ def run_comparison():
                 emg_ratio=VIGOUROUX_RATIOS[posture_name],
             )
 
-            F_ext = F_dir_norm * F_ext_mag
             try:
                 r_all = solve_all_methods(grip, PEERJ_GEOM, F_ext, contact=None)
             except Exception as e:
-                print(f'  ERROR [{posture_name}/{load_name}]: {e}')
+                print(f'  ERROR [{posture_name}/{gram}g]: {e}')
                 continue
 
             for method in ('emg', 'lu_min', 'direct'):
                 r = r_all[method]
-                pred_total = r['F_total']
-                pred_fdp   = r['F_FDP']
-                pred_fds   = r['F_FDS']
                 pred_ratio = r['ratio'] if not np.isinf(r['ratio']) else 999
+
+                # Force magnitude ratio: predicted total / applied total
+                force_ratio = r['F_total'] / total_tendon if total_tendon > 0 else 0
 
                 results.append({
                     'posture': posture_name,
-                    'load': load_name,
+                    'gram': gram,
                     'method': method,
+                    'F_exp_mag': F_exp_mag,
+                    'F_exp_ang': F_exp_ang,
                     'applied_tendon': total_tendon,
-                    'F_ext_mag': F_ext_mag,
-                    'F_ext_dir_deg': np.degrees(np.arctan2(F_dir_norm[1], F_dir_norm[0])),
-                    'pred_FDP': pred_fdp,
-                    'pred_FDS': pred_fds,
-                    'pred_total': pred_total,
+                    'pred_FDP': r['F_FDP'],
+                    'pred_FDS': r['F_FDS'],
+                    'pred_total': r['F_total'],
                     'pred_ratio': pred_ratio,
+                    'force_ratio': force_ratio,
                 })
 
-    # ── Print table ──────────────────────────────────────────────────────────
-    print(f"\n{'Posture':<12} {'Load':<6} {'Method':<11} "
-          f"{'Applied(N)':<11} {'F_dir(°)':<9} {'FDP':>7} {'FDS':>7} {'Total':>8} {'Ratio':>7}")
-    print('-' * 90)
+    # ── Print Section 1: Experimental forces ─────────────────────────────────
+    print(f"\n  SECTION 1: Experimental Fingertip Reaction Forces (mean ± std, n=3)")
+    print(f"  {'Posture':<12} {'Load':<6} {'|F_exp|(N)':<11} {'Dir(°)':<9} "
+          f"{'Applied(N)':<11} {'F_exp/F_tendon':<14}")
+    print('  ' + '-' * 70)
+    seen = set()
+    for r in results:
+        key = (r['posture'], r['gram'])
+        if key in seen:
+            continue
+        seen.add(key)
+        ratio_str = f"{r['F_exp_mag'] / r['applied_tendon']:.3f}"
+        print(f"  {r['posture']:<12} {r['gram']:<6} {r['F_exp_mag']:<11.3f} "
+              f"{r['F_exp_ang']:<9.1f} {r['applied_tendon']:<11.1f} {ratio_str:<14}")
+
+    # ── Print Section 2: Model predictions ───────────────────────────────────
+    print(f"\n  SECTION 2: Model Predictions (F_ext = measured fingertip reaction)")
+    print(f"  {'Posture':<12} {'Load':<6} {'Method':<11} "
+          f"{'FDP':>7} {'FDS':>7} {'Total':>8} {'Ratio':>7} {'Pred/App':>9}")
+    print('  ' + '-' * 75)
     last_key = None
     for r in results:
-        key = (r['posture'], r['load'])
+        key = (r['posture'], r['gram'])
         if key != last_key and last_key is not None:
             print()
         last_key = key
-        print(f"{r['posture']:<12} {r['load']:<6} {r['method']:<11} "
-              f"{r['applied_tendon']:<11.1f} {r['F_ext_dir_deg']:<9.1f}"
+        print(f"  {r['posture']:<12} {r['gram']:<6} {r['method']:<11} "
               f"{r['pred_FDP']:>7.1f} {r['pred_FDS']:>7.1f} "
-              f"{r['pred_total']:>8.1f} {r['pred_ratio']:>7.2f}")
+              f"{r['pred_total']:>8.1f} {r['pred_ratio']:>7.2f} "
+              f"{r['force_ratio']:>9.2f}")
 
-    # ── Key comparison: HyperExt (≈ crimp) ───────────────────────────────────
-    print('\n' + '=' * 90)
-    print('  KEY: HyperExt posture (DIP=45°, PIP=50°, MCP=-20°) ≈ crimp hyperextension')
-    print('  PeerJ EMG reference: FDP/FDS_crimp = 1.75 (Vigouroux 2006)')
+    # ── Print Section 3: Key validation summary ──────────────────────────────
+    print('\n' + '=' * 95)
+    print('  SECTION 3: Validation Summary')
     print()
-    for r in results:
-        if r['posture'] == 'HyperExt':
-            flag = '  ← EMG reference' if r['method'] == 'emg' else ''
-            print(f"  {r['method']:<12}: FDP={r['pred_FDP']:.1f}N  FDS={r['pred_FDS']:.1f}N  "
-                  f"ratio={r['pred_ratio']:.2f}  F_dir={r['F_ext_dir_deg']:.0f}°{flag}")
 
+    # EMG ratio validation
+    print('  3a. FDP/FDS Ratio Validation (EMG-constrained method):')
+    for posture in posture_order:
+        emg_results = [r for r in results if r['posture'] == posture and r['method'] == 'emg']
+        if emg_results:
+            ratios = [r['pred_ratio'] for r in emg_results]
+            expected = VIGOUROUX_RATIOS[posture]
+            match = '✓' if all(abs(r - expected) < 0.01 for r in ratios) else '✗'
+            print(f"    {posture:<12}: {ratios[0]:.2f} (expected {expected:.2f}) {match}")
+
+    # Force magnitude validation
     print()
-    print('  MinorFlex posture (DIP=35°, PIP=55°, MCP=40°) ≈ half-crimp')
-    for r in results:
-        if r['posture'] == 'MinorFlex':
-            flag = '  ← EMG reference' if r['method'] == 'emg' else ''
-            print(f"  {r['method']:<12}: FDP={r['pred_FDP']:.1f}N  FDS={r['pred_FDS']:.1f}N  "
-                  f"ratio={r['pred_ratio']:.2f}  F_dir={r['F_ext_dir_deg']:.0f}°{flag}")
+    print('  3b. Force Magnitude Ratio (Pred_total / Applied_tendon, EMG method):')
+    print('      Ideal ratio = 1.0 if moment arms are perfectly calibrated')
+    emg_ratios = [r['force_ratio'] for r in results if r['method'] == 'emg']
+    for posture in posture_order:
+        posture_ratios = [r['force_ratio'] for r in results
+                         if r['posture'] == posture and r['method'] == 'emg']
+        if posture_ratios:
+            mean_r = np.mean(posture_ratios)
+            print(f"    {posture:<12}: {mean_r:.3f}")
+    if emg_ratios:
+        print(f"    {'Overall':<12}: {np.mean(emg_ratios):.3f} ± {np.std(emg_ratios):.3f}")
 
-    # Find the representative results for the interpretation text
-    he_result = next((r for r in results if r['posture'] == 'HyperExt' and r['method'] == 'emg'), None)
-    mf_result = next((r for r in results if r['posture'] == 'MinorFlex' and r['method'] == 'emg'), None)
-
+    # Interpretation
     print()
-    print('  Interpretation (Iteration 13):')
-    print('  - F_ext direction is now posture-dependent (perpendicular to DP pad)')
-    if he_result:
-        print(f'    HyperExt: F_dir = {he_result["F_ext_dir_deg"]:.0f}° (was 0° in Iter 10)')
-    if mf_result:
-        print(f'    MinorFlex: F_dir = {mf_result["F_ext_dir_deg"]:.0f}° (was 0° in Iter 10)')
-    print('  - F_ext magnitude still uses total tendon force as upper-bound proxy')
-    print('    (true fingertip reaction ≈ 30-60% of tendon sum, posture-dependent)')
-    print('  - EMG method reproduces Vigouroux 2006 ratios exactly by construction')
-    print('  - Direct method FDP/FDS elevated in HyperExt (DIP hyperext artifact)')
-    print('  - For absolute force validation, cadaver force plate CSVs are needed')
-    print('=' * 90)
+    print('  3c. Interpretation:')
+    if emg_ratios:
+        mean_overall = np.mean(emg_ratios)
+        if mean_overall > 1.5:
+            print(f'    Pred/App = {mean_overall:.2f} → our model OVER-estimates tendon forces')
+            print('    Likely cause: moment arms in our model are shorter than PeerJ-calibrated values')
+            print('    (shorter moment arm → more tendon force needed to balance same external moment)')
+        elif mean_overall < 0.7:
+            print(f'    Pred/App = {mean_overall:.2f} → our model UNDER-estimates tendon forces')
+            print('    Likely cause: moment arms in our model are longer than PeerJ-calibrated values')
+        else:
+            print(f'    Pred/App = {mean_overall:.2f} → reasonable agreement with PeerJ')
+            print('    Force predictions within factor of 2 of applied tendon loads')
+    print('    - FDP/FDS ratios are exact by construction (EMG constraint)')
+    print('    - Absolute force differences arise from moment arm calibration')
+    print('    - PeerJ uses optimized path points from cadaver CT data;')
+    print('      our model uses simplified An et al. 1983 moment arm functions')
+    print('=' * 95)
 
 
 if __name__ == '__main__':

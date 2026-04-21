@@ -1,0 +1,87 @@
+mkdir -p failed for path /Users/igorcerovsky/.matplotlib: [Errno 1] Operation not permitted: '/Users/igorcerovsky/.matplotlib'
+Matplotlib created a temporary cache directory at /var/folders/t_/tzxm6p192rv7znh616mbyhxw0000gn/T/matplotlib-svu3k54t because there was an issue with the default path (/Users/igorcerovsky/.matplotlib); it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+
+Fontconfig error: No writable cache directories
+	/opt/homebrew/var/cache/fontconfig
+	/Users/igorcerovsky/.cache/fontconfig
+	/Users/igorcerovsky/.fontconfig
+Matplotlib is building the font cache; this may take a moment.
+===============================================================================================
+  VALIDATION: Our 3D Model vs PeerJ 7470 Cadaver Measurements (Iteration 14)
+  Using ACTUAL cadaver force plate data as F_ext (mean of 3 specimens)
+  Geometry: PP=47.0mm  MP=28.8mm  DP=19.0mm
+===============================================================================================
+
+  SECTION 1: Experimental Fingertip Reaction Forces (mean ± std, n=3)
+  Posture      Load   |F_exp|(N)  Dir(°)    Applied(N)  F_exp/F_tendon
+  ----------------------------------------------------------------------
+  MinorFlex    300    1.263       -113.2    4.9         0.257         
+  MinorFlex    950    3.769       -116.9    15.6        0.242         
+  MajorFlex    300    0.931       -115.5    4.9         0.189         
+  MajorFlex    950    3.366       -118.0    15.6        0.216         
+  HyperExt     300    1.569       -107.2    4.9         0.319         
+  HyperExt     950    5.000       -103.7    15.6        0.321         
+  Hook         300    1.315       -122.9    4.9         0.267         
+  Hook         950    4.512       -118.7    15.6        0.290         
+
+  SECTION 2: Model Predictions (F_ext = measured fingertip reaction)
+  Posture      Load   Method          FDP     FDS    Total   Ratio  Pred/App
+  ---------------------------------------------------------------------------
+  MinorFlex    300    emg             1.5     1.2      8.3    1.20      1.70
+  MinorFlex    300    lu_min          1.2     1.0      2.1    1.20      0.43
+  MinorFlex    300    direct          1.8     1.1      8.2    1.63      1.66
+
+  MinorFlex    950    emg             5.0     4.1     26.5    1.20      1.70
+  MinorFlex    950    lu_min          4.0     3.3      7.3    1.20      0.47
+  MinorFlex    950    direct          6.2     3.9     25.8    1.61      1.66
+
+  MajorFlex    300    emg             0.6     0.5      4.5    1.20      0.91
+  MajorFlex    300    lu_min          0.4     0.4      0.8    1.20      0.16
+  MajorFlex    300    direct          1.0     0.1      4.4  999.00      0.89
+
+  MajorFlex    950    emg             2.5     2.1     17.2    1.20      1.10
+  MajorFlex    950    lu_min          2.0     1.7      3.6    1.20      0.23
+  MajorFlex    950    direct          4.0     0.6     16.8    6.23      1.08
+
+  HyperExt     300    emg             7.3     4.2     27.2    1.75      5.52
+  HyperExt     300    lu_min          4.3     2.4      6.7    1.75      1.37
+  HyperExt     300    direct          5.7     4.2     17.3    1.33      3.53
+
+  HyperExt     950    emg            23.0    13.2     87.2    1.75      5.60
+  HyperExt     950    lu_min         13.4     7.6     21.0    1.75      1.35
+  HyperExt     950    direct         17.8    13.4     55.6    1.32      3.57
+
+  Hook         300    emg             3.4     2.8     15.2    1.20      3.09
+  Hook         300    lu_min          2.3     1.9      4.3    1.20      0.87
+  Hook         300    direct          3.5     3.1     13.0    1.12      2.64
+
+  Hook         950    emg            11.2     9.3     51.6    1.20      3.32
+  Hook         950    lu_min          7.5     6.3     13.8    1.20      0.89
+  Hook         950    direct         11.5    10.4     44.1    1.11      2.83
+
+===============================================================================================
+  SECTION 3: Validation Summary
+
+  3a. FDP/FDS Ratio Validation (EMG-constrained method):
+    MinorFlex   : 1.20 (expected 1.20) ✓
+    MajorFlex   : 1.20 (expected 1.20) ✓
+    HyperExt    : 1.75 (expected 1.75) ✓
+    Hook        : 1.20 (expected 1.20) ✓
+
+  3b. Force Magnitude Ratio (Pred_total / Applied_tendon, EMG method):
+      Ideal ratio = 1.0 if moment arms are perfectly calibrated
+    MinorFlex   : 1.699
+    MajorFlex   : 1.006
+    HyperExt    : 5.563
+    Hook        : 3.202
+    Overall     : 2.868 ± 1.749
+
+  3c. Interpretation:
+    Pred/App = 2.87 → our model OVER-estimates tendon forces
+    Likely cause: moment arms in our model are shorter than PeerJ-calibrated values
+    (shorter moment arm → more tendon force needed to balance same external moment)
+    - FDP/FDS ratios are exact by construction (EMG constraint)
+    - Absolute force differences arise from moment arm calibration
+    - PeerJ uses optimized path points from cadaver CT data;
+      our model uses simplified An et al. 1983 moment arm functions
+===============================================================================================
