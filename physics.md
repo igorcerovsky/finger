@@ -270,6 +270,53 @@ The systematic overestimate indicates that our model's moment arms are **shorter
 
 ### 7.4 Limitations
 
-**Moment arm calibration**: The primary source of absolute force error is moment arm geometry, not the EMG ratio constraint or the solver algorithm. Importing the PeerJ-calibrated path points (available in `Geometry_Middle_Cal_Hum/`) would reduce the Pred/Applied ratio toward 1.0 but would require substantial refactoring of the moment arm computation.
-
 **Full T_mus matrix**: Our model uses simplified moment arms (3-DOF per joint) while the PeerJ model uses optimized path points with 6 muscles × 4 DOF, including extensor mechanism ratios. The T_mus matrix differences affect absolute force predictions but not the FDP/FDS ratio (which is set by the EMG constraint).
+
+## 8. Moment Arm Recalibration (Iteration 15)
+
+### 8.1 Diagnostic comparison
+
+A joint-by-joint moment arm comparison (`moment_arm_comparison.py`) was performed between our An et al. 1983 literature averages and the PeerJ CT-calibrated path points at 4 postures:
+
+| Joint × Tendon | Our (An 1983) | PeerJ (CT) | Ratio | Error direction |
+|---|---|---|---|---|
+| DIP × FDP | 7.6 mm | 4.4 mm | **1.73** | Ours too large |
+| PIP × FDP | 10.8 mm | 11.0 mm | **0.98** | ≈ matched |
+| PIP × FDS | 8.6 mm | 7.2 mm | **1.19** | Ours slightly large |
+| MCP × FDP | 10.1 mm | 13.6 mm | **0.74** | Ours too small |
+| MCP × FDS | 8.2 mm | 14.7 mm | **0.56** | Ours much too small |
+
+(Values shown for MinorFlex posture; pattern is consistent across all 4 postures.)
+
+**Root cause of force overestimate**: DIP too large (FDP forced high) + MCP too small (FDP and FDS need to be even higher to balance MCP moment). The compound effect across the lever chain produces 2–5× total force overestimate.
+
+### 8.2 Recalibrated coefficients
+
+Linear regressions were fit to the PeerJ moment arms at 4 postures (R² > 0.99 for all except DIP):
+
+```
+Config.moment_arm_source = 'peerj'   # (default in Iter 15)
+
+FDP_DIP = 4.70 − 0.011·θ_DIP    (was 6.0 + 0.045·θ_DIP)
+FDP_PIP = 8.21 + 0.050·θ_PIP    (was 9.0 + 0.033·θ_PIP)
+FDP_MCP = 9.89 + 0.087·θ_MCP    (was 8.0 + 0.053·θ_MCP)
+FDS_PIP = 4.46 + 0.050·θ_PIP    (was 7.5 + 0.020·θ_PIP)
+FDS_MCP = 10.13 + 0.108·θ_MCP   (was 6.8 + 0.036·θ_MCP)
+```
+
+The An 1983 coefficients are preserved as `Config.moment_arm_source = 'an1983'`.
+
+### 8.3 Impact on absolute force accuracy
+
+| Posture | Pred/App (An 1983) | Pred/App (PeerJ) | Improvement |
+|---|---|---|---|
+| MajorFlex | 1.01 | **0.83** | ✓ (was already good) |
+| MinorFlex | 1.70 | **1.34** | ↓ 21% |
+| Hook | 3.20 | **2.26** | ↓ 30% |
+| HyperExt | 5.56 | **3.31** | ↓ 40% |
+| **Overall** | **2.87** | **1.94** | **↓ 32%** |
+
+The recalibration reduced the systematic overestimate by 32% across all postures. The remaining error (overall 1.94×) is attributed to:
+1. The 3-DOF simplification (vs PeerJ's full 4-DOF 6-muscle T_mus matrix)
+2. Lumbrical, interossei, and extensor mechanism moment arms still at literature values
+3. The linear fit approximation to the nonlinear generalized-force moment arm

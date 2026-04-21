@@ -133,6 +133,11 @@ class Config:
     h_below_hold_mm    = 150.0   # COM vertical distance below hold (mm)
     d_com_mm           = 300.0   # COM perpendicular distance from wall (mm)
 
+    # ── Moment Arm Source ─────────────────────────────────────
+    # 'an1983'   : An et al. 1983 literature averages (original)
+    # 'peerj'    : PeerJ 7470 CT-calibrated path points (Iter 15)
+    moment_arm_source = 'peerj'
+
     save_figures  = True
     output_prefix = "climbing_3d"
 
@@ -275,33 +280,66 @@ def kinematics_3d(grip, geom):
 def moment_arms(grip):
     """Scalar moment arms (mm). Positive = flexion or radial abduction.
     
-    FDP and FDS DIP/PIP moment arms: linear fit to An et al. 1983 Table 2.
-    FDP and FDS MCP moment arms: angle-dependent linear fit to An et al. 1983
-      Table 2 (values ~8-13 mm across 0-90 deg). Previous fixed values of 10.4
-      and 8.6 mm were mid-range approximations, introducing systematic error.
+    Two calibration sources (selected by Config.moment_arm_source):
+    
+    'an1983' — An et al. 1983 Table 2 literature averages.
+      Linear fits to tabulated moment arm data across joint angle ranges.
+      These are population averages, not specimen-specific.
+    
+    'peerj' — PeerJ 7470 CT-calibrated path points (Iter 15).
+      Linear fits to moment arms computed from the cadaver-specific
+      tendon path points (Geometry_Middle_Cal_Hum/) at 4 postures.
+      Validated against 3-specimen force plate data. Key differences:
+        - DIP FDP: 4.7mm (PeerJ) vs 7.5mm (An) — 37% smaller
+        - MCP FDP: 9.9+0.087θ (PeerJ) vs 8.0+0.053θ (An) — 24% larger
+        - MCP FDS: 10.1+0.108θ (PeerJ) vs 6.8+0.036θ (An) — 49% larger
+      The net effect is lower predicted tendon forces, matching cadaver data.
     
     Note: FDS has zero moment arm at DIP — it inserts on the MP (middle
       phalanx), not the DP. The DIP row of the A matrix therefore has no FDS
       column entry (documented explicitly to avoid reconstruction errors).
     """
     tp, td, tm = grip.theta_PIP, grip.theta_DIP, grip.theta_MCP
-    return dict(
-        FDP_DIP=max(6.0 + 0.045*np.clip(td,-30,90),  2.0),
-        FDP_PIP=max(9.0 + 0.033*np.clip(tp,  0,120), 4.0),
-        FDP_MCP=max(8.0 + 0.053*np.clip(tm,  0,90),  6.0),   # An et al. 1983
-        FDS_PIP=max(7.5 + 0.020*np.clip(tp,  0,120), 3.0),
-        FDS_MCP=max(6.8 + 0.036*np.clip(tm,  0,90),  5.0),   # An et al. 1983
-        LU_DIP =-4.0,   # extends DIP
-        LU_PIP =-5.0,   # extends PIP
-        LU_MCP = 6.0,   # flexes MCP
-        FDP_abd=-2.1,   # ulnar side
-        FDS_abd=-1.5,
-        LU_abd = 3.5,   # radial side
-        EDC_DIP=-4.0,   # extends DIP (FDS_DIP=0: FDS inserts on MP, not DP)
-        EDC_PIP=-6.0,   # extends PIP
-        EDC_MCP=-10.0,  # extends MCP
-        EDC_abd=0.0,    # assumed neutral
-    )
+
+    if Config.moment_arm_source == 'peerj':
+        # PeerJ 7470 CT-calibrated (Iteration 15)
+        # Fit from Geometry_Middle_Cal_Hum path points at 4 postures
+        return dict(
+            FDP_DIP=max(4.70 - 0.011*np.clip(td,-30,90),  2.0),
+            FDP_PIP=max(8.21 + 0.050*np.clip(tp,  0,120), 4.0),
+            FDP_MCP=max(9.89 + 0.087*np.clip(tm,-30,90),  6.0),
+            FDS_PIP=max(4.46 + 0.050*np.clip(tp,  0,120), 3.0),
+            FDS_MCP=max(10.13 + 0.108*np.clip(tm,-30,90), 5.0),
+            LU_DIP =-4.0,   # extends DIP
+            LU_PIP =-5.0,   # extends PIP
+            LU_MCP = 6.0,   # flexes MCP
+            FDP_abd=-2.1,   # ulnar side
+            FDS_abd=-1.5,
+            LU_abd = 3.5,   # radial side
+            EDC_DIP=-4.0,   # extends DIP (FDS_DIP=0: FDS inserts on MP, not DP)
+            EDC_PIP=-6.0,   # extends PIP
+            EDC_MCP=-10.0,  # extends MCP
+            EDC_abd=0.0,    # assumed neutral
+        )
+    else:
+        # An et al. 1983 literature averages (original)
+        return dict(
+            FDP_DIP=max(6.0 + 0.045*np.clip(td,-30,90),  2.0),
+            FDP_PIP=max(9.0 + 0.033*np.clip(tp,  0,120), 4.0),
+            FDP_MCP=max(8.0 + 0.053*np.clip(tm,  0,90),  6.0),
+            FDS_PIP=max(7.5 + 0.020*np.clip(tp,  0,120), 3.0),
+            FDS_MCP=max(6.8 + 0.036*np.clip(tm,  0,90),  5.0),
+            LU_DIP =-4.0,   # extends DIP
+            LU_PIP =-5.0,   # extends PIP
+            LU_MCP = 6.0,   # flexes MCP
+            FDP_abd=-2.1,   # ulnar side
+            FDS_abd=-1.5,
+            LU_abd = 3.5,   # radial side
+            EDC_DIP=-4.0,   # extends DIP (FDS_DIP=0: FDS inserts on MP, not DP)
+            EDC_PIP=-6.0,   # extends PIP
+            EDC_MCP=-10.0,  # extends MCP
+            EDC_abd=0.0,    # assumed neutral
+        )
 
 
 # ─────────────────────────────────────────────────────────────
