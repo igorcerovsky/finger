@@ -290,7 +290,8 @@ def moment_arms(grip):
       Linear fits to moment arms computed from cadaver-specific tendon
       path points (Geometry_Middle_Cal_Hum/) at 4 postures (R2>=0.99).
       Iteration 16 extends to ALL muscles (LU, EDC, not just FDP/FDS):
-        - FDP: DIP 37% smaller, MCP 24% larger vs An1983
+        - FDP: DIP uses An1983 (PeerJ 4.7mm incompatible with 3-DOF: absent RI/UI intrinsics)
+          MCP 24% larger vs An1983
         - FDS: MCP 49% larger at theta=0 vs An1983
         - LU:  DIP/PIP via extensor mechanism fractions (RB=0.621, ES=0.379)
                MCP 9.02+0.111theta (+50% vs An1983 fixed 6.0)
@@ -307,7 +308,7 @@ def moment_arms(grip):
         # Fits from Geometry_Middle_Cal_Hum path points at 4 postures (R2>=0.99)
         # Iteration 16: extends calibration to LU (extensor mechanism) and EDC
         return dict(
-            FDP_DIP=max( 4.70 - 0.011*np.clip(td,-30,90),  2.0),
+            FDP_DIP=max( 6.00 + 0.045*np.clip(td,-30,90),  2.0),  # An1983: PeerJ 4.7mm incompatible with 3-DOF solver (RI/UI intrinsics absent)
             FDP_PIP=max( 8.24 + 0.050*np.clip(tp,  0,120), 4.0),
             FDP_MCP=max( 9.89 + 0.087*np.clip(tm,-30,90),  6.0),
             FDS_PIP=max( 4.44 + 0.050*np.clip(tp,  0,120), 3.0),
