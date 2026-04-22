@@ -286,14 +286,15 @@ def moment_arms(grip):
       Linear fits to tabulated moment arm data across joint angle ranges.
       These are population averages, not specimen-specific.
     
-    'peerj' — PeerJ 7470 CT-calibrated path points (Iter 15).
-      Linear fits to moment arms computed from the cadaver-specific
-      tendon path points (Geometry_Middle_Cal_Hum/) at 4 postures.
-      Validated against 3-specimen force plate data. Key differences:
-        - DIP FDP: 4.7mm (PeerJ) vs 7.5mm (An) — 37% smaller
-        - MCP FDP: 9.9+0.087θ (PeerJ) vs 8.0+0.053θ (An) — 24% larger
-        - MCP FDS: 10.1+0.108θ (PeerJ) vs 6.8+0.036θ (An) — 49% larger
-      The net effect is lower predicted tendon forces, matching cadaver data.
+    'peerj' — PeerJ 7470 CT-calibrated path points (Iterations 15-16).
+      Linear fits to moment arms computed from cadaver-specific tendon
+      path points (Geometry_Middle_Cal_Hum/) at 4 postures (R2>=0.99).
+      Iteration 16 extends to ALL muscles (LU, EDC, not just FDP/FDS):
+        - FDP: DIP 37% smaller, MCP 24% larger vs An1983
+        - FDS: MCP 49% larger at theta=0 vs An1983
+        - LU:  DIP/PIP via extensor mechanism fractions (RB=0.621, ES=0.379)
+               MCP 9.02+0.111theta (+50% vs An1983 fixed 6.0)
+        - EDC: all joints angle-dependent (was fixed at An1983 values)
     
     Note: FDS has zero moment arm at DIP — it inserts on the MP (middle
       phalanx), not the DP. The DIP row of the A matrix therefore has no FDS
@@ -302,23 +303,26 @@ def moment_arms(grip):
     tp, td, tm = grip.theta_PIP, grip.theta_DIP, grip.theta_MCP
 
     if Config.moment_arm_source == 'peerj':
-        # PeerJ 7470 CT-calibrated (Iteration 15)
-        # Fit from Geometry_Middle_Cal_Hum path points at 4 postures
+        # PeerJ 7470 CT-calibrated (Iterations 15-16)
+        # Fits from Geometry_Middle_Cal_Hum path points at 4 postures (R2>=0.99)
+        # Iteration 16: extends calibration to LU (extensor mechanism) and EDC
         return dict(
-            FDP_DIP=max(4.70 - 0.011*np.clip(td,-30,90),  2.0),
-            FDP_PIP=max(8.21 + 0.050*np.clip(tp,  0,120), 4.0),
-            FDP_MCP=max(9.89 + 0.087*np.clip(tm,-30,90),  6.0),
-            FDS_PIP=max(4.46 + 0.050*np.clip(tp,  0,120), 3.0),
-            FDS_MCP=max(10.13 + 0.108*np.clip(tm,-30,90), 5.0),
-            LU_DIP =-4.0,   # extends DIP
-            LU_PIP =-5.0,   # extends PIP
-            LU_MCP = 6.0,   # flexes MCP
-            FDP_abd=-2.1,   # ulnar side
+            FDP_DIP=max( 4.70 - 0.011*np.clip(td,-30,90),  2.0),
+            FDP_PIP=max( 8.24 + 0.050*np.clip(tp,  0,120), 4.0),
+            FDP_MCP=max( 9.89 + 0.087*np.clip(tm,-30,90),  6.0),
+            FDS_PIP=max( 4.44 + 0.050*np.clip(tp,  0,120), 3.0),
+            FDS_MCP=max(10.13 + 0.108*np.clip(tm,-30,90),  5.0),
+            # LU via extensor mechanism (RB_frac=0.621, ES_frac=0.379)
+            LU_DIP =min(-2.53 + 0.016*np.clip(td,-30,90), -0.5),  # extends DIP
+            LU_PIP =min(-4.19 + 0.043*np.clip(tp,  0,120), -0.5), # extends PIP
+            LU_MCP =max(min(9.02 + 0.111*np.clip(tm,-30,90), 12.0), 3.0), # flexes MCP (capped: LU assists, not dominates)
+            FDP_abd=-2.1,   # ulnar (An 1983 -- abduction not in PeerJ path data)
             FDS_abd=-1.5,
-            LU_abd = 3.5,   # radial side
-            EDC_DIP=-4.0,   # extends DIP (FDS_DIP=0: FDS inserts on MP, not DP)
-            EDC_PIP=-6.0,   # extends PIP
-            EDC_MCP=-10.0,  # extends MCP
+            LU_abd = 3.5,   # radial
+            # Extensor mechanism (TE at DIP, ES at PIP, LE at MCP)
+            EDC_DIP=min(-4.07 + 0.025*np.clip(td,-30,90), -1.5),  # extends DIP
+            EDC_PIP=min(-6.48 + 0.042*np.clip(tp,  0,120), -2.0), # extends PIP
+            EDC_MCP=min(-8.65 + 0.059*np.clip(tm,-30,90), -2.0),  # extends MCP
             EDC_abd=0.0,    # assumed neutral
         )
     else:

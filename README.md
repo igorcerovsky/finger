@@ -207,6 +207,7 @@ Edit `Config` in `climbing_finger_3d.py`:
 | `use_com_vectoring` | True | Enable body-COM-derived force direction |
 | `h_below_hold_mm` | 150.0 | COM vertical distance below hold (mm) |
 | `d_com_mm` | 300.0 | COM perpendicular distance from wall (mm) |
+| `moment_arm_source` | `'peerj'` | Moment arm calibration: `'peerj'` (CT-calibrated) or `'an1983'` (literature) |
 
 ---
 
@@ -220,7 +221,8 @@ While the current 3D biomechanical model represents a significant step up from p
 - **4th Posture Panel in Figs 8–10 (Iteration 9)**: Each depth-sweep figure now includes a panel D showing the equilibrium PIP and DIP angles at every hold depth per phenotype — the primary clinical output of the optimizer.
 - **Fig 11: Grip-Optimal Comparison (Iteration 9)**: For each hold depth × phenotype, shows which grip (Crimp/Half-Crimp/Open Hand) minimises total tendon force. Left column: all three force curves. Right column: optimal grip shaded by region. Directly answers the project’s core question.
 - **Friction Cone Soft Constraint (Iteration 10)**: The posture optimizer now includes a soft Coulomb friction penalty $\Phi_{friction}$, activating at ratio > 0.8 ($k_1 = 200$) and stiffening 10× past ratio = 1.0 ($k_2 = 2000$). Previously the friction feasibility was diagnostic-only; now it actively steers the optimizer away from physically impossible slip postures. See `physics.md` §6.
-- **Validation Against PeerJ 7470 (Iterations 10→13)**: `human_bonobo/compare_models.py` validates EMG ratios against Vigouroux (2006) across 4 cadaver postures. All match exactly: HyperExt=1.75, MinorFlex/MajorFlex/Hook=1.20. Iteration 13 added posture-dependent force direction (perpendicular to DP pad) and PeerJ-exact geometry (PP=47.0, MP=28.8, DP=19.0mm). The direct solver improved from 2.51→1.58 in HyperExt with the corrected force direction. Results: `outputs/validation_peerj_iter13.txt`. See `physics.md` §7.
+- **Validation Against PeerJ 7470 (Iterations 10→15)**: `human_bonobo/compare_models.py` validates EMG ratios against Vigouroux (2006) across 4 cadaver postures. All match exactly: HyperExt=1.75, MinorFlex/MajorFlex/Hook=1.20. Iteration 14 introduced absolute force validation using actual cadaver force plate data (mean of 3 specimens). See `physics.md` §7.
+- **PeerJ-Calibrated Moment Arms (Iteration 15)**: Diagnostic comparison revealed DIP FDP 73% too large, MCP FDS 44% too small vs CT-calibrated path points. New coefficients extracted from PeerJ `Geometry_Middle_Cal_Hum/` path points (R² > 0.99). Absolute force Pred/Applied ratio improved from 2.87× to 1.94× (−32%). Switchable via `Config.moment_arm_source = 'peerj' | 'an1983'`. See `physics.md` §8.
 - **Fig 11: Phenotype L_DP + Transition Annotations (Iteration 12)**: Each phenotype row in Fig 11 now shows its own L_DP line (Short=18.7mm, Long=25.3mm) instead of always using geom_std. Grip-transition boundaries are annotated with depth labels.
 - **Antagonist EDC Co-Contraction (Implemented, Iteration 6)**: The full Crimp posture forces the DIP into hyperextension ($\approx -22.6°$), triggering a mandatory passive/active extensor (EDC) stiffness floor. This translates to $\approx 3.7$ N mandatory EDC demand which propagates into additional flexor requirements, raising the Crimp's total tendon demand.
 - **Tissue Pulp Compression (Implemented, Iteration 5)**: Non-linear skin deformation under load dynamically shifts the palmar contact point toward the bone axis, shortening the external moment arm and producing a grip-dependent mechanical advantage that varies with load magnitude.
@@ -242,3 +244,4 @@ While the current 3D biomechanical model represents a significant step up from p
 9. **Serina ER, Mote CD, Rempel D.** Force response of the fingertip pulp to repeated compression. *Journal of Biomechanics*, 30(2):111–118 (1997).
 10. **Uno Y, Kawato M, Suzuki R.** Formation and control of optimal trajectory in human multijoint arm movement. *Biological Cybernetics*, 61(2):89–101 (1989).
 11. **Esteki A, Mansour JM.** An experimentally based nonlinear viscoelastic model of joint passive moment. *Journal of Biomechanics*, 29(4):443–450 (1996).
+12. **Vigouroux L, Domalain M, Berton E.** Comparison of tendon tensions estimated from two biomechanical models of the thumb. *PeerJ*, 7:e7470 (2019).

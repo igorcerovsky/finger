@@ -292,31 +292,45 @@ A joint-by-joint moment arm comparison (`moment_arm_comparison.py`) was performe
 
 ### 8.2 Recalibrated coefficients
 
-Linear regressions were fit to the PeerJ moment arms at 4 postures (R² > 0.99 for all except DIP):
+Linear regressions were fit to the PeerJ moment arms at 4 postures (R² ≥ 0.99 for all except DIP, R²=0.81):
 
 ```
-Config.moment_arm_source = 'peerj'   # (default in Iter 15)
+Config.moment_arm_source = 'peerj'   # default (Iterations 15-16)
 
+# Iteration 15 — FDP and FDS
 FDP_DIP = 4.70 − 0.011·θ_DIP    (was 6.0 + 0.045·θ_DIP)
-FDP_PIP = 8.21 + 0.050·θ_PIP    (was 9.0 + 0.033·θ_PIP)
+FDP_PIP = 8.24 + 0.050·θ_PIP    (was 9.0 + 0.033·θ_PIP)
 FDP_MCP = 9.89 + 0.087·θ_MCP    (was 8.0 + 0.053·θ_MCP)
-FDS_PIP = 4.46 + 0.050·θ_PIP    (was 7.5 + 0.020·θ_PIP)
+FDS_PIP = 4.44 + 0.050·θ_PIP    (was 7.5 + 0.020·θ_PIP)
 FDS_MCP = 10.13 + 0.108·θ_MCP   (was 6.8 + 0.036·θ_MCP)
+
+# Iteration 16 — LU (via extensor mechanism) and EDC
+LU_DIP  = −2.53 + 0.016·θ_DIP   (was −4.0 fixed)   [extends DIP]
+LU_PIP  = −4.19 + 0.043·θ_PIP   (was −5.0 fixed)   [extends PIP]
+LU_MCP  = 9.02 + 0.111·θ_MCP    (was 6.0 fixed)    [flexes MCP; cap 12mm]
+EDC_DIP = −4.07 + 0.025·θ_DIP   (was −4.0 fixed)   [extends DIP]
+EDC_PIP = −6.48 + 0.042·θ_PIP   (was −6.0 fixed)   [extends PIP]
+EDC_MCP = −8.65 + 0.059·θ_MCP   (was −10.0 fixed)  [extends MCP]
 ```
+
+**LU extensor mechanism fractions** (from `EM_CS_fractions.csv`): RB band = 0.621, ES band = 0.379.
+The LU_MCP is capped at 12 mm to prevent LU from dominating the MCP moment at high flexion angles (physiologically, LU assists FDP/FDS rather than replacing them).
 
 The An 1983 coefficients are preserved as `Config.moment_arm_source = 'an1983'`.
 
 ### 8.3 Impact on absolute force accuracy
 
-| Posture | Pred/App (An 1983) | Pred/App (PeerJ) | Improvement |
+| Posture | An 1983 | Iter 15 (FDP/FDS) | Iter 16 (+LU/EDC) |
 |---|---|---|---|
-| MajorFlex | 1.01 | **0.83** | ✓ (was already good) |
-| MinorFlex | 1.70 | **1.34** | ↓ 21% |
-| Hook | 3.20 | **2.26** | ↓ 30% |
-| HyperExt | 5.56 | **3.31** | ↓ 40% |
-| **Overall** | **2.87** | **1.94** | **↓ 32%** |
+| MajorFlex | 1.01 | 0.83 | **0.64** |
+| MinorFlex | 1.70 | 1.34 | **1.23** |
+| Hook | 3.20 | 2.26 | **1.95** |
+| HyperExt | 5.56 | 3.31 | **3.28** |
+| **Overall** | **2.87** | **1.94** | **1.78** |
 
-The recalibration reduced the systematic overestimate by 32% across all postures. The remaining error (overall 1.94×) is attributed to:
-1. The 3-DOF simplification (vs PeerJ's full 4-DOF 6-muscle T_mus matrix)
-2. Lumbrical, interossei, and extensor mechanism moment arms still at literature values
-3. The linear fit approximation to the nonlinear generalized-force moment arm
+Iteration 16 further reduces the overall overestimate by 8% (1.94 → 1.78). The cumulative improvement from An 1983 is **−38%**. HyperExt remains the hardest to calibrate, suggesting the DIP hyperextension geometry is the most sensitive to nonlinear path-point effects not captured by linear fits.
+
+**Residual error sources**:
+1. Linear fit to nonlinear generalized-force moment arm (especially DIP at high angles)
+2. Abduction moment arms (FDP_abd, FDS_abd, LU_abd) still at An 1983 — not in PeerJ path data
+3. Interossei (RI, UI) not included in our 3-muscle model; they carry ~5-10% of MCP moment
