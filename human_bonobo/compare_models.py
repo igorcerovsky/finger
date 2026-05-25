@@ -151,7 +151,14 @@ def run_comparison():
             # Our model: x=distal, y=dorsal
             # The force plate measures the reaction on the finger, so we negate
             # to get the external force applied TO the finger (Newton's 3rd law)
-            F_ext = -F_exp_mean   # Negate: reaction → applied
+            F_ext_pj = -F_exp_mean   # Negate: reaction → applied in PeerJ system
+            
+            # Mirrored conversion facade: map PeerJ coordinates to our +x clockwise system.
+            # To match the sagittal plane joint moments under a mirrored bone starting direction
+            # (+x in our system, -x in PeerJ) and opposite flexion rotation directions,
+            # we keep the distal (x) force component same, but negate dorsal (y) and lateral (z)
+            # force components: F_our = [Fx_pj, -Fy_pj, -Fz_pj]
+            F_ext = np.array([F_ext_pj[0], -F_ext_pj[1], -F_ext_pj[2]])
 
             grip = GripAngles(
                 name=posture_name,
