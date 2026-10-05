@@ -334,3 +334,25 @@ Iteration 16 further reduces the overall overestimate by 8% (1.94 → 1.78). The
 1. Linear fit to nonlinear generalized-force moment arm (especially DIP at high angles)
 2. Abduction moment arms (FDP_abd, FDS_abd, LU_abd) still at An 1983 — not in PeerJ path data
 3. Interossei (RI, UI) not included in our 3-muscle model; they carry ~5-10% of MCP moment
+
+## 9. Iteration 18: Wrist Extension Coupling, Adaptive Tribology, and Posture Continuation
+
+### 9.1 Wrist Tenodesis Pre-Tension Coupling
+During rock climbing, particularly under crimp postures on small edges ($<15\text{ mm}$), athletes naturally extend the wrist by $20^\circ\text{–}35^\circ$ (Lutter et al. 2021). Wrist extension draws the extrinsic flexors (FDP, FDS) proximally across the radiocarpal and midcarpal joints, creating a passive tenodesis pre-tension that shifts sarcomere operating lengths towards optimal active-force production and increases the effective moment arm of the extrinsic flexor tendons at the MCP joint:
+
+$$\Delta ma_{MCP}(\theta_{wrist}) = k_{wrist} \cdot \theta_{wrist}$$
+
+where $k_{wrist} = 0.04\text{ mm/deg}$ and $\theta_{wrist} = 25.0^\circ$ by default, yielding $\Delta ma_{MCP} \approx 1.0\text{ mm}$.
+
+### 9.2 Normal-Force-Dependent Non-Linear Skin Tribology
+Empirical investigations of chalked human skin on rock and polyurethane climbing surfaces (Fuss & Niegl 2008; Derler & Gerhardt 2012; Amca et al. 2012) demonstrate that the friction coefficient decreases as normal force increases due to microscopic epidermal asperity saturation:
+
+$$\mu_{eff}(F_N) = \text{clip}\left( \mu_0 \cdot \left(\frac{F_{ref}}{\max(F_N, 1.0)}\right)^{1 - n}, 0.25, 0.85 \right)$$
+
+where $\mu_0 = 0.50$, $F_{ref} = 20.0\text{ N}$, and $n = 0.85$. Under light exploration ($F_N \approx 5\text{ N}$), $\mu_{eff} \approx 0.62$; under maximal finger loading ($F_N \approx 170\text{ N}$), $\mu_{eff}$ settles near $0.36\text{–}0.40$, preventing over-optimistic friction assumptions in the posture optimizer.
+
+### 9.3 Numerical Continuation Optimizer
+Parametric optimization across hold depth sweeps ($d_{hold} \in [2.0, 45.0]\text{ mm}$) leverages parametric continuation:
+1. Because biological finger posture changes continuously along edge depth, the solution from the adjacent depth $[\theta_{PIP}^*, \theta_{DIP}^*]$ serves as an initial seed.
+2. A localized Nelder-Mead search refines the posture directly within the established basin.
+3. If local refinement encounters mechanical instability or friction boundary violation ($J > 3500\text{ N}$), the optimizer automatically falls back to the full $10 \times 10$ global grid search.

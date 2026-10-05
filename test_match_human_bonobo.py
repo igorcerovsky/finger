@@ -29,6 +29,7 @@ def test_backward_compatibility():
     Config.use_icr_shifting = False
     Config.use_capstan = False
     Config.use_interossei = False
+    Config.use_wrist_coupling = False
     Config.moment_arm_source = 'an1983'
 
     # 2. Replicate `compare_models.py` MinorFlex condition

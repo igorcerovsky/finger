@@ -146,7 +146,22 @@ class Config:
     # 'peerj'    : PeerJ 7470 CT-calibrated path points (Iter 15)
     moment_arm_source = 'peerj'
 
+    # ── Wrist Extension Coupling (Iteration 18) ───────────────────
+    # Climbers extend the wrist during crimping (typically 20-35 deg),
+    # which increases passive tension and effective flexor moment arm at MCP.
+    use_wrist_coupling = True
+    theta_wrist_deg    = 25.0    # Wrist extension angle (deg)
+    k_wrist_ma         = 0.04    # Moment arm shift per degree of wrist extension (mm/deg)
+
+    # ── Normal-Load Dependent Friction (Iteration 18) ────────────
+    # Non-linear skin tribology (Fuss & Niegl 2008, Derler & Gerhardt 2012, Amca et al. 2012)
+    # mu_eff(F_N) = mu_0 * (F_ref / max(F_N, 1.0))^(1-n)
+    use_adaptive_friction = True
+    friction_n            = 0.85   # Exponent (0.75 - 0.85 typical for skin)
+    friction_F_ref        = 20.0   # Reference force where mu = mu_friction (N)
+
     save_figures  = True
+    show_figures  = False
     output_prefix = "climbing_3d"
 
 
@@ -311,6 +326,12 @@ def moment_arms(grip):
     """
     tp, td, tm = grip.theta_PIP, grip.theta_DIP, grip.theta_MCP
 
+    # Wrist extension coupling (Iteration 18): tenodesis increases effective MCP flexor moment arm
+    wrist_boost = 0.0
+    if getattr(Config, 'use_wrist_coupling', False):
+        w_deg = getattr(Config, 'theta_wrist_deg', 0.0)
+        wrist_boost = float(getattr(Config, 'k_wrist_ma', 0.04) * np.clip(w_deg, 0.0, 45.0))
+
     if Config.moment_arm_source == 'peerj':
         # PeerJ 7470 CT-calibrated (Iterations 15-16)
         # Fits from Geometry_Middle_Cal_Hum path points at 4 postures (R2>=0.99)
@@ -321,9 +342,9 @@ def moment_arms(grip):
         return dict(
             FDP_DIP=max( 6.00 + 0.045*np.clip(td,-30,90),  2.0),  # An1983: PeerJ 4.7mm incompatible with 3-DOF solver (RI/UI intrinsics absent)
             FDP_PIP=max( 8.24 + 0.050*np.clip(tp,  0,120), 4.0),
-            FDP_MCP=max( 9.89 + 0.087*np.clip(tm,-30,90),  6.0),
+            FDP_MCP=max( 9.89 + 0.087*np.clip(tm,-30,90),  6.0) + wrist_boost,
             FDS_PIP=max( 4.44 + 0.050*np.clip(tp,  0,120), 3.0),
-            FDS_MCP=max(10.13 + 0.108*np.clip(tm,-30,90),  5.0),
+            FDS_MCP=max(10.13 + 0.108*np.clip(tm,-30,90),  5.0) + wrist_boost,
             # LU via extensor mechanism (RB_frac=0.621, ES_frac=0.379)
             LU_DIP =min(-2.53 + 0.016*np.clip(td,-30,90), -0.5),  # extends DIP
             LU_PIP =min(-4.19 + 0.043*np.clip(tp,  0,120), -0.5), # extends PIP
@@ -353,9 +374,9 @@ def moment_arms(grip):
         return dict(
             FDP_DIP=max(6.0 + 0.045*np.clip(td,-30,90),  2.0),
             FDP_PIP=max(9.0 + 0.033*np.clip(tp,  0,120), 4.0),
-            FDP_MCP=max(8.0 + 0.053*np.clip(tm,  0,90),  6.0),
+            FDP_MCP=max(8.0 + 0.053*np.clip(tm,  0,90),  6.0) + wrist_boost,
             FDS_PIP=max(7.5 + 0.020*np.clip(tp,  0,120), 3.0),
-            FDS_MCP=max(6.8 + 0.036*np.clip(tm,  0,90),  5.0),
+            FDS_MCP=max(6.8 + 0.036*np.clip(tm,  0,90),  5.0) + wrist_boost,
             LU_DIP =-4.0,   # extends DIP
             LU_PIP =-5.0,   # extends PIP
             LU_MCP = 6.0,   # flexes MCP
@@ -559,12 +580,24 @@ def check_friction_feasibility(F_ext: np.ndarray,
 
     if F_N <= 0.01:
         return dict(feasible=False, F_N=F_N, F_f_total=F_f_total,
-                    friction_ratio=np.inf, F_f_axial=F_f_axial, F_f_lat=F_f_lat)
+                    friction_ratio=np.inf, F_f_axial=F_f_axial, F_f_lat=F_f_lat,
+                    mu_eff=contact.mu)
 
-    ratio    = F_f_total / (contact.mu * F_N)
+    # Adaptive non-linear skin friction (Iteration 18: Fuss et al. 2022)
+    mu_base = contact.mu
+    if getattr(Config, 'use_adaptive_friction', False):
+        n_exp = getattr(Config, 'friction_n', 0.85)
+        F_ref = getattr(Config, 'friction_F_ref', 20.0)
+        mu_eff = mu_base * ((F_ref / max(F_N, 1.0)) ** (1.0 - n_exp))
+        mu_eff = float(np.clip(mu_eff, 0.25, 0.85))
+    else:
+        mu_eff = mu_base
+
+    ratio    = F_f_total / (mu_eff * F_N)
     feasible = ratio <= 1.0
     return dict(feasible=feasible, F_N=F_N, F_f_total=F_f_total,
-                friction_ratio=ratio, F_f_axial=F_f_axial, F_f_lat=F_f_lat)
+                friction_ratio=ratio, F_f_axial=F_f_axial, F_f_lat=F_f_lat,
+                mu_eff=mu_eff)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -806,54 +839,62 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
 
         return float(raw_total + penalty)
 
-    # ── 1. Grid search ─────────────────────────────────────────────────
-    # Always run a full coarse global grid to find the true global basin.
-    # Additionally, if a warm-start is provided (e.g. previous depth in a sweep),
-    # run a fine local grid around it. Take whichever gives the lower total force.
-    # This prevents warm-start from trapping the optimizer in a local minimum
-    # when a genuine posture-mode transition occurs between adjacent depths.
-    pip_grid_g = np.linspace(0.0, 110.0, 10)   # global: 10 pts (~11 deg step, optimized from 16)
-    dip_grid_g = np.linspace(-25.0, 90.0, 10)
-    best_f_global, best_pip_g, best_dip_g = np.inf, theta_PIP_0, theta_DIP_0
+    # ── 1. Fast Continuation / Grid search ────────────────────────────
+    # Numerical continuation: if warm-start angles (pip0, dip0) are provided from
+    # the immediately adjacent depth step, evaluate and refine locally first.
+    # Biological finger postures move continuously with edge depth.
+    # Fall back to the full global grid only if no warm-start exists or if the
+    # local continuation encounters a mechanical discontinuity / high penalty.
+    need_global = True
+    best_pip, best_dip, best_f = theta_PIP_0, theta_DIP_0, np.inf
 
-    for pip in pip_grid_g:
-        for dip in dip_grid_g:
-            try:
-                f = total_force_for_angles(pip, dip)
-                if f < best_f_global:
-                    best_f_global, best_pip_g, best_dip_g = f, pip, dip
-            except Exception:
-                pass
+    if pip0 is not None and dip0 is not None:
+        try:
+            f_warm = total_force_for_angles(pip0, dip0)
+            if f_warm < 4000.0:
+                from scipy.optimize import minimize  # type: ignore
+                def obj_w(xy):
+                    try:
+                        return total_force_for_angles(xy[0], xy[1])
+                    except Exception:
+                        return 1e9
+                res_w = minimize(obj_w, [pip0, dip0], method='Nelder-Mead',
+                                 options={'xatol': 0.8, 'fatol': 1.0, 'maxiter': 40})
+                if res_w.fun < 3500.0:
+                    best_pip, best_dip, best_f = float(res_w.x[0]), float(res_w.x[1]), float(res_w.fun)
+                    need_global = False
+        except Exception:
+            need_global = True
 
-    best_pip, best_dip, best_f = best_pip_g, best_dip_g, best_f_global
+    if need_global:
+        pip_grid_g = np.linspace(0.0, 110.0, 10)   # global: 10 pts
+        dip_grid_g = np.linspace(-25.0, 90.0, 10)
+        best_f_global, best_pip_g, best_dip_g = np.inf, theta_PIP_0, theta_DIP_0
 
-    # If warm-start provided, also search locally — take result only if it beats global
-    if pip0 is not None:
-        best_f_warm, best_pip_w, best_dip_w = np.inf, pip0, dip0
-        for pip in np.linspace(pip0 - 15.0, pip0 + 15.0, 5): # optimized from 9
-            for dip in np.linspace(dip0 - 15.0, dip0 + 15.0, 5):
+        for pip in pip_grid_g:
+            for dip in dip_grid_g:
                 try:
                     f = total_force_for_angles(pip, dip)
-                    if f < best_f_warm:
-                        best_f_warm, best_pip_w, best_dip_w = f, pip, dip
+                    if f < best_f_global:
+                        best_f_global, best_pip_g, best_dip_g = f, pip, dip
                 except Exception:
                     pass
-        if best_f_warm < best_f:
-            best_pip, best_dip, best_f = best_pip_w, best_dip_w, best_f_warm
 
-    # ── 2. Local refinement ───────────────────────────────────────────
-    try:
-        from scipy.optimize import minimize  # type: ignore
-        def obj(xy):
-            try:
-                return total_force_for_angles(xy[0], xy[1])
-            except Exception:
-                return 1e9
-        res = minimize(obj, [best_pip, best_dip], method='Nelder-Mead',
-                       options={'xatol': 1.0, 'fatol': 1.0, 'maxiter': 60}) # optimized from 0.5/200
-        best_pip, best_dip = float(res.x[0]), float(res.x[1])
-    except Exception:
-        pass  # grid solution is used as fallback
+        best_pip, best_dip, best_f = best_pip_g, best_dip_g, best_f_global
+
+        # ── 2. Local refinement ───────────────────────────────────────────
+        try:
+            from scipy.optimize import minimize  # type: ignore
+            def obj(xy):
+                try:
+                    return total_force_for_angles(xy[0], xy[1])
+                except Exception:
+                    return 1e9
+            res = minimize(obj, [best_pip, best_dip], method='Nelder-Mead',
+                           options={'xatol': 1.0, 'fatol': 1.0, 'maxiter': 50})
+            best_pip, best_dip = float(res.x[0]), float(res.x[1])
+        except Exception:
+            pass  # grid solution is used as fallback
 
     return GripAngles(grip_base.name, grip_base.theta_MCP, grip_base.phi_MCP,
                       best_pip, best_dip, grip_base.color, grip_base.emg_ratio)
@@ -1071,43 +1112,64 @@ def solve_all_methods(grip: GripAngles,
 # ─────────────────────────────────────────────────────────────
 
 def compute_pulley_angles(kin, geom):
-    ex    = np.array([1.,0.,0.])
+    ex    = np.array([1., 0., 0.])
     R_MCP = kin['R_MCP']
     R_PIP = kin['R_PIP']
 
-    p_A2     = kin['p_MCP'] + R_MCP @ (0.40*geom.L1*ex)
-    d_in_A2  = Config.wrist_pos - p_A2
-    d_in_A2 /= np.linalg.norm(d_in_A2)
-    d_out_A2 = R_MCP @ ex
+    p_A2 = kin['p_MCP'] + R_MCP @ (0.40 * geom.L1 * ex)
+    p_A4 = kin['p_PIP'] + R_PIP @ (0.20 * geom.L2 * ex)
     
-    # Capstan wrap angles
-    dot_A2 = np.clip(np.dot(d_in_A2, d_out_A2), -1.0, 1.0)
-    theta_A2 = np.arccos(dot_A2)
-
-    p_A4     = kin['p_PIP'] + R_PIP @ (0.20*geom.L2*ex)
-    d_in_A4  = R_MCP @ ex
-    d_out_A4 = R_PIP @ ex
+    # Unit direction vectors along phalanges
+    u_PP = R_MCP @ ex
+    u_MP = R_PIP @ ex
     
-    dot_A4 = np.clip(np.dot(d_in_A4, d_out_A4), -1.0, 1.0)
-    theta_A4 = np.arccos(dot_A4)
+    # Unit direction vector from wrist to MCP joint
+    u_wrist = kin['p_MCP'] - Config.wrist_pos
+    u_wrist /= np.linalg.norm(u_wrist)
     
-    return theta_A2, theta_A4, d_in_A2, d_out_A2, d_in_A4, d_out_A4, p_A2, p_A4
+    # Deflection angle at MCP (between wrist and PP)
+    dot_MCP = np.clip(np.dot(u_wrist, u_PP), -1.0, 1.0)
+    theta_MCP = np.arccos(dot_MCP)
+    
+    # Deflection angle at PIP (between PP and MP)
+    dot_PIP = np.clip(np.dot(u_PP, u_MP), -1.0, 1.0)
+    theta_PIP = np.arccos(dot_PIP)
+    
+    # Physiological bowstringing sharing across joints (Roloff et al. 2006, Vigouroux et al. 2006):
+    # A2 restrains entry MCP deflection plus proximal share (~50%) of PIP bowstringing
+    # A4 restrains distal share (~40%) of PIP bowstringing (A3/capsule absorbs ~10%)
+    f_A2_pip = 0.50
+    f_A4_pip = 0.40
+    
+    theta_A2 = theta_MCP + f_A2_pip * theta_PIP
+    theta_A4 = f_A4_pip * theta_PIP
+    
+    # Resultant bowstringing vector directions: delta_u = u_in - u_out
+    delta_MCP = u_wrist - u_PP
+    delta_PIP = u_PP - u_MP
+    
+    return theta_A2, theta_A4, delta_MCP, delta_PIP, u_PP, u_MP, p_A2, p_A4
 
 def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
     """
-    Computes spatially distributed capstan tissue limits for A2/A4.
-    F_pulley = T * (d_hat_in + d_hat_out).
-    Out-of-plane (z) component appears when phi_MCP != 0.
+    Computes 3D pulley forces for A2 and A4 based on tendon deflection geometry
+    and physiological bowstringing sharing across joints (Roloff et al. 2006, Vigouroux et al. 2006).
     """
-    theta_A2, theta_A4, d_in_A2, d_out_A2, d_in_A4, d_out_A4, p_A2, p_A4 = compute_pulley_angles(kin, geom)
+    theta_A2, theta_A4, delta_MCP, delta_PIP, u_PP, u_MP, p_A2, p_A4 = compute_pulley_angles(kin, geom)
     
-    # Track the distributed maximum limits across sliding tendons
+    f_A2_pip = 0.50
+    f_A4_pip = 0.40
+    
+    # Both FDP and FDS pass under A2
     T_A2 = (F_FDP + F_FDS) * np.exp(Config.mu_tendon * theta_A2)
-    F_A2_vec = T_A2 * (d_in_A2 + d_out_A2)
+    # A2 restrains MCP tendon entry deflection + distal PIP bowstringing
+    F_A2_vec = T_A2 * (delta_MCP + f_A2_pip * delta_PIP)
     F_A2_mag = float(np.linalg.norm(F_A2_vec))
     
+    # Only FDP passes under A4 (FDS inserts onto MP)
     T_A4 = F_FDP * np.exp(Config.mu_tendon * (theta_A2 + theta_A4))
-    F_A4_vec = T_A4 * (d_in_A4 + d_out_A4)
+    # A4 restrains proximal PIP bowstringing
+    F_A4_vec = T_A4 * (f_A4_pip * delta_PIP)
     F_A4_mag = float(np.linalg.norm(F_A4_vec))
 
     # Pressure distribution mappings
@@ -1824,10 +1886,10 @@ if __name__ == '__main__':
             fig.savefig(fname, dpi=150, bbox_inches='tight')
             print(f'  Saved -> {fname}')
     
-    # Show figures only if in an interactive terminal to prevent blocking headlessly
+    # Show figures only if configured and in an interactive terminal
     import sys
-    if sys.stdout.isatty():
+    if getattr(Config, 'show_figures', False) and sys.stdout.isatty():
         plt.show()
     else:
-        print("  Headless or background execution detected; skipping plt.show() blocking.")
+        print("  Figures successfully saved to disk (headless mode).")
     print('\nDone.')
