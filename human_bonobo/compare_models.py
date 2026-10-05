@@ -191,6 +191,8 @@ def run_comparison():
                     'applied_tendon': total_tendon,
                     'pred_FDP': r['F_FDP'],
                     'pred_FDS': r['F_FDS'],
+                    'pred_RI': r.get('F_RI', 0.0),
+                    'pred_UI': r.get('F_UI', 0.0),
                     'pred_total': r['F_total'],
                     'pred_ratio': pred_ratio,
                     'force_ratio': force_ratio,
@@ -214,8 +216,8 @@ def run_comparison():
     # ── Print Section 2: Model predictions ───────────────────────────────────
     print(f"\n  SECTION 2: Model Predictions (F_ext = measured fingertip reaction)")
     print(f"  {'Posture':<12} {'Load':<6} {'Method':<11} "
-          f"{'FDP':>7} {'FDS':>7} {'Total':>8} {'Ratio':>7} {'Pred/App':>9}")
-    print('  ' + '-' * 75)
+          f"{'FDP':>6} {'FDS':>6} {'RI':>5} {'UI':>5} {'Total':>7} {'Ratio':>7} {'Pred/App':>8}")
+    print('  ' + '-' * 85)
     last_key = None
     for r in results:
         key = (r['posture'], r['gram'])
@@ -223,9 +225,10 @@ def run_comparison():
             print()
         last_key = key
         print(f"  {r['posture']:<12} {r['gram']:<6} {r['method']:<11} "
-              f"{r['pred_FDP']:>7.1f} {r['pred_FDS']:>7.1f} "
-              f"{r['pred_total']:>8.1f} {r['pred_ratio']:>7.2f} "
-              f"{r['force_ratio']:>9.2f}")
+              f"{r['pred_FDP']:>6.1f} {r['pred_FDS']:>6.1f} "
+              f"{r['pred_RI']:>5.1f} {r['pred_UI']:>5.1f} "
+              f"{r['pred_total']:>7.1f} {r['pred_ratio']:>7.2f} "
+              f"{r['force_ratio']:>8.2f}")
 
     # ── Print Section 3: Key validation summary ──────────────────────────────
     print('\n' + '=' * 95)

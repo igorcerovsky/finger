@@ -28,6 +28,7 @@ def test_backward_compatibility():
     # 1. Disable all advanced modules and restore legacy moment arm source
     Config.use_icr_shifting = False
     Config.use_capstan = False
+    Config.use_interossei = False
     Config.moment_arm_source = 'an1983'
 
     # 2. Replicate `compare_models.py` MinorFlex condition

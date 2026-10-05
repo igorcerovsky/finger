@@ -133,6 +133,14 @@ class Config:
     h_below_hold_mm    = 150.0   # COM vertical distance below hold (mm)
     d_com_mm           = 300.0   # COM perpendicular distance from wall (mm)
 
+    # ── Interossei config ─────────────────────────────────────
+    use_interossei     = True
+    # Note: Modern research shows PCSA is not a reliable predictor of active muscle strength
+    # limits. Our musculoskeletal solver is designed to be completely agnostic to PCSA,
+    # optimizing raw force magnitude directly. These variables are kept for reference only.
+    PCSA_RI            = 2.8     # Radial Interosseous PCSA (cm²)
+    PCSA_UI            = 2.2     # Ulnar Interosseous PCSA (cm²)
+
     # ── Moment Arm Source ─────────────────────────────────────
     # 'an1983'   : An et al. 1983 literature averages (original)
     # 'peerj'    : PeerJ 7470 CT-calibrated path points (Iter 15)
@@ -307,6 +315,9 @@ def moment_arms(grip):
         # PeerJ 7470 CT-calibrated (Iterations 15-16)
         # Fits from Geometry_Middle_Cal_Hum path points at 4 postures (R2>=0.99)
         # Iteration 16: extends calibration to LU (extensor mechanism) and EDC
+        # Iteration 17: Interossei (RI and UI) linear fits + extensor mechanism fractions
+        edc_dip = min(-4.07 + 0.025*np.clip(td,-30,90), -1.5)
+        edc_pip = min(-6.48 + 0.042*np.clip(tp,  0,120), -2.0)
         return dict(
             FDP_DIP=max( 6.00 + 0.045*np.clip(td,-30,90),  2.0),  # An1983: PeerJ 4.7mm incompatible with 3-DOF solver (RI/UI intrinsics absent)
             FDP_PIP=max( 8.24 + 0.050*np.clip(tp,  0,120), 4.0),
@@ -321,13 +332,24 @@ def moment_arms(grip):
             FDS_abd=-1.5,
             LU_abd = 3.5,   # radial
             # Extensor mechanism (TE at DIP, ES at PIP, LE at MCP)
-            EDC_DIP=min(-4.07 + 0.025*np.clip(td,-30,90), -1.5),  # extends DIP
-            EDC_PIP=min(-6.48 + 0.042*np.clip(tp,  0,120), -2.0), # extends PIP
+            EDC_DIP=edc_dip,  # extends DIP
+            EDC_PIP=edc_pip,  # extends PIP
             EDC_MCP=min(-8.65 + 0.059*np.clip(tm,-30,90), -2.0),  # extends MCP
             EDC_abd=0.0,    # assumed neutral
+            # Interossei MCP linear fits (Iteration 17 calibration)
+            RI_MCP=max( 2.58 + 0.069*np.clip(tm,-30,90),  1.0),
+            UI_MCP=max( 3.29 + 0.095*np.clip(tm,-30,90),  1.0),
+            RI_abd=max( 9.78 - 0.024*np.clip(tm,-30,90),  3.0),
+            UI_abd=min(-8.21 + 0.010*np.clip(tm,-30,90), -3.0),
+            # Interossei extensor fractions (23.2% reaching DIP, 61.2% reaching PIP)
+            RI_DIP=0.232 * edc_dip,
+            UI_DIP=0.232 * edc_dip,
+            RI_PIP=0.612 * edc_pip,
+            UI_PIP=0.612 * edc_pip,
         )
     else:
         # An et al. 1983 literature averages (original)
+        # Iteration 17: backward compatible interossei average values
         return dict(
             FDP_DIP=max(6.0 + 0.045*np.clip(td,-30,90),  2.0),
             FDP_PIP=max(9.0 + 0.033*np.clip(tp,  0,120), 4.0),
@@ -344,6 +366,15 @@ def moment_arms(grip):
             EDC_PIP=-6.0,   # extends PIP
             EDC_MCP=-10.0,  # extends MCP
             EDC_abd=0.0,    # assumed neutral
+            # Interossei literature fixed averages
+            RI_MCP=3.0,
+            UI_MCP=4.0,
+            RI_abd=9.0,
+            UI_abd=-8.0,
+            RI_DIP=0.232 * -4.0,
+            UI_DIP=0.232 * -4.0,
+            RI_PIP=0.612 * -6.0,
+            UI_PIP=0.612 * -6.0,
         )
 
 
@@ -689,30 +720,58 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         C_A2 = np.exp(Config.mu_tendon * theta_A2) if getattr(Config, 'use_capstan', True) else 1.0
         C_A4 = np.exp(Config.mu_tendon * theta_A4) if getattr(Config, 'use_capstan', True) else 1.0
         
-        A3e = np.array([
-            [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'], ma['EDC_DIP']],
-            [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'], ma['EDC_PIP']],
-            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'], ma['EDC_MCP']],
-        ])
-        b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
-        
         F_EDC_min = get_min_EDC_force(float(dip))
-        bounds = ([0.0, 0.0, F_EDC_min], [np.inf, np.inf, np.inf])
-        
-        # Muscle forces can only pull (>= 0), lsq_linear strictly enforces this with bounds
-        res = lsq_linear(A3e, b3e, bounds=bounds)
-        x_clip = res.x
-        
-        F_FDS_clip = x_clip[0]
-        F_LU_clip  = x_clip[1]
-        F_EDC_clip = x_clip[2]
-        F_FDP_clip = r_emg * F_FDS_clip
-        
-        raw_total = F_FDP_clip + F_FDS_clip + F_LU_clip + F_EDC_clip
-        # If the joints would collapse (e.g. at degenerate straight-finger postures),
-        # this residual will be massive. We heavily penalise it.
-        M_muscle = A3e.dot(x_clip)
-        residual_error = float(np.linalg.norm(M_muscle - b3e))
+
+        if getattr(Config, 'use_interossei', False):
+            # 4x5 interossei system: balances DIP, PIP, MCP flexion + MCP abduction
+            A4e = np.array([
+                [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'],  ma['EDC_DIP'],  ma['RI_DIP'],  ma['UI_DIP']],
+                [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'],  ma['EDC_PIP'],  ma['RI_PIP'],  ma['UI_PIP']],
+                [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'],  ma['EDC_MCP'],  ma['RI_MCP'],  ma['UI_MCP']],
+                [r_emg*ma['FDP_abd'] + ma['FDS_abd'],            ma['LU_abd'],  ma['EDC_abd'],  ma['RI_abd'],  ma['UI_abd']],
+            ])
+            b4e = np.array([ext['DIP'], ext['PIP'], ext['MCP'], ext['abd']])
+            
+            # Stacked L2 regularization to minimize muscle stress/effort (resolve null-space redundancy)
+            lam = 1e-4
+            W = np.diag([np.sqrt(r_emg**2 + 1.0), 1.0, 1.0, 1.0, 1.0])
+            A_stacked = np.vstack([A4e, lam * W])
+            b_stacked = np.concatenate([b4e, np.zeros(5)])
+            
+            bounds = ([0.0, 0.0, F_EDC_min, 0.0, 0.0], [np.inf, np.inf, np.inf, np.inf, np.inf])
+            res = lsq_linear(A_stacked, b_stacked, bounds=bounds)
+            x_clip = res.x
+            
+            F_FDS_clip = x_clip[0]
+            F_LU_clip  = x_clip[1]
+            F_EDC_clip = x_clip[2]
+            F_RI_clip  = x_clip[3]
+            F_UI_clip  = x_clip[4]
+            F_FDP_clip = r_emg * F_FDS_clip
+            
+            raw_total = F_FDP_clip + F_FDS_clip + F_LU_clip + F_EDC_clip + F_RI_clip + F_UI_clip
+            M_muscle = A4e.dot(x_clip)
+            residual_error = float(np.linalg.norm(M_muscle - b4e))
+        else:
+            # Legacy 3x3 system: balances DIP, PIP, MCP flexion
+            A3e = np.array([
+                [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'], ma['EDC_DIP']],
+                [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'], ma['EDC_PIP']],
+                [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'], ma['EDC_MCP']],
+            ])
+            b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
+            bounds = ([0.0, 0.0, F_EDC_min], [np.inf, np.inf, np.inf])
+            res = lsq_linear(A3e, b3e, bounds=bounds)
+            x_clip = res.x
+            
+            F_FDS_clip = x_clip[0]
+            F_LU_clip  = x_clip[1]
+            F_EDC_clip = x_clip[2]
+            F_FDP_clip = r_emg * F_FDS_clip
+            
+            raw_total = F_FDP_clip + F_FDS_clip + F_LU_clip + F_EDC_clip
+            M_muscle = A3e.dot(x_clip)
+            residual_error = float(np.linalg.norm(M_muscle - b3e))
         
         penalty = 10.0 * residual_error
         
@@ -753,8 +812,8 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
     # run a fine local grid around it. Take whichever gives the lower total force.
     # This prevents warm-start from trapping the optimizer in a local minimum
     # when a genuine posture-mode transition occurs between adjacent depths.
-    pip_grid_g = np.linspace(0.0, 110.0, 16)   # global: 16 pts (~7 deg step)
-    dip_grid_g = np.linspace(-25.0, 90.0, 16)
+    pip_grid_g = np.linspace(0.0, 110.0, 10)   # global: 10 pts (~11 deg step, optimized from 16)
+    dip_grid_g = np.linspace(-25.0, 90.0, 10)
     best_f_global, best_pip_g, best_dip_g = np.inf, theta_PIP_0, theta_DIP_0
 
     for pip in pip_grid_g:
@@ -771,8 +830,8 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
     # If warm-start provided, also search locally — take result only if it beats global
     if pip0 is not None:
         best_f_warm, best_pip_w, best_dip_w = np.inf, pip0, dip0
-        for pip in np.linspace(pip0 - 15.0, pip0 + 15.0, 9):
-            for dip in np.linspace(dip0 - 15.0, dip0 + 15.0, 9):
+        for pip in np.linspace(pip0 - 15.0, pip0 + 15.0, 5): # optimized from 9
+            for dip in np.linspace(dip0 - 15.0, dip0 + 15.0, 5):
                 try:
                     f = total_force_for_angles(pip, dip)
                     if f < best_f_warm:
@@ -791,7 +850,7 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
             except Exception:
                 return 1e9
         res = minimize(obj, [best_pip, best_dip], method='Nelder-Mead',
-                       options={'xatol': 0.5, 'fatol': 0.5, 'maxiter': 200})
+                       options={'xatol': 1.0, 'fatol': 1.0, 'maxiter': 60}) # optimized from 0.5/200
         best_pip, best_dip = float(res.x[0]), float(res.x[1])
     except Exception:
         pass  # grid solution is used as fallback
@@ -847,76 +906,163 @@ def solve_all_methods(grip: GripAngles,
     ])
     b3 = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
 
-    # ── Method 1: Direct 3x3 solve ────────────────────────────
     F_EDC_min = get_min_EDC_force(grip.theta_DIP)
-    b3_direct = b3 - F_EDC_min * np.array([ma['EDC_DIP'], ma['EDC_PIP'], ma['EDC_MCP']])
-    
-    try:
-        f1 = np.linalg.solve(A3, b3_direct)
-    except np.linalg.LinAlgError:
-        f1 = np.linalg.lstsq(A3, b3_direct, rcond=None)[0]
-    f1 = np.maximum(f1, 0.0)
-    # Direct method enforces EDC min instead of 0
-    f1 = np.array([f1[0], f1[1], f1[2], F_EDC_min])
 
-    # ─────────────────────────────────────────────────────────────
-    # Method 2: EMG-constrained (Vigouroux 2006) + EDC
-    # ─────────────────────────────────────────────────────────────
-    from scipy.optimize import lsq_linear
-    r_emg = get_emg_ratio(grip.emg_ratio, c_info['frac_DP'] if contact else None)
-    
-    # Capstan multipliers
-    theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
-    C_A2 = np.exp(Config.mu_tendon * theta_A2) if getattr(Config, 'use_capstan', True) else 1.0
-    C_A4 = np.exp(Config.mu_tendon * theta_A4) if getattr(Config, 'use_capstan', True) else 1.0
+    if getattr(Config, 'use_interossei', False):
+        from scipy.optimize import lsq_linear
+        lam = 1e-4
 
-    # Solve 3x3 system with lsq_linear to enforce bounded EDC limit
-    A3e = np.array([
-        [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'], ma['EDC_DIP']],
-        [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'], ma['EDC_PIP']],
-        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'], ma['EDC_MCP']],
-    ])
-    b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
-    
-    bounds2 = ([0.0, 0.0, F_EDC_min], [np.inf, np.inf, np.inf])
-    sol2 = lsq_linear(A3e, b3e, bounds=bounds2)
-    
-    F_FDS2 = sol2.x[0]
-    F_LU2  = sol2.x[1]
-    F_EDC2 = sol2.x[2]
-    F_FDP2 = r_emg * F_FDS2
-    f2     = np.array([F_FDP2, F_FDS2, F_LU2, F_EDC2])
+        # Compute Capstan friction pulley multipliers
+        theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
+        C_A2 = np.exp(Config.mu_tendon * theta_A2) if getattr(Config, 'use_capstan', True) else 1.0
+        C_A4 = np.exp(Config.mu_tendon * theta_A4) if getattr(Config, 'use_capstan', True) else 1.0
 
-    # ── Method 3: LU-minimising ───────────────────────────────
-    # Set F_LU = 0; solve for FDS and EDC using bounded least squares
-    A3_lu = np.array([
-        [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['EDC_DIP']],
-        [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['EDC_PIP']],
-        [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['EDC_MCP']],
-    ])
-    
-    bounds3 = ([0.0, F_EDC_min], [np.inf, np.inf])
-    sol3 = lsq_linear(A3_lu, b3e, bounds=bounds3)
-    
-    F_FDS3 = sol3.x[0]
-    F_LU3  = 0.0
-    F_EDC3 = sol3.x[1]
-    F_FDP3 = r_emg * F_FDS3
-    f3 = np.array([F_FDP3, F_FDS3, F_LU3, F_EDC3])
+        # ─── Method 1: Direct 4x6 Bounded Least-Squares ───
+        # Minimizes raw forces under 4 DOF constraints (DIP, PIP, MCP flexion + MCP abduction)
+        # Incorporates Capstan friction for physical tendon amplification across DIP and PIP joints
+        A4 = np.array([
+            [ma['FDP_DIP']*C_A2*C_A4,                  0.0,          ma['LU_DIP'],  ma['EDC_DIP'],  ma['RI_DIP'],  ma['UI_DIP']],
+            [ma['FDP_PIP']*C_A2,                       ma['FDS_PIP']*C_A2, ma['LU_PIP'],  ma['EDC_PIP'],  ma['RI_PIP'],  ma['UI_PIP']],
+            [ma['FDP_MCP'],                            ma['FDS_MCP'], ma['LU_MCP'],  ma['EDC_MCP'],  ma['RI_MCP'],  ma['UI_MCP']],
+            [ma['FDP_abd'],                            ma['FDS_abd'], ma['LU_abd'],  ma['EDC_abd'],  ma['RI_abd'],  ma['UI_abd']],
+        ])
+        b4 = np.array([ext['DIP'], ext['PIP'], ext['MCP'], ext['abd']])
+        
+        # Stacked L2 regularization to minimize muscle stress/effort
+        A4_stacked = np.vstack([A4, lam * np.eye(6)])
+        b4_stacked = np.concatenate([b4, np.zeros(6)])
+        
+        bounds1 = ([0.0, 0.0, 0.0, F_EDC_min, 0.0, 0.0], [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
+        sol1 = lsq_linear(A4_stacked, b4_stacked, bounds=bounds1)
+        f1 = sol1.x  # FDP, FDS, LU, EDC, RI, UI
+
+        # ─── Method 2: EMG-constrained 4x5 Bounded Least-Squares ───
+        r_emg = get_emg_ratio(grip.emg_ratio, c_info['frac_DP'] if contact else None)
+
+        A4e = np.array([
+            [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'],  ma['EDC_DIP'],  ma['RI_DIP'],  ma['UI_DIP']],
+            [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'],  ma['EDC_PIP'],  ma['RI_PIP'],  ma['UI_PIP']],
+            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'],  ma['EDC_MCP'],  ma['RI_MCP'],  ma['UI_MCP']],
+            [r_emg*ma['FDP_abd'] + ma['FDS_abd'],            ma['LU_abd'],  ma['EDC_abd'],  ma['RI_abd'],  ma['UI_abd']],
+        ])
+        
+        # Stacked L2 regularization to minimize muscle stress/effort
+        W2 = np.diag([np.sqrt(r_emg**2 + 1.0), 1.0, 1.0, 1.0, 1.0])
+        A4e_stacked = np.vstack([A4e, lam * W2])
+        b4e_stacked = np.concatenate([b4, np.zeros(5)])
+        
+        bounds2 = ([0.0, 0.0, F_EDC_min, 0.0, 0.0], [np.inf, np.inf, np.inf, np.inf, np.inf])
+        sol2 = lsq_linear(A4e_stacked, b4e_stacked, bounds=bounds2)
+        F_FDS2 = sol2.x[0]
+        F_LU2  = sol2.x[1]
+        F_EDC2 = sol2.x[2]
+        F_RI2  = sol2.x[3]
+        F_UI2  = sol2.x[4]
+        F_FDP2 = r_emg * F_FDS2
+        f2 = np.array([F_FDP2, F_FDS2, F_LU2, F_EDC2, F_RI2, F_UI2])
+
+        # ─── Method 3: LU-minimising 4x4 Bounded Least-Squares ───
+        A4_lu = np.array([
+            [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['EDC_DIP'],  ma['RI_DIP'],  ma['UI_DIP']],
+            [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['EDC_PIP'],  ma['RI_PIP'],  ma['UI_PIP']],
+            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['EDC_MCP'],  ma['RI_MCP'],  ma['UI_MCP']],
+            [r_emg*ma['FDP_abd'] + ma['FDS_abd'],            ma['EDC_abd'],  ma['RI_abd'],  ma['UI_abd']],
+        ])
+        
+        # Stacked L2 regularization to minimize muscle stress/effort
+        W3 = np.diag([np.sqrt(r_emg**2 + 1.0), 1.0, 1.0, 1.0])
+        A4_lu_stacked = np.vstack([A4_lu, lam * W3])
+        b4_lu_stacked = np.concatenate([b4, np.zeros(4)])
+        
+        bounds3 = ([0.0, F_EDC_min, 0.0, 0.0], [np.inf, np.inf, np.inf, np.inf])
+        sol3 = lsq_linear(A4_lu_stacked, b4_lu_stacked, bounds=bounds3)
+        F_FDS3 = sol3.x[0]
+        F_LU3  = 0.0
+        F_EDC3 = sol3.x[1]
+        F_RI3  = sol3.x[2]
+        F_UI3  = sol3.x[3]
+        F_FDP3 = r_emg * F_FDS3
+        f3 = np.array([F_FDP3, F_FDS3, F_LU3, F_EDC3, F_RI3, F_UI3])
+
+    else:
+        # Legacy 3-muscle flexion systems
+        A3 = np.array([
+            [ma['FDP_DIP'],  0.0,          ma['LU_DIP']],
+            [ma['FDP_PIP'],  ma['FDS_PIP'], ma['LU_PIP']],
+            [ma['FDP_MCP'],  ma['FDS_MCP'], ma['LU_MCP']],
+        ])
+        b3 = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
+
+        # Method 1: Direct 3x3 solve
+        b3_direct = b3 - F_EDC_min * np.array([ma['EDC_DIP'], ma['EDC_PIP'], ma['EDC_MCP']])
+        try:
+            f1 = np.linalg.solve(A3, b3_direct)
+        except np.linalg.LinAlgError:
+            f1 = np.linalg.lstsq(A3, b3_direct, rcond=None)[0]
+        f1 = np.maximum(f1, 0.0)
+        f1 = np.array([f1[0], f1[1], f1[2], F_EDC_min])
+
+        # Method 2: EMG-constrained (Vigouroux 2006) + EDC
+        from scipy.optimize import lsq_linear
+        r_emg = get_emg_ratio(grip.emg_ratio, c_info['frac_DP'] if contact else None)
+        theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
+        C_A2 = np.exp(Config.mu_tendon * theta_A2) if getattr(Config, 'use_capstan', True) else 1.0
+        C_A4 = np.exp(Config.mu_tendon * theta_A4) if getattr(Config, 'use_capstan', True) else 1.0
+
+        A3e = np.array([
+            [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'], ma['EDC_DIP']],
+            [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'], ma['EDC_PIP']],
+            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'], ma['EDC_MCP']],
+        ])
+        b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
+        bounds2 = ([0.0, 0.0, F_EDC_min], [np.inf, np.inf, np.inf])
+        sol2 = lsq_linear(A3e, b3e, bounds=bounds2)
+        F_FDS2 = sol2.x[0]
+        F_LU2  = sol2.x[1]
+        F_EDC2 = sol2.x[2]
+        F_FDP2 = r_emg * F_FDS2
+        f2     = np.array([F_FDP2, F_FDS2, F_LU2, F_EDC2])
+
+        # Method 3: LU-minimising
+        A3_lu = np.array([
+            [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['EDC_DIP']],
+            [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['EDC_PIP']],
+            [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['EDC_MCP']],
+        ])
+        bounds3 = ([0.0, F_EDC_min], [np.inf, np.inf])
+        sol3 = lsq_linear(A3_lu, b3e, bounds=bounds3)
+        F_FDS3 = sol3.x[0]
+        F_LU3  = 0.0
+        F_EDC3 = sol3.x[1]
+        F_FDP3 = r_emg * F_FDS3
+        f3 = np.array([F_FDP3, F_FDS3, F_LU3, F_EDC3])
 
     results = {}
     for mname, f in [('direct', f1), ('emg', f2), ('lu_min', f3)]:
-        FDP, FDS, LU, EDC = f
-        ratio = FDP/FDS if FDS > 0.1 else np.inf
-        results[mname] = dict(
-            F_FDP=float(FDP), F_FDS=float(FDS), F_LU=float(LU), F_EDC=float(EDC),
-            F_total=float(FDP+FDS+LU+EDC),
-            ratio=ratio,
-            f_vec=f, kin=kin, ext=ext,
-            # Contact geometry info (None if no contact model used)
-            p_C=p_C_DP, d_eff=d_eff, s_from_DIP=s_from_DIP,
-            friction=feas,
-        )
+        if getattr(Config, 'use_interossei', False):
+            FDP, FDS, LU, EDC, RI, UI = f
+            ratio = FDP/FDS if FDS > 0.1 else np.inf
+            results[mname] = dict(
+                F_FDP=float(FDP), F_FDS=float(FDS), F_LU=float(LU), F_EDC=float(EDC),
+                F_RI=float(RI), F_UI=float(UI),
+                F_total=float(FDP+FDS+LU+EDC+RI+UI),
+                ratio=ratio,
+                f_vec=f, kin=kin, ext=ext,
+                p_C=p_C_DP, d_eff=d_eff, s_from_DIP=s_from_DIP,
+                friction=feas,
+            )
+        else:
+            FDP, FDS, LU, EDC = f
+            ratio = FDP/FDS if FDS > 0.1 else np.inf
+            results[mname] = dict(
+                F_FDP=float(FDP), F_FDS=float(FDS), F_LU=float(LU), F_EDC=float(EDC),
+                F_RI=0.0, F_UI=0.0,
+                F_total=float(FDP+FDS+LU+EDC),
+                ratio=ratio,
+                f_vec=f, kin=kin, ext=ext,
+                p_C=p_C_DP, d_eff=d_eff, s_from_DIP=s_from_DIP,
+                friction=feas,
+            )
     return results
 
 
@@ -1616,13 +1762,17 @@ def run_simulation():
 # ─────────────────────────────────────────────────────────────
 
 def print_summary(all_res, jreact, F_tip):
-    W = 110
+    W = 125 if getattr(Config, 'use_interossei', False) else 110
     print('\n' + '='*W)
     print('  3D CLIMBING FINGER BIOMECHANICS  (Standard geometry)')
     print(f'  Load: {F_tip:.1f} N')
     print('='*W)
-    print(f"{'Grip':<13} {'Method':<25} {'F_FDP':>8} {'F_FDS':>8} {'F_LU':>7} {'F_EDC':>7} "
-          f"{'Total':>8} {'Ratio':>7} {'A2(MPa)':>8}")
+    if getattr(Config, 'use_interossei', False):
+        print(f"{'Grip':<13} {'Method':<25} {'F_FDP':>8} {'F_FDS':>8} {'F_LU':>7} {'F_EDC':>7} {'F_RI':>7} {'F_UI':>7} "
+              f"{'Total':>8} {'Ratio':>7} {'A2(MPa)':>8}")
+    else:
+        print(f"{'Grip':<13} {'Method':<25} {'F_FDP':>8} {'F_FDS':>8} {'F_LU':>7} {'F_EDC':>7} "
+              f"{'Total':>8} {'Ratio':>7} {'A2(MPa)':>8}")
     print('-'*W)
     for key in GRIPS:
         for mname in ['direct', 'emg', 'lu_min']:
@@ -1632,9 +1782,15 @@ def print_summary(all_res, jreact, F_tip):
             note = ''
             if key == 'crimp' and mname == 'direct' and r['F_FDS'] < 50.0:
                 note = '  ⚠ DIP hyperext — use EMG'
-            print(f"{GRIPS[key].name:<13} {METHOD_LABELS[mname]:<25} "
-                  f"{r['F_FDP']:>8.1f} {r['F_FDS']:>8.1f} {r['F_LU']:>7.1f} {r['F_EDC']:>7.1f} "
-                  f"{r['F_total']:>8.1f} {rat:>7} {jr['pulley']['P_A2_MPa']:>8.1f}{note}")
+            if getattr(Config, 'use_interossei', False):
+                print(f"{GRIPS[key].name:<13} {METHOD_LABELS[mname]:<25} "
+                      f"{r['F_FDP']:>8.1f} {r['F_FDS']:>8.1f} {r['F_LU']:>7.1f} {r['F_EDC']:>7.1f} "
+                      f"{r['F_RI']:>7.1f} {r['F_UI']:>7.1f} "
+                      f"{r['F_total']:>8.1f} {rat:>7} {jr['pulley']['P_A2_MPa']:>8.1f}{note}")
+            else:
+                print(f"{GRIPS[key].name:<13} {METHOD_LABELS[mname]:<25} "
+                      f"{r['F_FDP']:>8.1f} {r['F_FDS']:>8.1f} {r['F_LU']:>7.1f} {r['F_EDC']:>7.1f} "
+                      f"{r['F_total']:>8.1f} {rat:>7} {jr['pulley']['P_A2_MPa']:>8.1f}{note}")
         print()
     print('  Notes: Direct (3×3) crimp: DIP hyperextension makes FDS near-zero (artifact).')
     print('         EMG method (Vigouroux 2006) is the physiological reference.')
@@ -1667,5 +1823,11 @@ if __name__ == '__main__':
             fname = f'outputs/{Config.output_prefix}_fig{i}.png'
             fig.savefig(fname, dpi=150, bbox_inches='tight')
             print(f'  Saved -> {fname}')
-    plt.show()
+    
+    # Show figures only if in an interactive terminal to prevent blocking headlessly
+    import sys
+    if sys.stdout.isatty():
+        plt.show()
+    else:
+        print("  Headless or background execution detected; skipping plt.show() blocking.")
     print('\nDone.')

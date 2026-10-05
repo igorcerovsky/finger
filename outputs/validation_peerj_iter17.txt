@@ -1,0 +1,79 @@
+===============================================================================================
+  VALIDATION: Our 3D Model vs PeerJ 7470 Cadaver Measurements (Iteration 14)
+  Using ACTUAL cadaver force plate data as F_ext (mean of 3 specimens)
+  Geometry: PP=47.0mm  MP=28.8mm  DP=19.0mm
+===============================================================================================
+
+  SECTION 1: Experimental Fingertip Reaction Forces (mean ± std, n=3)
+  Posture      Load   |F_exp|(N)  Dir(°)    Applied(N)  F_exp/F_tendon
+  ----------------------------------------------------------------------
+  MinorFlex    300    1.263       -113.2    4.9         0.257         
+  MinorFlex    950    3.769       -116.9    15.6        0.242         
+  MajorFlex    300    0.931       -115.5    4.9         0.189         
+  MajorFlex    950    3.366       -118.0    15.6        0.216         
+  HyperExt     300    1.569       -107.2    4.9         0.319         
+  HyperExt     950    5.000       -103.7    15.6        0.321         
+  Hook         300    1.315       -122.9    4.9         0.267         
+  Hook         950    4.512       -118.7    15.6        0.290         
+
+  SECTION 2: Model Predictions (F_ext = measured fingertip reaction)
+  Posture      Load   Method         FDP    FDS    RI    UI   Total   Ratio Pred/App
+  -------------------------------------------------------------------------------------
+  MinorFlex    300    emg            1.1    0.9   0.4   0.0     2.4    1.20     0.49
+  MinorFlex    300    lu_min         1.1    0.9   0.4   0.0     2.4    1.20     0.49
+  MinorFlex    300    direct        13.2    1.6   5.2   0.0    54.0    8.28    10.99
+
+  MinorFlex    950    emg            3.7    3.1   2.2   0.0     9.0    1.20     0.58
+  MinorFlex    950    lu_min         3.7    3.1   2.2   0.0     9.0    1.20     0.58
+  MinorFlex    950    direct        39.8    5.5  16.4   0.0   163.6    7.24    10.51
+
+  MajorFlex    300    emg            1.2    1.0   0.8   0.0     3.1    1.20     0.63
+  MajorFlex    300    lu_min         1.2    1.0   0.8   0.0     3.1    1.20     0.63
+  MajorFlex    300    direct         7.1    0.0   2.4   0.0    24.5  999.00     4.99
+
+  MajorFlex    950    emg            4.6    3.8   3.7   0.0    12.2    1.20     0.78
+  MajorFlex    950    lu_min         4.6    3.8   3.7   0.0    12.2    1.20     0.78
+  MajorFlex    950    direct        27.3    0.0   9.9   0.0    95.8  999.00     6.16
+
+  HyperExt     300    emg            9.3    5.3  16.3  15.3    72.7    1.75    14.80
+  HyperExt     300    lu_min         9.3    5.3  16.3  15.3    72.7    1.75    14.80
+  HyperExt     300    direct         5.1    0.0   5.8   4.5    31.2  999.00     6.35
+
+  HyperExt     950    emg           29.7   17.0  52.8  50.2   235.8    1.75    15.15
+  HyperExt     950    lu_min        29.7   17.0  52.8  50.2   235.8    1.75    15.15
+  HyperExt     950    direct        16.2    0.0  19.2  15.7   103.3  999.00     6.64
+
+  Hook         300    emg            3.2    2.6   1.9   0.0    17.3    1.20     3.52
+  Hook         300    lu_min         3.2    2.6   1.9   0.0    17.3    1.20     3.52
+  Hook         300    direct         3.9    0.4   1.7   0.0    14.2    8.82     2.89
+
+  Hook         950    emg           10.6    8.8   6.0   0.0    60.4    1.20     3.88
+  Hook         950    lu_min        10.6    8.8   6.0   0.0    60.4    1.20     3.88
+  Hook         950    direct        13.3    0.6   5.5   0.0    48.7   21.10     3.13
+
+===============================================================================================
+  SECTION 3: Validation Summary
+
+  3a. FDP/FDS Ratio Validation (EMG-constrained method):
+    MinorFlex   : 1.20 (expected 1.20) ✓
+    MajorFlex   : 1.20 (expected 1.20) ✓
+    HyperExt    : 1.75 (expected 1.75) ✓
+    Hook        : 1.20 (expected 1.20) ✓
+
+  3b. Force Magnitude Ratio (Pred_total / Applied_tendon, EMG method):
+      Ideal ratio = 1.0 if moment arms are perfectly calibrated
+    MinorFlex   : 0.532
+    MajorFlex   : 0.704
+    HyperExt    : 14.973
+    Hook        : 3.703
+    Overall     : 4.978 ± 5.908
+
+  3c. Interpretation:
+    Pred/App = 4.98 → our model OVER-estimates tendon forces
+    Likely cause: moment arms in our model are shorter than PeerJ-calibrated values
+    (shorter moment arm → more tendon force needed to balance same external moment)
+    - FDP/FDS ratios are exact by construction (EMG constraint)
+    - Absolute force differences arise from moment arm calibration
+    - PeerJ uses optimized path points from cadaver CT data;
+      our model uses simplified An et al. 1983 moment arm functions
+===============================================================================================
