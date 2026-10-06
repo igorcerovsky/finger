@@ -18,5 +18,5 @@ Remember, you're scientist, only results which are checked and agree with observ
 6. Test the implementation with known scientific facts, findings, papers. Outputs must contain text/md file with simulation results which can be compared to previous versions (in git). The results shall agree with `human_bonobo` simulation for given similar condition. Create test for this scenarion.
 7. Update `README.md` to reflect the latest changes. Create a "Discussion" section in `README.md`.
 8. Make a code review and write the code review to `code_review.md`. If fixes are required, apply the fixes.
-9. Only code which improves the simulation shall be committed, otherwise the iteration shall be discarded.
+9. Only code which improves the simulation shall be committed (always asking for explicit user confirmation before committing), otherwise the iteration shall be discarded.
 10. Repeat the iteration.
