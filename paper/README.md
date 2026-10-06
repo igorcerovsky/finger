@@ -17,7 +17,6 @@ paper/
 ├── paper_draft.md                # Primary academic research manuscript (5–8 pages)
 ├── practical_training_guide.md   # Companion practical field guide for coaches & athletes
 └── figures/                      # High-resolution (300 DPI) publication-grade figures
-    ├── fig_finger_anatomy.png
     ├── pub_fig1_model_validation.png
     ├── pub_fig2_hold_depth_crossover.png
     └── pub_fig3_shear_and_scaling.png
@@ -62,10 +61,9 @@ paper/
 
 | Figure | Filename | Description |
 | :--- | :--- | :--- |
-| **Figure 1** | [`fig_finger_anatomy.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/fig_finger_anatomy.png) | **Anatomical Musculoskeletal Architecture:** Spatial arrangement of phalangeal bone segments (MC, PP, MP, DP), joints (MCP, PIP, DIP), extrinsic flexors (FDP, FDS), and annular pulleys (A1–A5). |
-| **Figure 2** | [`pub_fig1_model_validation.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/pub_fig1_model_validation.png) | **3D Kinematics, Contact Pressure & Validation:** (A) 3D spatial bone segments in Full Crimp, Half-Crimp, and Open Hand. (B) Dual-phalanx contact pressure distributions ($p(s)$) for shallow ($10\text{ mm}$) and deep ($35\text{ mm}$) holds. (C) Predicted vs. measured force ratios across 4 cadaveric postures. |
-| **Figure 3** | [`pub_fig2_hold_depth_crossover.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/pub_fig2_hold_depth_crossover.png) | **Hold Depth Redistribution & Grip Frontiers:** (A) FDP vs. FDS tendon forces across edge depths ($2\text{–}42\text{ mm}$) identifying crossover thresholds for Short, Nominal, and Long phenotypes. (B) Minimum-effort energetic grip selection zones (<8 mm Half-Crimp, 8–18 mm Transition, >18 mm Open Hand). |
-| **Figure 4** | [`pub_fig3_shear_and_scaling.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/pub_fig3_shear_and_scaling.png) | **Transverse Shearing & Phenotypic Rupture Limits:** (A) Lateral pulley shear ($F_{A2,lat}$, $F_{A4,lat}$) and PIP joint shear as a function of MCP radial abduction ($0^\circ\text{–}20^\circ$). (B) Annular pulley loads for Short, Nominal, and Long phenotypes against the $300\text{ N}$ structural yield and $400\text{ N}$ ultimate rupture limits under 100 N ledge hang and 171.7 N dynamic slip conditions. |
+| **Figure 1** | [`pub_fig1_model_validation.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/pub_fig1_model_validation.png) | **3D Kinematics, Contact Pressure & Validation:** (A) 3D spatial bone segments in Full Crimp, Half-Crimp, and Open Hand. (B) Dual-phalanx contact pressure distributions ($p(s)$) for shallow ($10\text{ mm}$) and deep ($35\text{ mm}$) holds. (C) Predicted vs. measured force ratios across 4 cadaveric postures. |
+| **Figure 2** | [`pub_fig2_hold_depth_crossover.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/pub_fig2_hold_depth_crossover.png) | **Hold Depth Redistribution & Grip Frontiers:** (A) FDP vs. FDS tendon forces across edge depths ($2\text{–}42\text{ mm}$) identifying crossover thresholds for Short, Nominal, and Long phenotypes. (B) Minimum-effort energetic grip selection zones (<8 mm Half-Crimp, 8–18 mm Transition, >18 mm Open Hand). |
+| **Figure 3** | [`pub_fig3_shear_and_scaling.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/pub_fig3_shear_and_scaling.png) | **Transverse Shearing & Phenotypic Rupture Limits:** (A) Lateral pulley shear ($F_{A2,lat}$, $F_{A4,lat}$) and PIP joint shear as a function of MCP radial abduction ($0^\circ\text{–}20^\circ$). (B) Annular pulley loads for Short, Nominal, and Long phenotypes against the $300\text{ N}$ structural yield and $400\text{ N}$ ultimate rupture limits under 100 N ledge hang and 171.7 N dynamic slip conditions. |
 
 ---
 
