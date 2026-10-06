@@ -101,10 +101,13 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 ---
 
 ### Recommendation 8: Skin Tribology, Temperature & Friction Management
-* **The Physics:** Skin-rock friction is non-linear and decays under heavy load ($\mu \propto F_N^{n-1}$). When holds become warm, greasy, or polished, the friction coefficient drops from $\approx 0.65$ to below $0.35$. To prevent slipping, the climber must squeeze with drastically higher normal clamping force, which cascades directly into multiplied tendon tension.
+* **The Physics:** Skin-rock friction is non-linear and decays under heavy load ($\mu \propto F_N^{n-1}$). Epidermal skin is a viscoelastic composite; friction follows an inverted U-curve relative to temperature and stratum corneum hydration:
+  - **The Sweaty/Warm Regime ("Greasing Out"):** When ambient temperature rises ($>20^\circ\text{C}$) or hands sweat, a liquid lubricating film forms, plummeting $\mu$ from $\approx 0.65$ to below $0.35$. To compensate, the climber must squeeze with drastically higher normal clamping force, which cascades directly into multiplied tendon tension.
+  - **The Hyper-Cold & Desiccated Regime ("Dry-Firing"):** Conversely, extreme cold ($<5^\circ\text{C}$), very low ambient humidity (<30% RH), or chalk-overdosed skin create the opposite, equally hazardous phenomenon known in climbing jargon as **"dry-firing"**. In freezing, arid air, the stratum corneum loses its viscoelastic compliance and turns into a hard, glassy surface. Without baseline interstitial moisture, skin cannot microscopically deform into rock asperities. The fingertips skate off holds instantaneously with zero tactile warning, sending un-damped dynamic shock waves straight into the annular pulleys and joint capsules.
 * **Practical Skin Care Protocol:**
-  - **Brushing & Chalk Hygiene:** Regular brushing removes polished grease layers and restores micro-texture. Liquid chalk base layers combined with pure magnesium carbonate maintain skin dryness.
-  - **Temperature Optimization:** Cold, crisp conditions are not just an aesthetic preference—they are a biomechanical defense. Stiff, cool skin maintains a higher friction coefficient, reducing required finger clamping force by up to 25%.
+  - **The Friction Sweet Spot:** Optimal friction occurs in cool, crisp conditions ($\approx 8\text{–}15^\circ\text{C}$ with moderate $40\text{–}60\%$ relative humidity), where skin is stiff enough to resist shearing but compliant enough to interlock with grain texture.
+  - **Preventing the "Dry-Fire":** On freezing, arid days, avoid over-caking chalk on already dry hands. Warm your fingers inside pockets, or gently exhale warm, humid breath onto the fingertips immediately prior to pulling on. This tiny amount of moisture restores epidermal compliance without inducing liquid sweat.
+  - **Brushing & Chalk Hygiene:** Regular brushing removes polished grease layers and chalk build-up to restore micro-texture. Liquid chalk base layers combined with pure magnesium carbonate maintain skin dryness without over-desiccating the tissue into a glassy, brittle state.
 
 ---
 
