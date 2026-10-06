@@ -44,15 +44,15 @@ paper/
 - **Title:** *Biomechanical Manual for Finger Training & Injury Prevention in Sport Climbing: A Practical Field Guide for Coaches, Clinicians, and Athletes*
 - **Audience:** Climbing coaches, sports physical therapists, orthopedic clinicians, and dedicated athletes.
 - **Core Practical Content:**
-  1. **The 8 Golden Biomechanical Rules:**
-     - *Rule 1:* Grip load budgeting (80/20 Open Hand vs. Crimp ratio).
-     - *Rule 2:* Forearm-hold co-linearity & Center of Gravity (CoG) pull vector optimization; avoiding the vanity peak-load trap on force gauges (Tindeq).
-     - *Rule 3:* Long-finger periodization protocol (slower connective tissue adaptation, mandatory 48–72h recovery).
-     - *Rule 4:* Footwork as "pulley armor" (mitigating dynamic shock blowouts; climbing shoe rubber cleanliness).
-     - *Rule 5:* Inter-digit asymmetry & ergonomic rung selection (Quadriga effect and middle finger hyper-flexion).
-     - *Rule 6:* Joint capsule & collateral ligament protection (preventing dynamic slip trauma on the protruding long middle finger).
-     - *Rule 7:* Edge normalization in athletic assessment ($d_{test} = 0.8 \times L_{DP}$).
-     - *Rule 8:* Skin tribology, temperature & friction management.
+  1. **The 8 Core Biomechanical Recommendations:**
+     - *Recommendation 1:* Grip load budgeting (80/20 Open Hand vs. Crimp ratio).
+     - *Recommendation 2:* Forearm-hold co-linearity & Center of Gravity (CoG) pull vector optimization; avoiding the vanity peak-load trap on force gauges (Tindeq).
+     - *Recommendation 3:* Long-finger periodization protocol (slower connective tissue adaptation, mandatory 48–72h recovery).
+     - *Recommendation 4:* Footwork as "pulley armor" (mitigating dynamic shock blowouts; climbing shoe rubber cleanliness).
+     - *Recommendation 5:* Inter-digit asymmetry & ergonomic rung selection (Quadriga effect and middle finger hyper-flexion).
+     - *Recommendation 6:* Joint capsule & collateral ligament protection (preventing dynamic slip trauma on the protruding long middle finger).
+     - *Recommendation 7:* Edge normalization in athletic assessment ($d_{test} = 0.8 \times L_{DP}$).
+     - *Recommendation 8:* Skin tribology, temperature & friction management.
   2. **Diagnostic Self-Assessment Table:** Clinical warning signs and actions for A2 morning stiffness, palmar PIP tenderness, collateral/capsular synovitis, and lumbrical shear.
   3. **Phenotypic Micro-Cycle Template:** Side-by-side comparison of weekly training periodization for short (<85 mm) vs. long (>105 mm) finger phenotypes.
 
