@@ -88,13 +88,15 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 ---
 
 ### Recommendation 7: Edge Normalization in Athletic Assessment
-* **The Fallacy of the Universal 20 mm Edge:** Standard testing protocols evaluate all athletes on an arbitrary 20 mm edge. Biomechanically:
-  - For a short-fingered climber ($L_{DP} = 18.7\text{ mm}$), 20 mm is a **deep hold** ($d/L_{DP} = 1.07$). The middle phalanx engages, transferring load to the A3 pulley and reducing FDP demand.
-  - For a long-fingered climber ($L_{DP} = 25.3\text{ mm}$), 20 mm is a **shallow edge** ($d/L_{DP} = 0.79$), isolating all load onto the terminal phalanx and spiking flexor demand.
+* **The Fallacy of the Universal 20 mm Edge:** Standard testing protocols evaluate all athletes on an arbitrary 20 mm edge. Biomechanically, edge depth scales relative to distal phalanx length ($d / L_{DP}$):
+  - For an **extreme short-fingered phenotype** (e.g., bottom percentiles, $L_{DP} = 18.7\text{ mm}$), 20 mm acts as a **deep hold** ($d/L_{DP} = 1.07$). The middle phalanx engages, transferring load to the A3 pulley and drastically reducing FDP demand.
+  - For an **extreme long-fingered phenotype** (e.g., top percentiles, $L_{DP} = 25.3\text{ mm}$), 20 mm acts as a **shallow micro-edge** ($d/L_{DP} = 0.79$), isolating all load onto the terminal phalanx and spiking flexor demand.
+  *(Note: While these ±15% phenotypes represent extreme anatomical boundary cases, even subtle natural variances between 20 mm and 24 mm phalanx lengths create significant testing discrepancies across athletes).*
 * **Practical Assessment Guideline:**
   - Standardize testing edges to individual anatomy:
     $$d_{test} = 0.80 \times L_{DP}$$
-  - For a standard finger ($L_{DP} = 22\text{ mm}$), test on $18\text{ mm}$. For a short finger, test on $15\text{ mm}$. For a long finger, test on $20\text{–}22\text{ mm}$.
+  - For an average standard finger ($L_{DP} \approx 22\text{ mm}$), test on **$17.5\text{–}18\text{ mm}$**.
+  - For extreme cases: short digits ($18.7\text{ mm}$) scale down to **$15\text{ mm}$**, while extreme long digits ($25.3\text{ mm}$) scale up to **$20\text{–}22\text{ mm}$**.
 
 ---
 
