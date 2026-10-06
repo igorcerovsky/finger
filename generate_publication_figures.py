@@ -284,83 +284,10 @@ fig3.savefig('outputs/pub_fig3_shear_and_scaling.png', dpi=300, bbox_inches='tig
 plt.close(fig3)
 print("Saved pub_fig3_shear_and_scaling.png")
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# FIGURE 0: Anatomical Architecture of the Finger Ray
-# ─────────────────────────────────────────────────────────────────────────────
-print("Generating Anatomical Architecture Figure...")
-raw_anatomy_path = 'paper/figures/raw_finger_anatomy_base.jpg'
-if os.path.exists(raw_anatomy_path):
-    import matplotlib.image as mpimg
-    img_raw = mpimg.imread(raw_anatomy_path)
-    
-    fig_anat, ax_a = plt.subplots(figsize=(15, 8.5), dpi=300)
-    ax_a.imshow(img_raw)
-    ax_a.set_xlim(0, 1376)
-    ax_a.set_ylim(768, 0)
-    ax_a.axis('off')
-    
-    def annotate_bone(text, xy, xytext):
-        ax_a.annotate(text, xy=xy, xytext=xytext,
-                      arrowprops=dict(arrowstyle="-|>", color="#0D47A1", lw=1.5, mutation_scale=11),
-                      fontsize=9.5, fontweight='bold', color="#0D47A1", ha='center',
-                      bbox=dict(boxstyle="round,pad=0.3", facecolor="#E3F2FD", edgecolor="#0D47A1", lw=1.2, alpha=0.96))
-
-    def annotate_joint(text, xy, xytext):
-        ax_a.annotate(text, xy=xy, xytext=xytext,
-                      arrowprops=dict(arrowstyle="-|>", color="#B71C1C", lw=1.5, mutation_scale=11),
-                      fontsize=9.5, fontweight='bold', color="#B71C1C", ha='center',
-                      bbox=dict(boxstyle="round,pad=0.3", facecolor="#FFEBEE", edgecolor="#B71C1C", lw=1.2, alpha=0.96))
-
-    def annotate_pulley(text, xy, xytext):
-        ax_a.annotate(text, xy=xy, xytext=xytext,
-                      arrowprops=dict(arrowstyle="-|>", color="#1B5E20", lw=1.5, mutation_scale=11),
-                      fontsize=9.0, fontweight='bold', color="#1B5E20", ha='center',
-                      bbox=dict(boxstyle="round,pad=0.3", facecolor="#E8F5E9", edgecolor="#1B5E20", lw=1.2, alpha=0.96))
-
-    def annotate_tendon(text, xy, xytext):
-        ax_a.annotate(text, xy=xy, xytext=xytext,
-                      arrowprops=dict(arrowstyle="-|>", color="#E65100", lw=1.6, mutation_scale=12),
-                      fontsize=9.5, fontweight='bold', color="#E65100", ha='center',
-                      bbox=dict(boxstyle="round,pad=0.35", facecolor="#FFF3E0", edgecolor="#E65100", lw=1.3, alpha=0.96))
-
-    # Top: Joints & Bones
-    annotate_joint("MCP Joint\n(Flexion / Radial Abduction)", (380, 310), (250, 95))
-    annotate_joint("PIP Joint\n(1-DOF Flexion; Primary Crimp Lever)", (785, 290), (740, 95))
-    annotate_joint("DIP Joint\n(Flexion / Hyperextension)", (1055, 345), (1080, 95))
-
-    annotate_bone("Metacarpal (MC)", (220, 440), (100, 210))
-    annotate_bone("Proximal Phalanx (PP)", (530, 310), (510, 210))
-    annotate_bone("Middle Phalanx (MP)", (890, 325), (890, 210))
-    annotate_bone("Distal Phalanx (DP)", (1180, 420), (1240, 210))
-
-    # Bottom: Pulleys & Tendons
-    annotate_pulley("A1 Pulley", (380, 480), (320, 590))
-    annotate_pulley("A2 Pulley\n(Crucial Crimp Load)", (655, 390), (580, 590))
-    annotate_pulley("A3 Pulley\n(Palmar Plate Anchor)", (805, 370), (780, 590))
-    annotate_pulley("A4 Pulley\n(Middle Phalanx)", (965, 380), (950, 590))
-    annotate_pulley("A5 Pulley", (1065, 410), (1110, 590))
-
-    annotate_tendon("Flexor Digitorum Superficialis (FDS)\n(Splits at Camper's Chiasm; inserts onto MP)", 
-                    (730, 435), (420, 705))
-    annotate_tendon("Flexor Digitorum Profundus (FDP)\n(Runs deep through chiasm; inserts onto DP base)", 
-                    (1160, 485), (960, 705))
-
-    fig_anat.text(0.5, 0.965, "Anatomical Architecture of the Human Finger Ray in Sport Climbing",
-                 ha='center', fontsize=15, fontweight='bold', color='#1A237E')
-    fig_anat.text(0.5, 0.932, "Spatial Musculoskeletal Chain: Articulated Phalanges, 4-DOF Kinematics, Flexor Tendons (FDP & FDS), and Annular Pulleys (A1–A5)",
-                 ha='center', fontsize=10, fontstyle='italic', color='#424242')
-
-    plt.subplots_adjust(top=0.91, bottom=0.06, left=0.02, right=0.98)
-    fig_anat.savefig('outputs/fig_finger_anatomy.png', dpi=300, bbox_inches='tight')
-    fig_anat.savefig('paper/figures/fig_finger_anatomy.png', dpi=300, bbox_inches='tight')
-    plt.close(fig_anat)
-    print("Saved fig_finger_anatomy.png")
-
-# Copy all figures to the brain artifact directory and paper/figures directory
+# Copy all publication figures to artifact directory and paper/figures directory
 artifact_dir = "/Users/igorcerovsky/.gemini/antigravity-ide/brain/6db08e62-544f-418f-b0fa-e5341f42d013"
 os.makedirs("paper/figures", exist_ok=True)
-all_figures = ['fig_finger_anatomy.png', 'pub_fig1_model_validation.png', 'pub_fig2_hold_depth_crossover.png', 'pub_fig3_shear_and_scaling.png']
+all_figures = ['pub_fig1_model_validation.png', 'pub_fig2_hold_depth_crossover.png', 'pub_fig3_shear_and_scaling.png']
 for fn in all_figures:
     if os.path.exists(f'outputs/{fn}'):
         if os.path.exists(artifact_dir):
@@ -369,5 +296,6 @@ for fn in all_figures:
         print(f"Copied {fn} to artifact directory and paper/figures/.")
 
 print("All publication figures successfully created!")
+
 
 

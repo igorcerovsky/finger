@@ -19,9 +19,6 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ## 1. The 7 Golden Biomechanical Rules of Finger Training
 
-![Anatomical Architecture of the Human Finger Ray](figures/fig_finger_anatomy.png)
-*Figure A: Spatial musculoskeletal anatomy of the finger ray, detailing the three rigid phalanx levers (PP, MP, DP), 4-DOF articular joints (MCP, PIP, DIP), extrinsic flexor tendons (FDP, FDS), and the annular pulley sheath system (A1–A5). Understanding this structural linkage provides the physical foundation for the seven training rules below.*
-
 ### Rule 1: Grip Load Budgeting — The "Pulley-Protective" Open Hand
 * **The Physics:** In a Full Crimp, DIP hyperextension forces the FDP tendon to take up to 65% of the total finger load, while the extreme PIP flexion angle ($105^\circ$) drives the tendon deflection vector directly against the A2 pulley, elevating normal force to **$314\text{–}384\text{ N}$** under standard ledge hangs. In contrast, transitioning to an **Open Hand** drops A2 normal force to **below $100\text{ N}$**—an over **70% reduction in sheath stress**.
 * **Practical Training Protocol:**
