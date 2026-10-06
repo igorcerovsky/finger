@@ -4,6 +4,7 @@
 **Author:** Igor Cerovsky  
 *Independent Climbing Physics Enthusiast*  
 **Correspondence:** [igor.cerovsky@gmail.com](mailto:igor.cerovsky@gmail.com)  
+**Project Repository:** [https://github.com/igorcerovsky/finger](https://github.com/igorcerovsky/finger)  
 **Companion Research Paper:** *A Three-Dimensional Musculoskeletal Model of the Climbing Finger: Contact Mechanics, Phenotypic Scaling, and Pulley Shearing* (Cerovsky, 2026)
 
 ---
@@ -18,6 +19,9 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ## 1. The 7 Golden Biomechanical Rules of Finger Training
 
+![Anatomical Architecture of the Human Finger Ray](figures/fig_finger_anatomy.png)
+*Figure A: Spatial musculoskeletal anatomy of the finger ray, detailing the three rigid phalanx levers (PP, MP, DP), 4-DOF articular joints (MCP, PIP, DIP), extrinsic flexor tendons (FDP, FDS), and the annular pulley sheath system (A1–A5). Understanding this structural linkage provides the physical foundation for the seven training rules below.*
+
 ### Rule 1: Grip Load Budgeting — The "Pulley-Protective" Open Hand
 * **The Physics:** In a Full Crimp, DIP hyperextension forces the FDP tendon to take up to 65% of the total finger load, while the extreme PIP flexion angle ($105^\circ$) drives the tendon deflection vector directly against the A2 pulley, elevating normal force to **$314\text{–}384\text{ N}$** under standard ledge hangs. In contrast, transitioning to an **Open Hand** drops A2 normal force to **below $100\text{ N}$**—an over **70% reduction in sheath stress**.
 * **Practical Training Protocol:**
@@ -26,12 +30,15 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Rule 2: Forearm-Hold Co-Linearity — Eliminating Transverse Lateral Shear
+### Rule 2: Forearm-Hold Co-Linearity & Center-of-Gravity Optimization — Eliminating Transverse Lateral Shear
 * **The Physics:** Annular pulleys (A2, A4) are anisotropic fibrocartilaginous arches engineered for circumferential hoop stress (holding tendons close to the bone). They possess minimal transverse shear resistance. Our 3D model shows that just **$15^\circ$ of MCP radial abduction** produces **$61.0\text{ N}$** of lateral shear on A2, **$46.4\text{ N}$** on A4, and **$44.4\text{ N}$** of mediolateral shear on the PIP collateral ligaments.
-* **Practical Wall & Training Technique:**
-  - **The Perpendicular Pull:** When loading side-pulls, gastons, or angled rungs, position your feet and hips so that the forearm pulling vector is strictly perpendicular to the hold edge.
-  - **The Elbow Trap:** Avoid the common error of dropping the elbow inward on gastons or chicken-winging on side-pulls while bearing down. This twists the flexor sheath, creating catastrophic stress concentrations at the lateral pulley margins (peel failure).
-  - **Hangboard Safety:** Never perform weighted hangs on angled or rotated holds until foundational straight-line tendon stiffness has been conditioned for multiple seasons.
+* **Climbing Technique — Center of Gravity (CoG) & The Optimal "Pull Vector":**
+  - **CoG Dictates Finger Demands:** Elite climbing technique is fundamentally the art of body positioning. By actively steering your center of gravity (hips, torso, and dynamic foot placements), you can align the resultant pulling vector strictly perpendicular to the hold's usable surface.
+  - **Dual Benefit (Performance + Longevity):** Optimizing the pull vector through body position minimizes the total finger grip power required to stick the move (maximizing effective friction and mechanical advantage), making hard moves feel drastically easier and possible. Simultaneously, it eliminates parasitic out-of-plane joint torques and transverse shear ($F_{A2,lat}, F_{A4,lat}$), neutralizing the primary physical trigger for acute pulley tearing. High-level technique *is* your best injury defense.
+  - **The Elbow Trap:** Avoid the common technical fault of dropping the elbow inward on gastons or chicken-winging outwards on side-pulls while bearing down. This twists the flexor sheath, creating catastrophic stress concentrations at the lateral pulley margins (peel failure).
+* **Hangboard & Force Gauge (Tindeq) Training Safety:**
+  - **Avoid the "Max Vanity Load" Trap:** When testing or training with isometric force sensors (e.g., Tindeq Progressor, crane scales, or smart boards), athletes frequently rotate their wrists, flare their elbows, or torque their fingers to register a higher peak load number on the screen. This is hazardous cheating: it wedges joints and recruits shoulder/lat leverage at the expense of dangerous asymmetric pulley sheath strain and collateral ligament torque.
+  - **Train for Efficacy, Not Peak Numbers:** On hangboards or portable edges, position digits strictly perpendicular to the edge to avoid twisting. Do not optimize for maximum vanity load—optimize strictly for clean sagittal mechanics, training efficacy, and long-term injury avoidance.
 
 ---
 
