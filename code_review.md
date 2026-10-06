@@ -85,7 +85,8 @@ This was a highly subtle biomechanical and kinematic coordinate mismatch:
    - **Adaptive Skin Tribology**: Replaced static Coulomb friction with an empirical normal-load-dependent adhesion model: $\mu_{eff}(F_N) = \mu_0 (F_{ref}/F_N)^{1-n}$, bounded in $[0.25, 0.85]$.
    - **Numerical Continuation Optimizer**: Implemented parametric continuation in `find_equilibrium_posture`, accelerating depth sweeps along $d_{hold}$ by leveraging adjacent posture warm starts with global fallback.
 
-3. **Publication Deliverable**:
-   - Authored a complete, publication-ready 5–8 page manuscript ([paper_draft.md](file:///Users/igorcerovsky/Documents/finger/paper_draft.md)) adhering to standard *Journal of Biomechanics* structure, complete with mathematical formulations, structured tables, and literature citations.
+3. **Publication Deliverables**:
+   - Authored a complete, publication-ready 5–8 page manuscript ([paper/paper_draft.md](file:///Users/igorcerovsky/Documents/finger/paper/paper_draft.md)) adhering to standard *Journal of Biomechanics* structure, complete with mathematical formulations, structured tables, and literature citations.
+   - Authored companion athletic manual ([paper/practical_training_guide.md](file:///Users/igorcerovsky/Documents/finger/paper/practical_training_guide.md)) translating 3D physics into actionable training protocols and injury prevention rules.
 
 **Status: ITERATION 18 COMPLETED — Fast continuation optimizer operational, wrist tenodesis and adaptive tribology integrated, regression tests passing, and 5-8 page scientific paper drafted.**

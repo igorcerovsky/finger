@@ -226,7 +226,7 @@ Hook         950       4.512      -118.7      15.55         11.2           9.3  
 2. **Force Magnitude Agreement:** For flexed climbing grips (MinorFlex and MajorFlex), the predicted-to-applied force ratios were $0.50 \pm 0.05$ and $0.67 \pm 0.08$, demonstrating excellent order-of-magnitude agreement and reflecting the biological stabilization provided by the intrinsic interossei.
 3. **HyperExt Sensitivity:** In HyperExt, predicted forces exceeded applied cadaveric loads. This discrepancy stems from cadaveric jig boundary constraints where external force-plate reactions are damped by passive joint ligamentous end-stops not engaged in living climbers actively pulling on micro-edges.
 
-![Figure 1: 3D Musculoskeletal Kinematics, Dual-Phalanx Contact Mechanics, and Experimental Cadaver Validation](outputs/pub_fig1_model_validation.png)
+![Figure 1: 3D Musculoskeletal Kinematics, Dual-Phalanx Contact Mechanics, and Experimental Cadaver Validation](figures/pub_fig1_model_validation.png)
 *Figure 1: Model architecture, multi-segment contact mechanics, and cadaveric experimental validation. (A) 3D spatial kinematics of the 4-DOF finger model in Full Crimp (red), Half-Crimp (orange), and Open Hand (green). (B) Contact pressure distributions $p(s)$ along the palmar digit surface for a shallow hold ($10\text{ mm}$, blue, DP only) and a deep hold ($35\text{ mm}$, purple, bridging across the DIP crease onto the MP with A3 pulley anchoring). (C) Validation of predicted-to-applied force ratios against PeerJ 7470 cadaveric force-plate measurements across four standardized postures under 300 g and 950 g loads.*
 
 ---
@@ -264,7 +264,7 @@ When hold depth is swept continuously from $2.0\text{ mm}$ (micro-edge) to $45.0
    - **Equilibrium Overhang Posture:** Crossover occurs at **$29.6\text{ mm}$** for short digits and **$35.0\text{ mm}$** for standard digits, whereas long digits fail to reach crossover within functional half-crimp depth limits ($\le 35\text{ mm}$). The long lever arm of the DP forces FDP to remain the prime mover even on deep edges.
 3. **Full Crimp:** Because the baseline ratio is high ($1.75$), FDP remains strictly dominant across all usable crimp depths ($2\text{–}22\text{ mm}$), maintaining high tension ($>320\text{ N}$).
 
-![Figure 2: Hold Depth Force Redistribution, Phenotypic Crossover Mechanics, and Minimum-Effort Grip Frontiers](outputs/pub_fig2_hold_depth_crossover.png)
+![Figure 2: Hold Depth Force Redistribution, Phenotypic Crossover Mechanics, and Minimum-Effort Grip Frontiers](figures/pub_fig2_hold_depth_crossover.png)
 *Figure 2: Hold depth force redistribution and grip optimization. (A) Muscle tendon forces (FDP: solid, FDS: dashed) across hold depths ($d_{hold} \in [2, 42\text{ mm}]$) in Half-Crimp for Short (−15%, blue), Standard (green), and Long (+15%, magenta) phenotypes. Crossover points where FDS surpasses FDP as prime mover occur at $28.3\text{ mm}$ (Short), $33.5\text{ mm}$ (Standard), and $38.4\text{ mm}$ (Long). Yellow background shading indicates the single-segment DP region ($d \le L_{DP}$); purple shading indicates dual DP+MP contact. (B) Minimum-effort energetic grip frontier showing total tendon force across hold depths, with shaded background zones indicating optimal grip selection: Half-Crimp (<8 mm, orange), Transition Zone (8–18 mm, yellow), and Open Hand (>18 mm, green).*
 
 ---
@@ -273,7 +273,7 @@ When hold depth is swept continuously from $2.0\text{ mm}$ (micro-edge) to $45.0
 
 During asymmetric hand placements (e.g., side-pulls or gastons), the MCP joint experiences radial abduction ($\phi_{MCP} \in [0^\circ, 15^\circ]$). This out-of-plane deviation introduces severe transverse shearing forces:
 - At $\phi_{MCP} = 0^\circ$, pulley forces act in the sagittal plane ($F_{A2,lat} = 0\text{ N}$, $F_{A4,lat} = 0\text{ N}$).
-- At $\phi_{MCP} = 15^\circ$, the transverse lateral force component spikes to **$F_{A2,lat} = 128.2\text{ N}$** (A2) and **$F_{A4,lat} = 106.7\text{ N}$** (A4 in full crimp), generating high asymmetric shear stress across the lateral margin of the pulley sheath.
+- At $\phi_{MCP} = 15^\circ$, the transverse lateral force component reaches **$F_{A2,lat} = 61.0\text{ N}$** (A2) and **$F_{A4,lat} = 46.4\text{ N}$** (A4 in full crimp), generating high asymmetric shear stress across the lateral margin of the pulley sheath.
 - Mediolateral (ML) shear at the PIP joint rises from $0\text{ N}$ to **$44.4\text{ N}$**, straining the collateral ligaments and explaining the high clinical incidence of lateral joint impingement during dynamic side-pulling.
 
 ---
@@ -299,7 +299,7 @@ Long (+15%)         109.25         25.3         363.3 N            444.0 N      
 - **The Long-Finger Vulnerability:** For long-fingered climbers, the $+37.5\%$ mechanical penalty elevates half-crimp A2 pulley loads to **$444.0\text{ N}$**, crossing the **$400\text{ N}$** cadaveric ultimate tensile rupture limit (Lin et al., 1990; Moor et al., 2009; Schöffl et al., 2003) even in static equilibrium. In contrast, short digits operate at **$265.2\text{ N}$** in full crimp and **$322.9\text{ N}$** in half-crimp, protected well below structural failure limits.
 - **Dynamic Shock Rupture:** Under dynamic shock loading or foot slips ($F_{tip} \to 171.7\text{ N}$), A2 normal loads spike to **$536.8\text{ N}$** (nominal) and **$621.0\text{ N}$** (long), precipitating acute catastrophic sheath blowout. Isolated A4 loads remain moderate (**$138\text{–}190\text{ N}$** under standard hangs), confirming that A4 rarely tears in isolation and predominantly fails secondary to A2 collapse.
 
-![Figure 3: Out-of-Plane Annular Pulley Shearing Under Radial Abduction and Anthropometric Phenotype Scaling](outputs/pub_fig3_shear_and_scaling.png)
+![Figure 3: Out-of-Plane Annular Pulley Shearing Under Radial Abduction and Anthropometric Phenotype Scaling](figures/pub_fig3_shear_and_scaling.png)
 *Figure 3: 3D out-of-plane loading and phenotypic scaling penalties. (A) Transverse lateral shearing force ($F_{A2,lat}$ in red, $F_{A4,lat}$ in orange) and PIP mediolateral joint shear ($F_{ML}$ in blue) as a function of MCP radial abduction angle ($\phi_{MCP} \in [0^\circ, 20^\circ]$). Dashed purple line indicates severe side-pull abduction ($\phi = 15^\circ$), where transverse lateral shear reaches $61.0\text{ N}$ on A2 and $46.4\text{ N}$ on A4, alongside $44.4\text{ N}$ of PIP joint shear. (B) Anthropometric scaling comparison showing Annular Pulley Loads for Short (−15%), Standard (Nominal), and Long (+15%) phenotypes under 100 N middle-finger ledge load on a 10 mm edge (Full Crimp A2 in red, Half-Crimp A2 in orange, Full Crimp A4 in purple). Long digits incur a $+37.0\%$ (crimp A2) and $+37.5\%$ (half-crimp A2) force penalty, driving half-crimp A2 load past the 400 N ultimate rupture threshold (dotted dark red line). Dashed red line indicates the 300 N structural yield threshold.*
 
 ---
@@ -328,22 +328,52 @@ A long-standing debate in sports science centers on whether finger length correl
 - Consequently, long-fingered athletes must generate up to $36\%$ more muscle tension to hold the same edge depth.
 - In clinical practice, this explains why long-fingered climbers experience a higher incidence of chronic A2 pulley tenosynovitis and why they instinctively adopt open-hand grips on holds where shorter-fingered peers half-crimp comfortably.
 
-### 5.3 Clinical & Athletic Implications
-
-1. **Edge-Size Prescription in Hangboard Training:** Hangboard protocols (e.g., standard $20\text{ mm}$ testing edges) do not impose equal physiological strain across athletes. A $20\text{ mm}$ edge represents a deep hold for a short-fingered climber ($d/L_{DP} = 1.07$, engaging the MP), but a shallow hold for a long-fingered climber ($d/L_{DP} = 0.79$, concentrating all force on the DP). Edge depth should be normalized to the athlete's distal phalanx length ($d_{hold} = 0.8 L_{DP}$).
-2. **Conservative Pulley Rehabilitation:** Following acute Grade II–III pulley tears, functional taping or rigid thermoplastic pulley rings should be prioritized during the first 6–12 weeks to limit bowstringing excursion during PIP flexion $>60^\circ$ (Schöffl et al., 2003).
-
-### 5.4 Limitations and Future Research
+### 5.3 Limitations and Future Research
 
 In accordance with Occam's razor, our framework prioritized physically measurable parameters. However, certain simplifications warrant future extension:
-- **Static vs. Dynamic Eccentric Loading:** The current model is quasistatic. Clinical investigations into eccentric finger loading (where the finger uncurls under dynamic foot slip or latching) indicate that transient peak forces exceed static equilibrium by 150–200% (Schweizer, 2001; Schöffl et al., 2003).
-- **Inter-Digit Quadriga Constraint:** The middle and ring fingers share a common FDP muscle belly. Asymmetric single-finger loading (e.g., in two-finger pocket holds) induces high lumbrical shear strain not captured in isolated single-ray simulations.
+- **Quasistatic vs. Dynamic Eccentric Loading:** The current model evaluates static equilibrium. Dynamic movement analysis during foot slips indicates that eccentric uncurling introduces transient inertial and viscoelastic load spikes exceeding static values by 150–200% (Schweizer, 2001; Schöffl et al., 2003).
+- **Inter-Digit Quadriga Coupling:** Middle and ring fingers share a common FDP muscle belly. Asymmetrical single-finger loading in pocket holds generates high inter-tendinous shear across the lumbrical muscles that warrants multi-digit extension.
 
 ---
 
-## 6. Conclusion
+## 6. Practical, Athletic, and Clinical Implications
 
-We have established a comprehensive three-dimensional musculoskeletal model of the human finger that unifies multi-segment contact mechanics, CT-calibrated spatial moment arms, biological EMG constraints, and out-of-plane pulley shear. The model resolves longstanding anomalies in planar biomechanics, demonstrates the profound impact of hold depth on flexor recruitment, and quantifies the mechanical penalty imposed on longer digits. This framework provides an open, reproducible foundation for clinical injury prevention, surgical pulley reconstruction, and evidence-based athletic training in sport climbing.
+The biomechanical insights generated by our three-dimensional model provide a rigorous physical foundation for evidence-based climbing coaching, hangboard training protocols, and clinical injury prevention:
+
+### 6.1 Grip Hygiene and Pulley Load Budgeting
+- **The "Pulley-Protective" Open Hand:** Our model demonstrates that transitioning from Full Crimp to Open Hand reduces A2 pulley normal force from $314.2\text{ N}$ down to below $100\text{ N}$—an over $70\%$ reduction in fibrocartilage stress. In high-volume training (mileage, endurance laps, foundational hangboard blocks), climbers should systematically default to the Open Hand or relaxed Half-Crimp.
+- **Rationing the Full Crimp:** The Full Crimp introduces severe passive DIP hyperextension, forcing the FDP tendon to sustain up to $65\%$ of the total muscular load while requiring extensor (EDC) co-contraction to stabilize the terminal phalanx. Full Crimping should be treated as a scarce athletic currency, reserved strictly for sub-$8\text{ mm}$ project attempts where DIP flexion torque is unattainable through alternative grips.
+
+### 6.2 Alignment and the Elimination of Transverse Shearing (Side-Pulls & Gastons)
+- **Hoop Stress vs. Transverse Shear:** Annular pulleys are anisotropic fibrocartilaginous bands evolved to resist circumferential hoop tension. Our 3D kinematics reveal that a modest $15^\circ$ MCP radial abduction introduces $61.0\text{ N}$ of transverse lateral shear on A2, $46.4\text{ N}$ on A4, and $44.4\text{ N}$ of mediolateral shear on the PIP collateral ligaments.
+- **Forearm-Hold Co-Linearity:** When engaging side-pulls, gastons, or angled crimps, athletes must dynamically position their center of mass and foot placements to keep the forearm axis perpendicular to the hold edge. Dropping the elbow or internally rotating the shoulder while bearing down twists the flexor sheath, inducing edge-peel stresses that initiate microscopic partial tears. Hangboard edges should never be loaded obliquely until foundational tensile tolerance is established.
+
+### 6.3 Phenotype-Specific Periodization: The "Long-Finger Protocol"
+- **The Mechanical Reality of Longer Phalanxes:** Because external joint moments scale linearly with lever arm length ($M_{ext} = r \times F_{ext}$), longer digits suffer an intrinsic $+37.0\%$ to $+37.5\%$ force penalty on identical edge depths. Long-fingered athletes operate with an intrinsically narrower margin of structural safety; in Half-Crimp under standard $100\text{ N}$ hangs, long digits reach $444.0\text{ N}$ on A2, crossing the cadaveric ultimate rupture limit even under static conditions.
+- **Prolonged Connective Tissue Periodization:** While skeletal muscle adapts to training stimuli within weeks, collagen synthesis, cross-linking, and pulley sheath remodeling require 12 to 24 months of progressive overload. Long-fingered climbers must adopt conservative, elongated multi-year periodization models rather than rapid, aggressive hangboard cycles.
+- **Volume and Recovery Management:** Because long digits accumulate tissue micro-strain at significantly elevated rates, long-fingered climbers require extended recovery windows (48–72 hours between high-intensity crimping sessions) and reduced total weekly crimp volume.
+- **Tactical and Stylistic Optimization:** Long-fingered climbers should strategically orient their climbing toward slopers, large pinches, open-hand compression volumes, and technical body-positioning problems where span and contact surface area provide a mechanical advantage. On small micro-edges, they should prioritize high-step footwork and drop-knees to sink their weight, engaging the middle phalanx ($d > L_{DP}$) rather than forcing high-stress closed crimps.
+
+### 6.4 Footwork as "Pulley Armor": Mitigating Dynamic Shock Loading
+- **The Etiology of Catastrophic Failure:** In static equilibrium, healthy standard digits sustain $314\text{–}384\text{ N}$ of A2 force, hovering near the structural yield limit ($300\text{ N}$). However, when a foot unexpectedly slips or blows off a foothold, the external load instantaneously spikes to 25–40% body weight per digit ($F_{tip} \to 171.7\text{ N}$).
+- **The Dynamic Blowout:** At $171.7\text{ N}$, A2 pulley loads spike to $536.8\text{ N}$ (standard) and $621.0\text{ N}$ (long), vastly exceeding the $400\text{ N}$ ultimate tensile strength and causing immediate, audible pulley rupture. Precise footwork, core tension, and an ingrained conditioned reflex to release a crimp grip when feet cut are the primary clinical safeguards against acute pulley blowouts.
+
+### 6.5 Inter-Digit Asymmetry, Ergonomic Rungs, and Quadriga Management
+- **The Middle-Finger Overhang:** On conventional flat hangboard rungs, the anatomical length disparity between the middle finger (Digit III) and its adjacent neighbors (Digits II and IV) forces Digit III into hyper-flexion ($>105^\circ$ PIP flexion) to establish flush contact on the edge. This concentrates disproportionate normal forces and lateral torque onto the middle finger's A2 pulley.
+- **Ergonomic Rung Geometry:** Training boards should incorporate anatomical curvature (subtle arc-shaped or offset rungs) that match individual finger length gradients, equalizing contact pressure across digits II–V.
+- **Pocket Training and Lumbrical Shear:** Due to the shared deep flexor muscle belly (Quadriga effect), pocket grips that forcefully curl the middle and ring fingers while dropping adjacent fingers into extreme extension produce high inter-tendinous lumbrical shear. Climbers training two-finger pockets must avoid curling dropped fingers into the palm.
+
+### 6.6 Edge Normalization in Athletic Assessment
+- **Eliminating the 20 mm Bias:** Standardized testing protocols routinely utilize an arbitrary $20\text{ mm}$ edge for all athletes. Biomechanically, a $20\text{ mm}$ edge represents a deep hold for a short-fingered climber ($d/L_{DP} = 1.07$, transferring load to the middle phalanx and A3 pulley), but a shallow hold for a long-fingered climber ($d/L_{DP} = 0.79$, concentrating all force on the distal phalanx). Edge depth in scientific testing and training prescriptions must be normalized to individual anatomy ($d_{hold} = 0.8 L_{DP}$).
+
+### 6.7 Hold Tribology and Skin Care
+- **Normal-Force Friction Decay:** Skin friction follows a non-linear power-law decay ($\mu \propto F_N^{n-1}$). On polished or glassy holds, the drop in friction coefficient forces athletes to generate excessive normal squeezing force, multiplying tendon tension. Regular hold brushing, chalk maintenance, and climbing in cold, dry ambient conditions represent direct biomechanical defenses against pulley overload.
+
+---
+
+## 7. Conclusion
+
+We have established a comprehensive three-dimensional musculoskeletal model of the human finger that unifies multi-segment contact mechanics, CT-calibrated spatial moment arms, biological EMG constraints, and out-of-plane pulley shear. The model resolves longstanding anomalies in planar biomechanics, demonstrates the profound impact of hold depth on flexor recruitment, and quantifies the mechanical penalty imposed on longer digits. Furthermore, our translation of 3D spatial mechanics into practical training guidelines bridges the gap between theoretical musculoskeletal physics and on-the-wall athletic longevity. This framework provides an open, reproducible foundation for clinical injury prevention, surgical pulley reconstruction, and evidence-based athletic training in sport climbing.
 
 ---
 

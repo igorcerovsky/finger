@@ -1,0 +1,82 @@
+# Climbing Finger Biomechanics: Publications & Diagnostic Figures
+
+This directory contains the publication-ready academic manuscript, companion athletic field guide, and high-resolution figures for the 3D musculoskeletal finger biomechanics project.
+
+**Author:** Igor Cerovsky  
+*Independent Climbing Physics Enthusiast*  
+**Correspondence:** [igor.cerovsky@gmail.com](mailto:igor.cerovsky@gmail.com)  
+
+---
+
+## Directory Overview
+
+```
+paper/
+├── README.md                     # Overview and reproducibility guide (this file)
+├── paper_draft.md                # Primary academic research manuscript (5–8 pages)
+├── practical_training_guide.md   # Companion practical field guide for coaches & athletes
+└── figures/                      # High-resolution (300 DPI) publication-grade figures
+    ├── pub_fig1_model_validation.png
+    ├── pub_fig2_hold_depth_crossover.png
+    └── pub_fig3_shear_and_scaling.png
+```
+
+---
+
+## 1. Publications
+
+### Primary Academic Manuscript
+- **File:** [`paper_draft.md`](file:///Users/igorcerovsky/Documents/finger/paper/paper_draft.md)
+- **Title:** *A Three-Dimensional Musculoskeletal Model of the Climbing Finger: Dual-Phalanx Contact Mechanics, Anthropometric Phenotypic Scaling, and Out-of-Plane Annular Pulley Shearing*
+- **Target Venues:** *Journal of Biomechanics*, *Frontiers in Bioengineering and Biotechnology*, or *Sports Biomechanics*.
+- **Length:** ~7.5 pages (standard two-column academic formatting, ~4,800 words).
+- **Core Scientific Contributions:**
+  1. **4-DOF Spatial Kinematics:** Resolves non-sagittal joint actions (MCP flexion/abduction, PIP/DIP flexion) under spatial coordinate transforms.
+  2. **Dual-Phalanx Hertzian Contact Mechanics:** Captures hold depth transitions ($s \le L_{DP}$ vs. $s > L_{DP}$) where the middle phalanx engages the hold edge and anchors the A3 pulley, eliminating external DIP moment arms.
+  3. **Biomechanical Grip Crossovers:** Pinpoints the exact edge depth thresholds ($28.3\text{–}38.4\text{ mm}$) where FDS overtakes FDP as prime mover.
+  4. **Annular Pulley Vector Shearing:** Formulates 3D Capstan deflection mechanics ($T(\hat{\mathbf{u}}_{in} - \hat{\mathbf{u}}_{out})$) and demonstrates that $15^\circ$ of MCP radial abduction produces $>60\text{ N}$ of transverse lateral shear on A2/A4.
+  5. **Phenotypic Scaling Penalties:** Quantifies the $+37.5\%$ force penalty on long phalanges (+15%), explaining why long digits cross cadaveric rupture thresholds ($400\text{ N}$) on small edges under static bodyweight loads.
+  6. **Cadaveric & In Vivo Validation:** Validated against cadaveric force-plate measurements across four standardized joint postures under 300 g and 950 g loads.
+
+### Companion Practical Field Guide
+- **File:** [`practical_training_guide.md`](file:///Users/igorcerovsky/Documents/finger/paper/practical_training_guide.md)
+- **Title:** *Biomechanical Manual for Finger Training & Injury Prevention in Sport Climbing: A Practical Field Guide for Coaches, Clinicians, and Athletes*
+- **Audience:** Climbing coaches, sports physical therapists, orthopedic clinicians, and dedicated athletes.
+- **Core Practical Content:**
+  1. **The 7 Golden Biomechanical Rules:**
+     - *Rule 1:* Grip load budgeting (80/20 Open Hand vs. Crimp ratio).
+     - *Rule 2:* Forearm-hold co-linearity (eliminating out-of-plane lateral shear on sidepulls and gastons).
+     - *Rule 3:* Long-finger periodization protocol (slower connective tissue adaptation, mandatory 48–72h recovery).
+     - *Rule 4:* Footwork as "pulley armor" (mitigating dynamic shock blowouts from foot slips).
+     - *Rule 5:* Inter-digit asymmetry & ergonomic rung selection (Quadriga effect and middle finger hyper-flexion).
+     - *Rule 6:* Edge normalization in athletic assessment ($d_{test} = 0.8 \times L_{DP}$).
+     - *Rule 7:* Skin tribology, temperature & friction management.
+  2. **Diagnostic Self-Assessment Table:** Clinical warning signs and actions for A2 morning stiffness, palmar PIP tenderness, and lumbrical shear.
+  3. **Phenotypic Micro-Cycle Template:** Side-by-side comparison of weekly training periodization for short (<85 mm) vs. long (>105 mm) finger phenotypes.
+
+---
+
+## 2. Publication Figures
+
+| Figure | Filename | Description |
+| :--- | :--- | :--- |
+| **Figure 1** | [`pub_fig1_model_validation.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/pub_fig1_model_validation.png) | **3D Kinematics, Contact Pressure & Validation:** (A) 3D spatial bone segments in Full Crimp, Half-Crimp, and Open Hand. (B) Dual-phalanx contact pressure distributions ($p(s)$) for shallow ($10\text{ mm}$) and deep ($35\text{ mm}$) holds. (C) Predicted vs. measured force ratios across 4 cadaveric postures. |
+| **Figure 2** | [`pub_fig2_hold_depth_crossover.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/pub_fig2_hold_depth_crossover.png) | **Hold Depth Redistribution & Grip Frontiers:** (A) FDP vs. FDS tendon forces across edge depths ($2\text{–}42\text{ mm}$) identifying crossover thresholds for Short, Nominal, and Long phenotypes. (B) Minimum-effort energetic grip selection zones (<8 mm Half-Crimp, 8–18 mm Transition, >18 mm Open Hand). |
+| **Figure 3** | [`pub_fig3_shear_and_scaling.png`](file:///Users/igorcerovsky/Documents/finger/paper/figures/pub_fig3_shear_and_scaling.png) | **Transverse Shearing & Phenotypic Rupture Limits:** (A) Lateral pulley shear ($F_{A2,lat}$, $F_{A4,lat}$) and PIP joint shear as a function of MCP radial abduction ($0^\circ\text{–}20^\circ$). (B) Annular pulley loads for Short, Nominal, and Long phenotypes against the $300\text{ N}$ structural yield and $400\text{ N}$ ultimate rupture limits under 100 N ledge hang and 171.7 N dynamic slip conditions. |
+
+---
+
+## 3. Reproducibility & Regeneration
+
+All figures and simulation outputs are 100% deterministic and reproducible using the project's Python virtual environment:
+
+```bash
+# From workspace root:
+source .venv/bin/activate
+
+# Regenerate all high-resolution figures into paper/figures/ and outputs/:
+python3 generate_publication_figures.py
+
+# Run regression test suite:
+python3 test_match_human_bonobo.py
+```

@@ -284,10 +284,13 @@ fig3.savefig('outputs/pub_fig3_shear_and_scaling.png', dpi=300, bbox_inches='tig
 plt.close(fig3)
 print("Saved pub_fig3_shear_and_scaling.png")
 
-# Copy all three figures to the brain artifact directory
+# Copy all three figures to the brain artifact directory and paper/figures directory
 artifact_dir = "/Users/igorcerovsky/.gemini/antigravity-ide/brain/6db08e62-544f-418f-b0fa-e5341f42d013"
+os.makedirs("paper/figures", exist_ok=True)
 for fn in ['pub_fig1_model_validation.png', 'pub_fig2_hold_depth_crossover.png', 'pub_fig3_shear_and_scaling.png']:
     shutil.copy(f'outputs/{fn}', f'{artifact_dir}/{fn}')
-    print(f"Copied {fn} to artifact directory.")
+    shutil.copy(f'outputs/{fn}', f'paper/figures/{fn}')
+    print(f"Copied {fn} to artifact directory and paper/figures/.")
 
 print("All publication figures successfully created!")
+
