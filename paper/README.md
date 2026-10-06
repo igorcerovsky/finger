@@ -47,7 +47,7 @@ paper/
   1. **The 8 Core Biomechanical Recommendations:**
      - *Recommendation 1:* Grip load budgeting (80/20 Open Hand vs. Crimp ratio).
      - *Recommendation 2:* Forearm-hold co-linearity & Center of Gravity (CoG) pull vector optimization; avoiding the vanity peak-load trap on force gauges (Tindeq).
-     - *Recommendation 3:* Long-finger periodization protocol (slower connective tissue adaptation, mandatory 48–72h recovery).
+     - *Recommendation 3:* Long-finger periodization protocol (slower connective tissue adaptation, recommended 48–72h recovery).
      - *Recommendation 4:* Footwork as "pulley armor" (mitigating dynamic shock blowouts; climbing shoe rubber cleanliness).
      - *Recommendation 5:* Inter-digit asymmetry & ergonomic rung selection (Quadriga effect and middle finger hyper-flexion).
      - *Recommendation 6:* Joint capsule & collateral ligament protection (preventing dynamic slip trauma on the protruding long middle finger).

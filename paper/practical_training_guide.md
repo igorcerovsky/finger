@@ -30,12 +30,12 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 ### Recommendation 2: Forearm-Hold Co-Linearity & Center-of-Gravity Optimization — Eliminating Transverse Lateral Shear
 * **The Physics:** Annular pulleys (A2, A4) are anisotropic fibrocartilaginous arches engineered for circumferential hoop stress (holding tendons close to the bone). They possess minimal transverse shear resistance. Our 3D model shows that just **$15^\circ$ of MCP radial abduction** produces **$61.0\text{ N}$** of lateral shear on A2, **$46.4\text{ N}$** on A4, and **$44.4\text{ N}$** of mediolateral shear on the PIP collateral ligaments.
 * **Climbing Technique — Center of Gravity (CoG) & The Optimal "Pull Vector":**
-  - **CoG Dictates Finger Demands:** Elite climbing technique is fundamentally the art of body positioning. By actively steering your center of gravity (hips, torso, and dynamic foot placements), you can align the resultant pulling vector strictly perpendicular to the hold's usable surface.
-  - **Dual Benefit (Performance + Longevity):** Optimizing the pull vector through body position minimizes the total finger grip power required to stick the move (maximizing effective friction and mechanical advantage), making hard moves feel drastically easier and possible. Simultaneously, it eliminates parasitic out-of-plane joint torques and transverse shear ($F_{A2,lat}, F_{A4,lat}$), neutralizing the primary physical trigger for acute pulley tearing. High-level technique *is* your best injury defense.
-  - **The Elbow Trap:** Avoid the common technical fault of dropping the elbow inward on gastons or chicken-winging outwards on side-pulls while bearing down. This twists the flexor sheath, creating catastrophic stress concentrations at the lateral pulley margins (peel failure).
+  - **CoG Dictates Finger Demands:** Elite climbing technique is fundamentally the art of body positioning. By actively steering your center of gravity (hips, torso, and dynamic foot placements), you can align the resultant pulling vector closely perpendicular to the hold's usable surface.
+  - **Dual Benefit (Performance + Longevity):** Optimizing the pull vector through body position minimizes the total finger grip power required to stick the move (maximizing effective friction and mechanical advantage), making hard moves feel more manageable. Simultaneously, it reduces out-of-plane joint torques and transverse shear ($F_{A2,lat}, F_{A4,lat}$), lowering an important physical trigger for acute pulley tearing. High-level technique serves as an effective injury defense.
+  - **The Elbow Trap:** Avoid the common technical fault of dropping the elbow inward on gastons or chicken-winging outwards on side-pulls while bearing down. This twists the flexor sheath, creating elevated stress concentrations at the lateral pulley margins (peel failure).
 * **Hangboard & Force Gauge (Tindeq) Training Safety:**
-  - **Avoid the "Max Vanity Load" Trap:** When testing or training with isometric force sensors (e.g., Tindeq Progressor, crane scales, or smart boards), athletes frequently rotate their wrists, flare their elbows, or torque their fingers to register a higher peak load number on the screen. This is hazardous cheating: it wedges joints and recruits shoulder/lat leverage at the expense of dangerous asymmetric pulley sheath strain and collateral ligament torque.
-  - **Train for Efficacy, Not Peak Numbers:** On hangboards or portable edges, position digits strictly perpendicular to the edge to avoid twisting. Do not optimize for maximum vanity load—optimize strictly for clean sagittal mechanics, training efficacy, and long-term injury avoidance.
+  - **Avoid the "Max Vanity Load" Trap:** When testing or training with isometric force sensors (e.g., Tindeq Progressor, crane scales, or smart boards), athletes frequently rotate their wrists, flare their elbows, or torque their fingers to register a higher peak load number on the screen. This is hazardous cheating: it wedges joints and recruits shoulder/lat leverage at the expense of asymmetric pulley sheath strain and collateral ligament torque.
+  - **Train for Efficacy, Not Peak Numbers:** On hangboards or portable edges, position digits perpendicular to the edge to minimize twisting. Rather than optimizing for maximum vanity load, prioritize clean sagittal mechanics, training efficacy, and long-term joint health.
 
 ---
 
@@ -44,16 +44,16 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 * **Practical Training Protocol for Long-Fingered Climbers:**
   - **Slower Connective Tissue Periodization:** While muscles adapt in 4–6 weeks, avascular pulley fibrocartilage requires **12 to 24 months** of progressive collagen cross-linking. Long-fingered climbers are advised to progress hold sizes and added training loads more conservatively than shorter-fingered peers.
   - **Extended Recovery Windows:** Because longer digits sustain higher baseline torque, allowing **48 to 72 hours of connective tissue recovery** between high-intensity finger sessions is generally prudent.
-  - **Play to Biomechanical Strengths:** Long-fingered athletes naturally excel on **slopers, large pinches, open-hand volumes, and technical compression boulders** where span and friction contact area provide an insurmountable advantage. On micro-crimps, long fingers are at an extreme physical disadvantage; rather than forcing closed crimps, focus on high-step footwork, drop-knees, and open-hand dragging.
+  - **Play to Biomechanical Strengths:** Long-fingered athletes naturally excel on **slopers, large pinches, open-hand volumes, and technical compression boulders** where span and friction contact area provide a pronounced mechanical advantage. On micro-crimps, long fingers face a notable mechanical disadvantage; rather than forcing closed crimps, focus on high-step footwork, drop-knees, and open-hand dragging.
 
 ---
 
 ### Recommendation 4: Footwork as "Pulley Armor" — Mitigating Dynamic Shock Blowouts
-* **The Physics:** In static equilibrium, healthy standard digits sustain $314\text{–}384\text{ N}$ of A2 force (safely hovering near the $300\text{ N}$ yield threshold). However, when a foot unexpectedly slips or blows off a foothold, the external load instantaneously spikes to 25–40% body weight per digit ($171.7\text{ N}$). At this load, A2 pulley normal force spikes to **$536.8\text{ N}$ (standard)** and **$621.0\text{ N}$ (long)**, vastly exceeding the $400\text{ N}$ ultimate tensile strength.
+* **The Physics:** In static equilibrium, healthy standard digits sustain $314\text{–}384\text{ N}$ of A2 force (safely hovering near the $300\text{ N}$ yield threshold). However, when a foot unexpectedly slips or blows off a foothold, the external load instantaneously spikes to 25–40% body weight per digit ($171.7\text{ N}$). At this load, A2 pulley normal force spikes to **$536.8\text{ N}$ (standard)** and **$621.0\text{ N}$ (long)**, substantially exceeding the $400\text{ N}$ ultimate tensile strength.
 * **Practical Training Habit:**
-  - **The "Release on Slip" Reflex:** Condition yourself to immediately relax hand tension and drop when feet blow, rather than desperately death-gripping the hold. The vast majority of catastrophic Grade IV pulley ruptures occur during sudden eccentric shock loads following a foot pop.
-  - **Precision Foot Drills:** High-level footwork and core tension are literally physical armor for your pulleys. Practice silent-foot placements on greasy holds to eliminate foot slips under maximum hand loads.
-  - **Shoe Rubber Maintenance & Cleanliness:** Keep climbing shoe rubber spotless. Dust, chalk residue, and grit dramatically reduce friction ($\mu$), especially on polished limestone rock or slick no-tex / dual-tex gym footholds. Frequently wipe shoe soles clean before critical boulder attempts to prevent abrupt, catastrophic foot slips that violently shock-load the flexor pulleys.
+  - **The "Release on Slip" Reflex:** Condition yourself to immediately relax hand tension and drop when feet blow, rather than desperately death-gripping the hold. Acute Grade IV pulley ruptures frequently occur during sudden eccentric shock loads following a foot pop.
+  - **Precision Foot Drills:** High-level footwork and core tension provide functional protection for your pulleys. Practice silent-foot placements on greasy holds to eliminate foot slips under maximum hand loads.
+  - **Shoe Rubber Maintenance & Cleanliness:** Keep climbing shoe rubber clean. Dust, chalk residue, and grit reduce friction ($\mu$), especially on polished limestone rock or slick no-tex / dual-tex gym footholds. Frequently wipe shoe soles clean before critical boulder attempts to prevent abrupt foot slips that shock-load the flexor pulleys.
 
 ---
 
@@ -102,7 +102,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ### Recommendation 8: Skin Tribology, Temperature & Friction Management
 * **The Physics:** Skin-rock friction is non-linear and decays under heavy load ($\mu \propto F_N^{n-1}$). Epidermal skin is a viscoelastic composite; friction follows an inverted U-curve relative to temperature and stratum corneum hydration:
-  - **The Sweaty/Warm Regime ("Greasing Out"):** When ambient temperature rises ($>20^\circ\text{C}$) or hands sweat, a liquid lubricating film forms, plummeting $\mu$ from $\approx 0.65$ to below $0.35$. To compensate, the climber must squeeze with drastically higher normal clamping force, which cascades directly into multiplied tendon tension.
+  - **The Sweaty/Warm Regime ("Greasing Out"):** When ambient temperature rises ($>20^\circ\text{C}$) or hands sweat, a liquid lubricating film forms, plummeting $\mu$ from $\approx 0.65$ to below $0.35$. To compensate, the climber naturally squeezes with higher normal clamping force, which cascades into elevated tendon tension.
   - **The Hyper-Cold & Desiccated Regime ("Dry-Firing"):** Conversely, extreme cold ($<5^\circ\text{C}$), very low ambient humidity (<30% RH), or chalk-overdosed skin create the opposite, equally hazardous phenomenon known in climbing jargon as **"dry-firing"**. In freezing, arid air, the stratum corneum loses its viscoelastic compliance and turns into a hard, glassy surface. Without baseline interstitial moisture, skin cannot microscopically deform into rock asperities. The fingertips skate off holds instantaneously with zero tactile warning, sending un-damped dynamic shock waves straight into the annular pulleys and joint capsules.
 * **Practical Skin Care Protocol:**
   - **The Friction Sweet Spot:** Optimal friction occurs in cool, crisp conditions ($\approx 8\text{–}15^\circ\text{C}$ with moderate $40\text{–}60\%$ relative humidity), where skin is stiff enough to resist shearing but compliant enough to interlock with grain texture.
@@ -113,7 +113,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ## 2. Diagnostic Self-Assessment: Are You Over-Straining Your Pulleys & Joint Capsules?
 
-Use this evidence-based clinical checklist to identify micro-strain before catastrophic failure occurs:
+Use this evidence-based clinical checklist to identify micro-strain before acute structural failure occurs:
 
 | Diagnostic Sign | Anatomical Structure | Biomechanical Cause | Recommended Action |
 | :--- | :--- | :--- | :--- |
