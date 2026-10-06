@@ -13,11 +13,11 @@
 
 For decades, finger training in sport climbing has relied on empirical trial-and-error, often punctuated by acute pulley blowouts (audible "pops") and chronic tenosynovitis. While hangboard benchmarks (such as the standard 20 mm edge) and high-load maximum hangs have become ubiquitous, they frequently ignore the underlying laws of three-dimensional musculoskeletal mechanics.
 
-Our 3D spatial model reveals that finger flexor loading is fundamentally governed by **contact pressure distribution**, **external moment arm lever scaling**, and **multi-planar vector mechanics**. This manual translates complex spatial equations into seven concrete, practical training rules designed to maximize athletic performance while ensuring long-term connective tissue longevity.
+Our 3D spatial model reveals that finger flexor loading is fundamentally governed by **contact pressure distribution**, **external moment arm lever scaling**, and **multi-planar vector mechanics**. This manual translates complex spatial equations into eight concrete, practical training rules designed to maximize athletic performance while ensuring long-term connective tissue longevity.
 
 ---
 
-## 1. The 7 Golden Biomechanical Rules of Finger Training
+## 1. The 8 Golden Biomechanical Rules of Finger Training
 
 ### Rule 1: Grip Load Budgeting — The "Pulley-Protective" Open Hand
 * **The Physics:** In a Full Crimp, DIP hyperextension forces the FDP tendon to take up to 65% of the total finger load, while the extreme PIP flexion angle ($105^\circ$) drives the tendon deflection vector directly against the A2 pulley, elevating normal force to **$314\text{–}384\text{ N}$** under standard ledge hangs. In contrast, transitioning to an **Open Hand** drops A2 normal force to **below $100\text{ N}$**—an over **70% reduction in sheath stress**.
@@ -65,7 +65,29 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Rule 6: Edge Normalization in Athletic Assessment
+### Rule 6: Joint Capsule & Collateral Ligament Protection — The "Escaping Middle-Finger" Hand-Slip Hazard
+* **The Physics of Sequential Finger Peel-Off:**
+  - **Inter-Digit Length Disparity:** In human hand anatomy, the middle finger (Digit III) protrudes 8 to 15 mm beyond the adjacent index (II) and ring (IV) fingers.
+  - **The Sequential Slip Cascade:** When a hand unexpectedly begins to slide backward or blow off a hold (due to sweat, polished stone, greasy dual-tex holds, or sudden dynamic movement), the fingers do *not* detach synchronously. Because Digits II and IV are shorter, they slip off the edge first.
+  - **Single-Digit Impulse Concentration:** For a critical 20–60 millisecond interval during the slip, **100% of the falling body momentum and escaping grip impulse is violently transferred onto the single protruding middle finger**.
+  - **Forced Dynamic Eccentric Extension & Torsion:** As the middle finger is dragged over the sharp lip of the hold under full bodyweight load, it undergoes violent, high-velocity eccentric extension. Furthermore, because hold surfaces and climbing vectors are rarely purely orthogonal, the escaping digit experiences an intense **torsional twisting moment** ($M = r \times F_{slip}$).
+  - **Lever Arm Multiplication in Long Digits:** Long-fingered climbers possess substantially longer middle and distal phalanx lever arms ($L_{MP} + L_{DP}$). This directly multiplies the external twisting moment acting on the PIP joint, subjecting capsular tissues to severe torsional peak torques.
+* **Capsular & Volar Plate Pathomechanics:**
+  - While annular pulleys primarily fail under palmar-directed hoop tension (bowstringing), the **PIP joint fibrous capsule, collateral ligaments, and fibrocartilaginous palmar (volar) plate** bear the brunt of dynamic hyperextension and lateral-rotational shear.
+  - This traumatic traction causes micro-tears in the collateral ligament attachments and strains the volar plate insertion, triggering acute or chronic **PIP joint capsulitis / synovitis**.
+  - **Clinical Presentation:** Unlike an acute pulley pop, capsule trauma presents as deep, circumferential aching around the PIP joint ("thick / swollen knuckle"), tenderness when pinching the joint sides, stiffness upon waking, and sharp pain when the finger is bumped or twisted laterally.
+* **Practical Prevention & Clinical Management:**
+  - **Extinguish the "Last-Ditch Claw" Reflex:** Train yourself never to attempt a desperate, single-finger clawing save with the middle finger when a hand slips. When the hand begins to slide, deliberately yield and let go cleanly rather than allowing the middle finger to drag under full load.
+  - **Functional PIP Cross-Taping / X-Taping:** Athletes with a prominent middle-finger length disparity or recurrent capsule irritation should apply supportive **X-taping** across the palmar aspect of the PIP joint. The crossed tape straps mechanically resist forced hyperextension and lateral deviation without restricting normal grip flexion.
+  - **Buddy-Taping for High-Intensity Sessions:** For bouldering sessions with greasy or dynamic slopers, loosely buddy-taping the middle finger to the ring finger (Digit III to Digit IV with a flexible strap between MCP and PIP) provides crucial lateral reinforcement and distributes slip forces across both digits.
+  - **Post-Strain Management & Synovitis Rehab:**
+    * *Avoid Aggressive Passive Stretching:* Forcing a swollen, capsular-inflamed joint into passive extension exacerbates synovial irritation.
+    * *Active Mid-Range Isometrics:* Perform gentle, submaximal isometrics in half-crimp or open-hand positions at 45°–60° flexion to promote synovial fluid circulation and collagen remodeling.
+    * *Contrast Hydrotherapy:* Warm-to-cool water immersion reduces persistent post-training joint effusion and accelerates metabolic clearance in avascular capsular tissue.
+
+---
+
+### Rule 7: Edge Normalization in Athletic Assessment
 * **The Fallacy of the Universal 20 mm Edge:** Standard testing protocols evaluate all athletes on an arbitrary 20 mm edge. Biomechanically:
   - For a short-fingered climber ($L_{DP} = 18.7\text{ mm}$), 20 mm is a **deep hold** ($d/L_{DP} = 1.07$). The middle phalanx engages, transferring load to the A3 pulley and reducing FDP demand.
   - For a long-fingered climber ($L_{DP} = 25.3\text{ mm}$), 20 mm is a **shallow edge** ($d/L_{DP} = 0.79$), isolating all load onto the terminal phalanx and spiking flexor demand.
@@ -76,7 +98,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Rule 7: Skin Tribology, Temperature & Friction Management
+### Rule 8: Skin Tribology, Temperature & Friction Management
 * **The Physics:** Skin-rock friction is non-linear and decays under heavy load ($\mu \propto F_N^{n-1}$). When holds become warm, greasy, or polished, the friction coefficient drops from $\approx 0.65$ to below $0.35$. To prevent slipping, the climber must squeeze with drastically higher normal clamping force, which cascades directly into multiplied tendon tension.
 * **Practical Skin Care Protocol:**
   - **Brushing & Chalk Hygiene:** Regular brushing removes polished grease layers and restores micro-texture. Liquid chalk base layers combined with pure magnesium carbonate maintain skin dryness.
@@ -84,7 +106,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-## 2. Diagnostic Self-Assessment: Are You Over-Straining Your Pulleys?
+## 2. Diagnostic Self-Assessment: Are You Over-Straining Your Pulleys & Joint Capsules?
 
 Use this evidence-based clinical checklist to identify micro-strain before catastrophic failure occurs:
 
@@ -94,6 +116,7 @@ Use this evidence-based clinical checklist to identify micro-strain before catas
 | **Sharp pain when pressing palmar PIP base** | Distal A2 / Proximal A3 | Peel stress from Full Crimp DIP hyperextension | Immediate cessation of full crimping; H-taping or thermoplastic ring support. |
 | **Pain when pulling on side-pulls/gastons** | Lateral Pulley Margins / Collateral Ligaments | Excessive MCP radial abduction shear ($F_{lat} > 60\text{ N}$) | Check forearm alignment; avoid twisting hand on holds. |
 | **Pain between ring and middle fingers** | Lumbrical Muscle Shear | Quadriga effect from deep pocket loading with dropped fingers | Cease 2-finger pockets; train four-finger open hand only. |
+| **Deep circumferential PIP ache; lateral joint tenderness after hand slips** | PIP Joint Capsule, Volar Plate & Collateral Ligaments | Sequential finger peel-off during dynamic hand slips; long middle finger absorbs 100% of falling momentum under violent eccentric extension and torsional shear. | Cease desperate clawing when slipping; apply PIP X-taping or buddy-taping (Digits III+IV); active mid-range isometrics; avoid passive joint hyperextension until synovitis subsides. |
 
 ---
 
