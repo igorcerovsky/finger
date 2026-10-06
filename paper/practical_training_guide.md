@@ -53,6 +53,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 * **Practical Training Habit:**
   - **The "Release on Slip" Reflex:** Condition yourself to immediately relax hand tension and drop when feet blow, rather than desperately death-gripping the hold. The vast majority of catastrophic Grade IV pulley ruptures occur during sudden eccentric shock loads following a foot pop.
   - **Precision Foot Drills:** High-level footwork and core tension are literally physical armor for your pulleys. Practice silent-foot placements on greasy holds to eliminate foot slips under maximum hand loads.
+  - **Shoe Rubber Maintenance & Cleanliness:** Keep climbing shoe rubber spotless. Dust, chalk residue, and grit dramatically reduce friction ($\mu$), especially on polished limestone rock or slick no-tex / dual-tex gym footholds. Frequently wipe shoe soles clean before critical boulder attempts to prevent abrupt, catastrophic foot slips that violently shock-load the flexor pulleys.
 
 ---
 
