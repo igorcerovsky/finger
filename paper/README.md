@@ -54,7 +54,7 @@ paper/
      - *Recommendation 7:* Edge normalization in athletic assessment ($d_{test} = 0.8 \times L_{DP}$).
      - *Recommendation 8:* Skin tribology, temperature & friction management.
   2. **Diagnostic Self-Assessment Table:** Clinical warning signs and actions for A2 morning stiffness, palmar PIP tenderness, collateral/capsular synovitis, and lumbrical shear.
-  3. **Age-Specific Biomechanical Guidelines:** Distinct musculoskeletal directives for Kids (<12–13 yrs, epiphyseal growth plate protection), Juniors (13–18 yrs, PHV and supervised bodyweight hangboarding), Adults (18–45 yrs, progressive overload & 8 recommendations), and Masters (45+ yrs, controlled isometrics, warm-up length, and joint preservation).
+  3. **Age-Specific Biomechanical Guidelines:** Connects phalanx lever scaling ($M_{ext} = r_{ext} \times F_{ext}$) and hold depth ratio ($d / L_{DP}$) across the lifespan: Kids (<12–13 yrs, growth plate shear & $d > L_{DP}$ inversion), Juniors (13–18 yrs, PHV lever-arm explosion & 12–24mo remodeling lag), Adults (18–45 yrs, +37.5% long-digit phenotypic penalty), and Masters (45+ yrs, cumulative lifetime contact stress & PIP osteoarthritis).
   4. **Phenotypic Micro-Cycle Template:** Side-by-side comparison of weekly training periodization for short (<85 mm) vs. long (>105 mm) finger phenotypes.
 
 ---
