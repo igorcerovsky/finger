@@ -125,7 +125,40 @@ Use this evidence-based clinical checklist to identify micro-strain before catas
 
 ---
 
-## 3. Long-Finger vs. Short-Finger Micro-Cycle Comparison
+## 3. Age-Specific Biomechanical Guidelines: From Pediatric Growth Plates to Masters Collagen
+
+Connective tissue biology and musculoskeletal risk profiles undergo profound transformations across an athlete's lifespan. Sports medicine literature (UIAA Medical Commission, Schöffl et al.) classifies climbing athletes into four distinct developmental cohorts, each demanding tailored finger loading protocols:
+
+### 3.1 Kids & Children (Pediatric: <12–13 Years / Pre-Pubertal)
+* **Anatomical Vulnerability — Epiphyseal Growth Plates:** In skeletally immature children, the weakest structural link is **not** the annular pulley or flexor tendon, but the open cartilaginous growth plate (physis) at the base of the middle phalanx. Extreme crimping generates high dorsal shear across the PIP joint, triggering Salter-Harris type II or III epiphyseal stress fractures (*epiphysiolysis*). If ignored, physeal injuries cause permanent finger deformities, premature plate closure, and lifelong joint dysfunction.
+* **Training Mandates:**
+  - **Absolute Ban on Systematic Hangboarding & Campus Boards:** Under no circumstances should pre-pubertal children perform isolated hangboard protocols, campus board power ladders, or weighted finger hangs.
+  - **Avoid Repetitive Micro-Crimp Boulders:** Restrict repetitive climbing on small, sharp edges.
+  - **Movement Literacy & Grip Variety:** Prioritize diverse climbing movement, agility, balance, and playful coordination. Route setters and coaches should favor large ergonomic jugs, slopers, volumes, compression features, and open-hand grips that distribute loads across the entire upper body kinetic chain.
+
+### 3.2 Juniors & Adolescents (Pubertal: ~13–18 Years / Growth Spurt)
+* **Anatomical Vulnerability — Peak Height Velocity (PHV):** During pubertal growth spurts, rapid longitudinal bone growth outpaces muscle-tendon lengthening, causing transient tendon tightness and elevated joint stiffness. While growth plates are in the final stages of fusion, they remain susceptible to avulsion fractures and overuse tenosynovitis under high-load closed crimps.
+* **Training Mandates:**
+  - **Conservative, Supervised Finger Training:** Isolated finger training should only be introduced in late adolescence (>15–16 years) once biological maturity is established.
+  - **Bodyweight-Only & Large Edges:** Restrict hangboard work strictly to bodyweight hangs on large edges ($\ge 20\text{–}25\text{ mm}$) using Open Hand and relaxed Half-Crimp grips. No added external loads.
+  - **Volume Strictness on Dynamic Power:** Severely cap high-intensity campus board volume. Emphasize full-body core tension, precise footwork, and kinetic chain efficiency over brute finger strength.
+
+### 3.3 Adults & Open Category (Prime: ~18–45 Years / Skeletal Maturity)
+* **Anatomical Vulnerability — Acute Pulley Ruptures & Overuse Sheath Stress:** With fully fused growth plates and peak muscular hypertrophy, adults can generate forces that exceed the tensile failure limits of their annular pulleys ($>400\text{ N}$). The primary clinical risks are acute A2/A4 ruptures from dynamic foot pops or sudden dry-fires, and chronic capsulitis from accumulated micro-strain.
+* **Training Mandates:**
+  - **Systematic High-Load Capacity:** Adult athletes can safely tolerate progressive high-intensity protocols (max hangs, density hangs, minimum-edge hangs), provided they adhere to connective tissue periodization (12–24 months macrocycles).
+  - **Enforce Core Recommendations:** Strict adherence to the 80/20 Open Hand ratio, forearm-hold co-linearity, center-of-gravity pull vector alignment, and individual edge normalization ($0.8 \times L_{DP}$).
+
+### 3.4 Masters & Veterans (Older Adults: 45–60+ Years / Slower Turnover)
+* **Anatomical Vulnerability — Age-Related Collagen Stiffening & Cartilage Thinning:** Aging connective tissue experiences decreased tenocyte cellularity, reduced vascular perfusion, lower elastin-to-collagen ratios (increased tissue brittleness), and thinned articular cartilage. Tendons and pulleys lose viscoelastic compliance, and metabolic repair cycles require 2 to 3 times longer. Degenerative joint changes (PIP osteoarthritis, Heberden/Bouchard nodes) can be exacerbated by aggressive crimp torques.
+* **Training Mandates:**
+  - **Extended, Progressive Warm-Ups:** Spend a minimum of 20 to 30 minutes on progressive general and finger-specific warm-ups. Elevating synovial fluid temperature drastically lowers intra-articular viscosity and prepares stiff collagen for loading.
+  - **Controlled Isometrics over High-Impact Bouldering:** Controlled, submaximal hangboard isometrics (e.g., long-duration density hangs at 60–70% MVC on comfortable ergonomic edges) are highly therapeutic for masters climbers. Static hangs stimulate collagen synthesis and bone mineral density without the unpredictable, ballistic shock loading of dynamic boulder dynos.
+  - **Grip Modification & Extended Recovery:** Minimize closed crimp positions; emphasize open-hand, three-finger drag, and ergonomic sloper/pinch grips to preserve articular cartilage. Enforce mandatory **72+ hours of recovery** between high-intensity finger sessions.
+
+---
+
+## 4. Long-Finger vs. Short-Finger Micro-Cycle Comparison
 
 To illustrate how periodization should diverge based on hand morphology, consider the following weekly training templates:
 
@@ -144,7 +177,7 @@ Connective Tissue Macro    6–8 week overload blocks           12–16 week pro
 
 ---
 
-## 4. Brief Physics Primer: The Science Behind the Recommendations
+## 5. Brief Physics Primer: The Science Behind the Recommendations
 
 For coaches and athletes interested in the underlying mathematical formulations, our 3D model integrates four core mechanical pillars:
 
@@ -157,6 +190,6 @@ For coaches and athletes interested in the underlying mathematical formulations,
 
 ---
 
-## Conclusion: Longevity Precedes Performance
+## 6. Conclusion: Longevity Precedes Performance
 
 In sport climbing, the strongest climber is the one who trains consistently without prolonged injury breaks. Tendons and pulleys cannot be rushed; their metabolic turnover is an order of magnitude slower than muscle tissue. By understanding the three-dimensional physics of the finger, climbing athletes can train with scientific intention, protect their anatomical structures, and climb harder for longer.

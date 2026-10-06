@@ -54,7 +54,8 @@ paper/
      - *Recommendation 7:* Edge normalization in athletic assessment ($d_{test} = 0.8 \times L_{DP}$).
      - *Recommendation 8:* Skin tribology, temperature & friction management.
   2. **Diagnostic Self-Assessment Table:** Clinical warning signs and actions for A2 morning stiffness, palmar PIP tenderness, collateral/capsular synovitis, and lumbrical shear.
-  3. **Phenotypic Micro-Cycle Template:** Side-by-side comparison of weekly training periodization for short (<85 mm) vs. long (>105 mm) finger phenotypes.
+  3. **Age-Specific Biomechanical Guidelines:** Distinct musculoskeletal directives for Kids (<12–13 yrs, epiphyseal growth plate protection), Juniors (13–18 yrs, PHV and supervised bodyweight hangboarding), Adults (18–45 yrs, progressive overload & 8 recommendations), and Masters (45+ yrs, controlled isometrics, warm-up length, and joint preservation).
+  4. **Phenotypic Micro-Cycle Template:** Side-by-side comparison of weekly training periodization for short (<85 mm) vs. long (>105 mm) finger phenotypes.
 
 ---
 
