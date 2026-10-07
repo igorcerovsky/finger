@@ -20,7 +20,13 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ## 1. Core Biomechanical Recommendations for Finger Training
 
-### Recommendation 1: Grip Load Budgeting — The "Pulley-Protective" Open Hand
+> [!NOTE]
+> **Evidence-Tier Classification:** To maintain scientific transparency (Review §10.B, Rec B7), each recommendation is classified by its primary evidence basis:
+> - **[Model-Derived]:** Quantitative results generated directly by our 3D musculoskeletal and contact mechanics simulation engine.
+> - **[Literature-Derived]:** Established empirical findings from clinical sports medicine, cadaveric testing, or tribological literature.
+> - **[Mechanistic Hypothesis]:** Logical deductions or coaching heuristics based on mechanical principles that warrant future direct empirical validation.
+
+### Recommendation 1: Grip Load Budgeting — The "Pulley-Protective" Open Hand [Model-Derived & Literature-Supported]
 * **The Physics:** In a Full Crimp, DIP hyperextension forces the FDP tendon to take up to 65% of the total finger load, while the extreme PIP flexion angle ($105^\circ$) drives the tendon deflection vector directly against the A2 pulley, elevating normal force to **$282\text{ N}$** under standard 100 N ledge hangs (and **$484\text{ N}$** under dynamic catch loads). In contrast, transitioning to an **Open Hand** drops A2 normal force to **$33\text{ N}$** under 100 N hangs (and **$57\text{ N}$** under dynamic loads)—an over **85% reduction in sheath stress** (consistently remaining well below 100 N across training loads).
 * **Practical Training Protocol:**
   - **80/20 Grip Ratio:** Allocate 80% of total training volume (mileage, endurance intervals, foundational hangboard blocks) to Open Hand and relaxed Half-Crimp grips.
@@ -28,7 +34,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Recommendation 2: Forearm-Hold Co-Linearity & Center-of-Gravity Optimization — Eliminating Transverse Lateral Shear
+### Recommendation 2: Forearm-Hold Co-Linearity & Pull-Vector Optimization — Eliminating Transverse Lateral Shear [Model-Derived & Technical Heuristic]
 * **The Physics:** Annular pulleys (A2, A4) are anisotropic fibrocartilaginous arches engineered for circumferential hoop stress (holding tendons close to the bone). They possess minimal transverse shear resistance. Our 3D model shows that just **$15^\circ$ of MCP radial abduction** produces **$61.0\text{ N}$** of lateral shear on A2, **$46.4\text{ N}$** on A4, and **$44.4\text{ N}$** of mediolateral shear on the PIP collateral ligaments.
 * **Climbing Technique — Center of Gravity (CoG) & The Optimal "Pull Vector":**
   - **CoG Dictates Finger Demands:** Elite climbing technique is fundamentally the art of body positioning. By actively steering your center of gravity (hips, torso, and dynamic foot placements), you can align the resultant pulling vector closely perpendicular to the hold's usable surface.
@@ -40,7 +46,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Recommendation 3: The Long-Finger Periodization Protocol
+### Recommendation 3: The Long-Finger Periodization Protocol [Model-Derived & Periodization Hypothesis]
 * **The Physics:** Longer phalanges act as longer mechanical levers ($M = r \times F$). When internal tendon moment arms do not scale with segment length (unscaled lever arm case), an athlete with +15% finger length experiences a **$+15.6\%$ force penalty** relative to standard digits (and a **$+37.5\%$ penalty** relative to short digits) on identical hold depths. Under standard $100\text{ N}$ ledge hangs, unscaled half-crimp A2 load reaches **$346.6\text{ N}$** in long digits (compared to $252.7\text{ N}$ for short digits).
 * **Practical Training Protocol for Long-Fingered Climbers:**
   - **Slower Connective Tissue Periodization:** While muscles adapt in 4–6 weeks, avascular pulley fibrocartilage requires **12 to 24 months** of progressive collagen cross-linking. Long-fingered climbers are advised to progress hold sizes and added training loads more conservatively than shorter-fingered peers.
@@ -49,7 +55,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Recommendation 4: Footwork as "Pulley Armor" — Mitigating Dynamic Shock Blowouts
+### Recommendation 4: Footwork as "Pulley Armor" — Mitigating Dynamic Shock Blowouts [Literature-Supported & Biomechanical Extrapolation]
 * **The Physics:** In static equilibrium on a 10 mm edge, healthy standard digits sustain $282\text{–}300\text{ N}$ of A2 force under a $100\text{ N}$ middle-finger load, operating within physiological margins. However, when a foot unexpectedly slips or blows off a foothold, the external load instantaneously spikes to 25–40% body weight per digit ($171.7\text{ N}$). At this load, A2 pulley normal force spikes to **$483.6\text{ N}$ (standard)** and **$561.0\text{ N}$ (long unscaled)**, substantially exceeding the $\sim 400\text{ N}$ cadaveric ultimate tensile strength benchmark (Lin et al. 1990; Schöffl et al. 2009).
 * **Practical Training Habit:**
   - **The "Release on Slip" Reflex:** Condition yourself to immediately relax hand tension and drop when feet blow, rather than desperately death-gripping the hold. Acute Grade IV pulley ruptures frequently occur during sudden eccentric shock loads following a foot pop.
@@ -58,7 +64,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Recommendation 5: Inter-Digit Asymmetry & Ergonomic Rung Selection
+### Recommendation 5: Inter-Digit Asymmetry & Ergonomic Rung Selection [Literature-Supported Clinical Heuristic]
 * **The Physics:** On a flat edge, the middle finger (Digit III) is significantly longer than the index (II) and ring (IV) fingers. To sit flush on a flat rung, Digit III is forced into extreme PIP hyper-flexion ($>105^\circ$), concentrating disproportionate normal forces and twisting torques onto its A2 pulley. Furthermore, because digits III, IV, and V share a common deep flexor muscle belly (**Quadriga effect**), uneven finger extension produces high inter-tendinous shear across the lumbrical muscles.
 * **Practical Gear & Training Guidance:**
   - **Anatomically Curved Rungs:** Choose hangboards featuring subtle arc-shaped, stepped, or angled rungs that match natural finger length gradients. This distributes load evenly across all four fingers without forcing the middle finger into dangerous hyper-flexion.
@@ -66,7 +72,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Recommendation 6: Joint Capsule & Collateral Ligament Protection — The "Escaping Middle-Finger" Hand-Slip Hazard
+### Recommendation 6: Joint Capsule & Collateral Ligament Protection — The "Escaping Middle-Finger" Hand-Slip Hazard [Clinical Observation & Mechanistic Hypothesis]
 * **The Physics of Sequential Finger Peel-Off:**
   - **Inter-Digit Length Disparity:** In human hand anatomy, the middle finger (Digit III) protrudes 8 to 15 mm beyond the adjacent index (II) and ring (IV) fingers.
   - **The Sequential Slip Cascade:** When a hand unexpectedly begins to slide backward or blow off a hold (due to sweat, polished stone, greasy dual-tex holds, or sudden dynamic movement), the fingers do *not* detach synchronously. Because Digits II and IV are shorter, they slip off the edge first.
@@ -88,7 +94,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Recommendation 7: Edge Normalization in Athletic Assessment
+### Recommendation 7: Edge Normalization in Athletic Assessment [Model-Derived Hypothesis]
 * **The Fallacy of the Universal 20 mm Edge:** Standard testing protocols evaluate all athletes on an arbitrary 20 mm edge. Biomechanically, edge depth scales relative to distal phalanx length ($d / L_{DP}$):
   - For an **extreme short-fingered phenotype** (e.g., bottom percentiles, $L_{DP} = 18.7\text{ mm}$), 20 mm acts as a **deep hold** ($d/L_{DP} = 1.07$). The middle phalanx engages, transferring load to the A3 pulley and drastically reducing FDP demand.
   - For an **extreme long-fingered phenotype** (e.g., top percentiles, $L_{DP} = 25.3\text{ mm}$), 20 mm acts as a **shallow micro-edge** ($d/L_{DP} = 0.79$), isolating all load onto the terminal phalanx and spiking flexor demand.
@@ -101,7 +107,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 
 ---
 
-### Recommendation 8: Skin Tribology, Temperature & Friction Management
+### Recommendation 8: Skin Tribology, Temperature & Friction Management [Literature-Derived & Tribological Heuristic]
 * **The Physics:** Skin-rock friction is non-linear and decays under heavy load ($\mu \propto F_N^{n-1}$). Epidermal skin is a viscoelastic composite; friction follows an inverted U-curve relative to temperature and stratum corneum hydration:
   - **The Sweaty/Warm Regime ("Greasing Out"):** When ambient temperature rises ($>20^\circ\text{C}$) or hands sweat, a liquid lubricating film forms, plummeting $\mu$ from $\approx 0.65$ to below $0.35$. To compensate, the climber naturally squeezes with higher normal clamping force, which cascades into elevated tendon tension.
   - **The Hyper-Cold & Desiccated Regime ("Dry-Firing"):** Conversely, extreme cold ($<5^\circ\text{C}$), very low ambient humidity (<30% RH), or chalk-overdosed skin create the opposite, equally hazardous phenomenon known in climbing jargon as **"dry-firing"**. In freezing, arid air, the stratum corneum loses its viscoelastic compliance and turns into a hard, glassy surface. Without baseline interstitial moisture, skin cannot microscopically deform into rock asperities. The fingertips skate off holds instantaneously with zero tactile warning, sending un-damped dynamic shock waves straight into the annular pulleys and joint capsules.

@@ -1,5 +1,5 @@
 # Biomechanical Model & Manuscript Fix Plan
-## Systematic Remediation Based on Literature Review (`finger_project_review.md`)
+## Systematic Remediation Based on Literature Review (`review_1.md`)
 
 This plan coordinates the methodological, computational, and editorial corrections required to align the *finger* project with state-of-the-art finger biomechanics, climbing sports medicine, and robotics literature.
 
@@ -25,14 +25,20 @@ This plan coordinates the methodological, computational, and editorial correctio
   - *Completed:* Removed speculative 300 N yield threshold from manuscript, guide, and figures. Framed 400 N cautiously as an elderly cadaveric benchmark (Lin et al. 1990; Schöffl et al. 2009) and contextualized with in vivo remodeling capacity and dynamic slip loading.
 
 #### Phase 3: Scientific Phrasing, Consistency & Guide Revision (Review §10.B)
-- [x] **Task 3.1: Code ↔ Manuscript Parameter Harmonization (Issue 7 / Rec B9)**
+- [x] **Task 3.1: Global Sensitivity Analysis (Issue 8 / Rec B6)**
+  - *Completed:* Created `benchmarks/global_sensitivity_analysis.py` covering all 7 parameters ($c_{max,PIP}$, $\delta_{max}$, $a2_{share}$, $\mu_t$, $\phi_{deg}$, $r_{base}$, $r_{edge}$) to quantify model sensitivity and robustness.
+- [x] **Task 3.2: Evidence-Tier Labeling & Guidance Architecture (Issue 9 / Rec B7)**
+  - *Completed:* Added an explicit evidence-classification callout box and tagged Recommendations 1–8 in `practical_training_guide.md` with explicit badges (`[Model-Derived]`, `[Literature-Derived]`, `[Mechanistic Hypothesis]`, etc.).
+- [x] **Task 3.3: Code ↔ Manuscript Parameter Harmonization (Issue 7 / Rec B9)**
   - *Completed:* Harmonized parameters across `climbing_finger_3d.py`, `paper_draft.md`, and `practical_training_guide.md`: $\mu_t = 0.08$, $c_{max,PIP} = 2.0$ mm, $c_{max,DIP} = 1.5$ mm, $\delta_{max} = 2.5$ mm.
-- [x] **Task 3.2: Scientific Phrasing & Terminology Updates (Issue 7 & Rule Guidelines)**
+- [x] **Task 3.4: Scientific Phrasing & Terminology Updates (Issue 7 & Rule Guidelines)**
   - *Completed:* Replaced "Hertzian triangular" with "linear triangular pressure formulation". Replaced "lateral shear" with "transverse (mediolateral) pulley load component". Strictly enforced non-dogmatic, scientific phrasing.
-- [x] **Task 3.3: Overhaul Age-Specific Biomechanics in Paper & Training Guide (Issue 6 / Rec B8)**
+- [x] **Task 3.5: Overhaul Age-Specific Biomechanics in Paper & Training Guide (Issue 6 / Rec B8)**
   - *Completed:* Overhauled §6.9 of `paper_draft.md` and Section 3 of `practical_training_guide.md` to center on Primary Periphyseal Stress Injuries (PPSI Stages I–IV) of the middle phalanx base (Schöffl's classification). Clarified that acute pulley ruptures are rare in youth due to the cartilaginous physis being the mechanical weak link.
-- [x] **Task 3.4: Reference Integrity & Bibliographic Fixes (Review §9)**
+- [x] **Task 3.6: Reference Integrity & Bibliographic Fixes (Review §9)**
   - *Completed:* Added Lin et al. (1990), Marco et al. (1998), Moor et al. (2009), Roloff et al. (2006), Schöffl et al. (2009, 2023), Synek et al. (2019) to References; removed fictitious Vigouroux (2019) citation.
+- [x] **Task 3.7: Cross-Model Benchmarking with MyoSuite/MyoHand (Rec C13)**
+  - *Completed:* Built and validated `benchmarks/benchmark_myosuite.py` using `myosuite` (v2.11.6) and `mujoco` (v3.3.0). Validated moment arms and muscle forces under 100 N tip loads, identifying key architectural agreements and pulley modeling boundaries.
 
 #### Phase 4: Regenerate Figures, Re-run Tests & Export
 - [x] **Task 4.1: Update Figure Generation Scripts**

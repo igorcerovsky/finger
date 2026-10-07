@@ -1,4 +1,4 @@
-# A Three-Dimensional Biomechanical Model of the Human Finger in Rock Climbing: Dual-Phalanx Contact Mechanics, Out-of-Plane Pulley Shear, and Phenotypic Constraints Across Hold Depths
+# A Biomechanical Model of the Human Finger in Rock Climbing: Quantifying the Short vs. Long Finger Advantage
 
 **Author:** Igor Cerovsky  
 *Independent Climbing Physics Enthusiast*  

@@ -2,7 +2,7 @@
 ## A 3D Musculoskeletal Model of the Climbing Finger, Its Manuscript, and Its Practical Training Guide, Evaluated Against Current Literature
 
 **Reviewed artefacts**
-- Manuscript: [paper_draft.md](file:///Users/igorcerovsky/Documents/finger/paper/paper_draft.md)
+- Manuscript: [short_vs_long_finger_advantage.md](file:///Users/igorcerovsky/Documents/finger/paper/short_vs_long_finger_advantage.md)
 - Field guide: [practical_training_guide.md](file:///Users/igorcerovsky/Documents/finger/paper/practical_training_guide.md)
 - Simulation engine: [climbing_finger_3d.py](file:///Users/igorcerovsky/Documents/finger/climbing_finger_3d.py)
 - Figures: [generate_publication_figures.py](file:///Users/igorcerovsky/Documents/finger/generate_publication_figures.py), `paper/figures/pub_fig1–3`

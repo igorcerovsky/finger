@@ -14,14 +14,14 @@ This directory contains the publication-ready academic manuscript, companion ath
 ```
 paper/
 ├── README.md                     # Overview and reproducibility guide (this file)
-├── paper_draft.md                # Primary academic research manuscript
-├── practical_training_guide.md   # Companion practical field guide for coaches & athletes
-├── pdf/                          # Publication-ready vector PDFs (KaTeX math + 300 DPI figures)
-│   ├── paper_draft.pdf           # 12-page academic manuscript PDF
-│   └── practical_training_guide.pdf # 11-page field guide PDF
-├── script/                       # Build and export tooling
-│   └── export_papers_to_pdf.py   # Automated PDF export script (uses .venv python)
-└── figures/                      # High-resolution (300 DPI) publication-grade figures
+├── short_vs_long_finger_advantage.md # Primary academic research manuscript
+├── practical_training_guide.md       # Companion practical field guide for coaches & athletes
+├── pdf/                              # Publication-ready vector PDFs (KaTeX math + 300 DPI figures)
+│   ├── short_vs_long_finger_advantage.pdf # 13-page academic manuscript PDF
+│   └── practical_training_guide.pdf  # 11-page field guide PDF
+├── script/                           # Build and export tooling
+│   └── export_papers_to_pdf.py       # Automated PDF export script (uses .venv python)
+└── figures/                          # High-resolution (300 DPI) publication-grade figures
     ├── pub_fig1_model_validation.png
     ├── pub_fig2_hold_depth_crossover.png
     └── pub_fig3_shear_and_scaling.png
@@ -32,9 +32,9 @@ paper/
 ## 1. Publications
 
 ### Primary Academic Manuscript
-- **Markdown Source:** [`paper_draft.md`](file:///Users/igorcerovsky/Documents/finger/paper/paper_draft.md)
-- **Publication PDF:** [`paper_draft.pdf`](file:///Users/igorcerovsky/Documents/finger/paper/pdf/paper_draft.pdf) (12 pages, vector formulas & figures)
-- **Title:** *A Three-Dimensional Musculoskeletal Model of the Climbing Finger: Dual-Phalanx Contact Mechanics, Anthropometric Phenotypic Scaling, and Out-of-Plane Annular Pulley Shearing*
+- **Markdown Source:** [`short_vs_long_finger_advantage.md`](file:///Users/igorcerovsky/Documents/finger/paper/short_vs_long_finger_advantage.md)
+- **Publication PDF:** [`short_vs_long_finger_advantage.pdf`](file:///Users/igorcerovsky/Documents/finger/paper/pdf/short_vs_long_finger_advantage.pdf) (13 pages, vector formulas & figures)
+- **Title:** *A Biomechanical Model of the Human Finger in Rock Climbing: Quantifying the Short vs. Long Finger Advantage*
 - **Target Venues:** *Journal of Biomechanics*, *Frontiers in Bioengineering and Biotechnology*, or *Sports Biomechanics*.
 - **Length:** 12 pages (standard academic formatting, ~4,800 words).
 - **Core Scientific Contributions:**

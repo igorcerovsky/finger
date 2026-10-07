@@ -3,7 +3,7 @@
 export_papers_to_pdf.py
 =======================
 Automated publication-quality PDF generator for climbing biomechanics manuscripts:
-  1. paper/paper_draft.md -> paper/pdf/paper_draft.pdf
+  1. paper/short_vs_long_finger_advantage.md -> paper/pdf/short_vs_long_finger_advantage.pdf
   2. paper/practical_training_guide.md -> paper/pdf/practical_training_guide.pdf
 
 Features:
@@ -473,9 +473,9 @@ def main():
     targets = []
     if not args.guide_only:
         targets.append({
-            "src": paper_dir / "paper_draft.md",
-            "dest": pdf_dir / "paper_draft.pdf",
-            "title": "A Three-Dimensional Biomechanical Model of the Human Finger in Rock Climbing",
+            "src": paper_dir / "short_vs_long_finger_advantage.md",
+            "dest": pdf_dir / "short_vs_long_finger_advantage.pdf",
+            "title": "A Biomechanical Model of the Human Finger in Rock Climbing: Short vs. Long Finger Advantage",
             "is_manuscript": True
         })
     if not args.paper_only:
