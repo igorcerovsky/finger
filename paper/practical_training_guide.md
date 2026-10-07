@@ -3,9 +3,10 @@
 
 **Author:** Igor Cerovsky  
 *Independent Climbing Physics Enthusiast*  
+**Date:** October 7, 2026  
 **Correspondence:** [igor.cerovsky@gmail.com](mailto:igor.cerovsky@gmail.com)  
 **Project Repository:** [https://github.com/igorcerovsky/finger](https://github.com/igorcerovsky/finger)  
-**Companion Research Paper:** *A Three-Dimensional Musculoskeletal Model of the Climbing Finger: Contact Mechanics, Phenotypic Scaling, and Pulley Shearing* (Cerovsky, 2026)
+**Companion Research Paper:** *A Three-Dimensional Musculoskeletal Model of the Climbing Finger: Contact Mechanics, Phenotypic Scaling, and Pulley Shearing* (Cerovsky, October 7, 2026)
 
 ---
 
@@ -20,7 +21,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 ## 1. Core Biomechanical Recommendations for Finger Training
 
 ### Recommendation 1: Grip Load Budgeting — The "Pulley-Protective" Open Hand
-* **The Physics:** In a Full Crimp, DIP hyperextension forces the FDP tendon to take up to 65% of the total finger load, while the extreme PIP flexion angle ($105^\circ$) drives the tendon deflection vector directly against the A2 pulley, elevating normal force to **$314\text{–}384\text{ N}$** under standard ledge hangs. In contrast, transitioning to an **Open Hand** drops A2 normal force to **below $100\text{ N}$**—an over **70% reduction in sheath stress**.
+* **The Physics:** In a Full Crimp, DIP hyperextension forces the FDP tendon to take up to 65% of the total finger load, while the extreme PIP flexion angle ($105^\circ$) drives the tendon deflection vector directly against the A2 pulley, elevating normal force to **$282\text{ N}$** under standard 100 N ledge hangs (and **$484\text{ N}$** under dynamic catch loads). In contrast, transitioning to an **Open Hand** drops A2 normal force to **$33\text{ N}$** under 100 N hangs (and **$57\text{ N}$** under dynamic loads)—an over **85% reduction in sheath stress** (consistently remaining well below 100 N across training loads).
 * **Practical Training Protocol:**
   - **80/20 Grip Ratio:** Allocate 80% of total training volume (mileage, endurance intervals, foundational hangboard blocks) to Open Hand and relaxed Half-Crimp grips.
   - **Ration the Closed Crimp:** Treat the closed/full crimp (with thumb lock) as high-octane racing fuel. Reserve it primarily for sub-8 mm project attempts where DIP flexion torque is unattainable through alternative grips. Avoid training full crimps to muscular exhaustion.
@@ -40,7 +41,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 ---
 
 ### Recommendation 3: The Long-Finger Periodization Protocol
-* **The Physics:** Longer phalanges act as longer mechanical levers ($M = r \times F$). On a 10 mm edge, an athlete with +15% finger length experiences a **$+37.5\%$ force penalty**, driving Half-Crimp A2 load to **$444.0\text{ N}$** under standard 100 N ledge hangs—crossing the cadaveric ultimate tensile strength ($400\text{ N}$) even in static equilibrium!
+* **The Physics:** Longer phalanges act as longer mechanical levers ($M = r \times F$). When internal tendon moment arms do not scale with segment length (unscaled lever arm case), an athlete with +15% finger length experiences a **$+15.6\%$ force penalty** relative to standard digits (and a **$+37.5\%$ penalty** relative to short digits) on identical hold depths. Under standard $100\text{ N}$ ledge hangs, unscaled half-crimp A2 load reaches **$346.6\text{ N}$** in long digits (compared to $252.7\text{ N}$ for short digits).
 * **Practical Training Protocol for Long-Fingered Climbers:**
   - **Slower Connective Tissue Periodization:** While muscles adapt in 4–6 weeks, avascular pulley fibrocartilage requires **12 to 24 months** of progressive collagen cross-linking. Long-fingered climbers are advised to progress hold sizes and added training loads more conservatively than shorter-fingered peers.
   - **Extended Recovery Windows:** Because longer digits sustain higher baseline torque, allowing **48 to 72 hours of connective tissue recovery** between high-intensity finger sessions is generally prudent.
@@ -49,7 +50,7 @@ Our 3D spatial model reveals that finger flexor loading is fundamentally governe
 ---
 
 ### Recommendation 4: Footwork as "Pulley Armor" — Mitigating Dynamic Shock Blowouts
-* **The Physics:** In static equilibrium, healthy standard digits sustain $314\text{–}384\text{ N}$ of A2 force (safely hovering near the $300\text{ N}$ yield threshold). However, when a foot unexpectedly slips or blows off a foothold, the external load instantaneously spikes to 25–40% body weight per digit ($171.7\text{ N}$). At this load, A2 pulley normal force spikes to **$536.8\text{ N}$ (standard)** and **$621.0\text{ N}$ (long)**, substantially exceeding the $400\text{ N}$ ultimate tensile strength.
+* **The Physics:** In static equilibrium on a 10 mm edge, healthy standard digits sustain $282\text{–}300\text{ N}$ of A2 force under a $100\text{ N}$ middle-finger load, operating within physiological margins. However, when a foot unexpectedly slips or blows off a foothold, the external load instantaneously spikes to 25–40% body weight per digit ($171.7\text{ N}$). At this load, A2 pulley normal force spikes to **$483.6\text{ N}$ (standard)** and **$561.0\text{ N}$ (long unscaled)**, substantially exceeding the $\sim 400\text{ N}$ cadaveric ultimate tensile strength benchmark (Lin et al. 1990; Schöffl et al. 2009).
 * **Practical Training Habit:**
   - **The "Release on Slip" Reflex:** Condition yourself to immediately relax hand tension and drop when feet blow, rather than desperately death-gripping the hold. Acute Grade IV pulley ruptures frequently occur during sudden eccentric shock loads following a foot pop.
   - **Precision Foot Drills:** High-level footwork and core tension provide functional protection for your pulleys. Practice silent-foot placements on greasy holds to eliminate foot slips under maximum hand loads.
@@ -117,7 +118,7 @@ Use this evidence-based clinical checklist to identify micro-strain before acute
 
 | Diagnostic Sign | Anatomical Structure | Biomechanical Cause | Recommended Action |
 | :--- | :--- | :--- | :--- |
-| **Morning stiffness at base of PP** | A2 Pulley Sheath | Repetitive hoop stress near $300\text{ N}$ yield limit | Reduce crimping volume by 50%; switch to Open Hand for 10 days. |
+| **Morning stiffness at base of PP** | A2 Pulley Sheath | Repetitive high hoop stress during chronic crimping | Reduce crimping volume by 50%; switch to Open Hand for 10 days. |
 | **Sharp pain when pressing palmar PIP base** | Distal A2 / Proximal A3 | Peel stress from Full Crimp DIP hyperextension | Immediate cessation of full crimping; H-taping or thermoplastic ring support. |
 | **Pain when pulling on side-pulls/gastons** | Lateral Pulley Margins / Collateral Ligaments | Excessive MCP radial abduction shear ($F_{lat} > 60\text{ N}$) | Check forearm alignment; avoid twisting hand on holds. |
 | **Pain between ring and middle fingers** | Lumbrical Muscle Shear | Quadriga effect from deep pocket loading with dropped fingers | Cease 2-finger pockets; train four-finger open hand only. |
@@ -147,10 +148,10 @@ Across an athlete's lifespan, phalanx length is **not static**—it transitions 
   - Pediatric phalanges are proportionally miniature: $L_{DP} \approx 13\text{–}16\text{ mm}$, with a total finger length $L_{tot} \approx 50\text{–}65\text{ mm}$ (compared to $22\text{ mm}$ and $95\text{ mm}$ in adults).
   - **The Adult-Hold Inversion Paradox:** On standard adult climbing gym holds ($18\text{–}22\text{ mm}$ rungs), the hold depth ratio for a child is $\rho = d / L_{DP} > 1.2\text{–}1.5$. An adult "crimp" acts on a child as a deep multi-phalanx ledge where the middle phalanx readily makes contact. This naturally suppresses the DIP external moment arm ($r_{DIP} \to 0$) and spares the distal joint.
   - **The Youth Micro-Edge Hazard:** Conversely, when route-setters or youth competitions introduce shallow holds scaled down to $6\text{–}10\text{ mm}$, the ratio drops to $\rho \le 0.6$. The entire contact force is concentrated at the distal phalanx tip, producing an isolated external flexion torque.
-* **The Physis vs. Lever-Arm Vulnerability (Epiphysiolysis):**
+* **The Physis vs. Lever-Arm Vulnerability (PPSI / Epiphysiolysis):**
   - While short phalanx lengths generate lower *absolute* external moments ($M = r \times F$) due to lower body mass, the internal tendon moment arm is equally miniature ($h \approx 2.5\text{–}3.5\text{ mm}$).
-  - More importantly, the **epiphyseal growth plate (physis)** at the base of the middle phalanx consists of uncalcified cartilaginous chondrocytes with an ultimate shear strength ($\tau_{crit} \approx 2\text{–}4\text{ MPa}$) that is over an order of magnitude weaker than mature cortical bone ($>80\text{ MPa}$) or mature fibrocartilage.
-  - In a closed crimp, the FDP tendon tension pulls diagonally across the flexed PIP joint, generating a powerful dorsal-directed shear force component directly across the open physis. Even modest single-finger loading ($30\text{–}40\text{ N}$) on shallow edges creates localized shear stresses that exceed the physeal failure threshold, causing Salter-Harris type II or III epiphyseal stress fractures (*epiphysiolysis*). If ignored, these stress fractures lead to premature physeal arrest, lateral angulation deformities, and lifelong joint dysfunction.
+  - More importantly, the **epiphyseal growth plate (physis)** at the base of the middle phalanx consists of uncalcified cartilaginous chondrocytes that represent the mechanical weak link of the pediatric skeleton compared to mature bone or fibrocartilage.
+  - In a closed crimp, high DIP hyperextension and PIP flexion generate high dorsal shear stresses directly across the open physis. Repetitive micro-trauma can trigger Salter-Harris type II or III epiphyseal stress fractures (*Primary Periphyseal Stress Injury - PPSI*). If left unmanaged, these stress fractures can lead to premature physeal arrest and axial angulation deformities.
 * **Evidence-Informed Practical Recommendations:**
   - **Prudent Avoidance of Isolated Hangboards & Micro-Edge Crimping:** In line with pediatric sports medicine guidelines (e.g., UIAA Medical Commission), isolated hangboard protocols, campus board power ladders, and weighted finger hangs are generally discouraged for pre-pubertal children to protect open growth plates from repetitive peak stresses.
   - **Hold Geometry & Support ($d \ge L_{DP}$):** Coaches and route-setters are encouraged to emphasize ergonomic holds ($d \ge 20\text{ mm}$), slopers, volumes, and compression features where the middle phalanx shares contact ($\rho > 1.0$), while limiting repetitive reliance on sharp sub-12 mm micro-edges.
@@ -159,16 +160,17 @@ Across an athlete's lifespan, phalanx length is **not static**—it transitions 
 ---
 
 ### 3.2 Juniors & Adolescents (Pubertal: ~13–18 Years / The Growth Spurt)
-* **The "Lever-Arm Explosion" During Peak Height Velocity (PHV):**
-  - During the adolescent growth spurt, long bones undergo rapid longitudinal elongation. Phalanx segment lengths ($L_{PP}, L_{MP}, L_{DP}$) can increase by **$+15\%$ to $+25\%$ within a single 12–18 month period** (e.g., $L_{tot}$ expanding from $75\text{ mm}$ to $95\text{ mm}$).
-  - **Dynamic Moment Arm Surge:** Because external joint moments scale linearly with segment length ($M_{ext} \propto L$), a $+20\%$ lengthening of the phalanges directly expands the external lever arms by $+20\text{–}30\%$. For the identical body weight and climbing move, the required flexor tendon tension $T_{FDP}$ and resulting A2 pulley normal force $F_{A2}$ **instantaneously surge by +25% to +35%**!
-  - **The Remodeling Latency Mismatch:** Skeletal elongation occurs rapidly under the influence of growth hormone and IGF-1. However, the metabolic remodeling and cross-sectional thickening of the fibrocartilaginous pulleys (A2, A4) and complete calcification of the epiphyseal plates lag behind by **12 to 24 months**.
-  - Compounding this mechanical surge, pubertal athletes simultaneously gain muscle mass and neuromuscular drive. The combination of greater body weight, increased muscle recruitment, and suddenly lengthened phalanx levers creates a severe structural bottleneck: peak torque acting on unadapted, freshly elongated lever systems.
-  - This physiological discrepancy explains why competitive youth climbers suffer a pronounced epidemic of acute A2/A4 pulley ruptures, epiphyseal avulsions, and flexor tenosynovitis precisely during or immediately following their peak growth spurt.
+* **The "Lever-Arm Surge" During Peak Height Velocity (PHV):**
+  - During the adolescent growth spurt, long bones undergo rapid longitudinal elongation. Phalanx segment lengths ($L_{PP}, L_{MP}, L_{DP}$) can increase by **$+15\%$ to $+25\%$ within a single 12–18 month period**.
+  - **Dynamic Moment Arm Surge:** Because external joint moments scale linearly with segment length ($M_{ext} \propto L$), rapid lengthening of the phalanges expands external lever arms. For identical body weight and movement, required flexor tendon tension and joint reactions increase significantly before connective tissue adaptation catches up.
+  - **The Dominant Vulnerability: Primary Periphyseal Stress Injury (PPSI):**
+    - High-level sports medicine research (Schöffl et al., 2023, 2025) demonstrates that **acute annular pulley ruptures are rare in adolescents**. Instead, the open physis is structurally weaker than the pulley sheath.
+    - Repetitive high-intensity crimping produces dorsal micro-traction and compressive shear across the open physis of the middle phalanx base, presenting as PPSI (classified into Stages I–IV, from MRI-detected bone marrow edema to overt fracture and physeal closure).
+    - When adolescent climbers complain of dorsal PIP joint pain, tenderness, or swelling, PPSI must be suspected immediately and evaluated with MRI before irreversible growth plate damage occurs.
 * **Evidence-Informed Practical Recommendations:**
-  - **Growth Velocity Awareness:** Monitoring stature and phalanx growth trends every few months helps identify Peak Height Velocity (PHV, often $>6\text{–}8\text{ cm/year}$). During rapid growth phases, proactively moderating high-intensity crimp volume provides a prudent buffer against sudden lever-arm elongation.
-  - **Conservative Hangboard Guidelines on Supportive Edges ($d \ge 20\text{ mm}$):** If supplemental hangboard training is introduced in late adolescence (>15–16 years with biological maturity), it is recommended to favor bodyweight hangs on generous edges ($d \ge 20\text{–}25\text{ mm}$, ensuring $\rho \ge 1.0$) using open-hand or relaxed half-crimp postures. It is recommended to avoid adding external weight or using shallow micro-edges during active PHV, as connective tissue adaptation often lags longitudinal bone growth.
-  - **Moderation of High-Velocity Ballistic Loading:** Dynamic campus board ladders and aggressive snatch-catches on small edges are best avoided or postponed until skeletal maturity to mitigate dynamic shock loading ($F_{tip} \to 170\text{ N}$) on elongating levers.
+  - **Growth Velocity Awareness:** Monitoring stature and phalanx growth trends helps identify Peak Height Velocity (PHV, often $>6\text{–}8\text{ cm/year}$). During rapid growth phases, proactively moderating high-intensity crimp volume provides a prudent buffer against sudden lever-arm elongation.
+  - **Conservative Hangboard Guidelines on Supportive Edges ($d \ge 20\text{ mm}$):** If supplemental hangboard training is introduced in late adolescence (>15–16 years with biological maturity), it is recommended to favor bodyweight hangs on generous edges ($d \ge 20\text{–}25\text{ mm}$, ensuring $\rho \ge 1.0$) using open-hand or relaxed half-crimp postures. It is recommended to avoid adding external weight or using shallow micro-edges during active PHV.
+  - **Moderation of High-Velocity Ballistic Loading:** Dynamic campus board ladders and aggressive snatch-catches on small edges are best avoided or postponed until skeletal maturity to mitigate dynamic shock loading on elongating levers.
 
 ---
 
@@ -177,11 +179,12 @@ Across an athlete's lifespan, phalanx length is **not static**—it transitions 
   - At skeletal maturity, epiphyseal plates are completely fused and phalanx lengths are locked. The force-to-length dependency now manifests as **individual morphological phenotype variance**.
   - As quantified by our 3D model, natural adult finger lengths vary across a $+37.5\%$ spectrum: short ($L_{tot} \approx 80\text{ mm}$), nominal ($95\text{ mm}$), and long ($110\text{ mm}$).
   - For the exact same $100\text{ N}$ vertical grip force on a $10\text{ mm}$ edge:
-    - The short-fingered phenotype ($80\text{ mm}$) sustains **$322.9\text{ N}$** of A2 pulley normal force in half-crimp—safely below the $400\text{ N}$ rupture limit and operating within the $300\text{ N}$ structural yield boundary.
-    - The long-fingered phenotype ($110\text{ mm}$) sustains **$444.0\text{ N}$**—a **$+37.5\%$ mechanical penalty** that exceeds cadaveric ultimate tensile strength ($400\text{ N}$) even under static equilibrium!
+    - Under unscaled lever arm conditions, the short-fingered phenotype sustains **$252.7\text{ N}$** of A2 pulley force in half-crimp.
+    - The standard phenotype sustains **$299.7\text{ N}$** (operating within physiological static margins).
+    - The long-fingered phenotype sustains **$346.6\text{ N}$**—a **$+15.6\%$ mechanical penalty over standard** and **$+37.2\%$ penalty over short digits**! Under dynamic shock loading (foot slips, $171.7\text{ N}$), A2 force spikes to $561.0\text{ N}$, well past the $\sim 400\text{ N}$ cadaveric benchmark (Lin et al. 1990; Schöffl et al. 2009).
   - **Individualized Edge Normalization:** An arbitrary $20\text{ mm}$ edge represents a protective dual-phalanx ledge for a short-fingered adult ($L_{DP} = 18.7\text{ mm}$, $\rho = 1.07$), but constitutes an isolated, high-torque single-phalanx micro-edge for a long-fingered adult ($L_{DP} = 25.3\text{ mm}$, $\rho = 0.79$).
 * **Evidence-Informed Practical Recommendations:**
-  - **Phenotypic Volume & Recovery Calibration:** Athletes are encouraged to tailor training volume and rest intervals according to phalanx lever length. Because longer digits sustain higher baseline torque, long-fingered climbers typically benefit from longer recovery windows (e.g., 48–72 hours between intense crimp sessions) and patient, progressive macrocycles.
+  - **Phenotypic Volume & Recovery Calibration:** Athletes are encouraged to tailor training volume and rest intervals according to phalanx lever length. Because longer digits sustain higher baseline torque when lever arms are unscaled, long-fingered climbers typically benefit from longer recovery windows (e.g., 48–72 hours between intense crimp sessions) and patient, progressive macrocycles.
   - **Anatomical Edge Normalization ($d_{test} \approx 0.8 L_{DP}$):** Where practical, calibrating assessment edges to individual distal phalanx length offers a more biomechanically uniform evaluation than a rigid 20 mm benchmark.
   - **Application of Foundational Grip Principles:** Emphasizing open-hand dominant volume (e.g., ~80/20 ratio), maintaining forearm-hold co-linearity to minimize transverse lateral shear ($F_{lat} > 60\text{ N}$), and cultivating deliberate footwork help protect pulleys against dynamic shock loads.
 
@@ -190,13 +193,12 @@ Across an athlete's lifespan, phalanx length is **not static**—it transitions 
 ### 3.4 Masters & Veterans (Older Adults: 45–60+ Years / Slower Turnover)
 * **Cumulative Lifetime Lever-Arm Exposure & Articular Contact Stress:**
   - Joint compressive contact force is the direct physical equilibrium resultant: $\vec{F}_{joint} \approx \vec{T}_{FDP} + \vec{T}_{FDS} + \vec{F}_{ext}$.
-  - Because internal tendon tension scales linearly with finger length ($T \propto L_{finger}$), long-fingered climbers subject their PIP and DIP articular cartilage to **consistently higher compressive contact stresses (often $>15\text{–}20\text{ MPa}$)** across their entire athletic career.
-  - Over 25–35 years of climbing, a long-fingered master has absorbed millions of high-torque cycles with $+37.5\%$ higher joint reaction forces than an equivalent shorter-fingered peer.
-  - In aging athletes, chondrocyte proliferation declines, proteoglycan synthesis decreases (loss of cartilage water retention), and synovial fluid lubrication diminishes. This cumulative lever-arm history dramatically accelerates **PIP and DIP degenerative osteoarthritis (OA), subchondral sclerosis, joint space narrowing, and osteophyte formation (Bouchard / Heberden nodes)**.
-  - Furthermore, aging collagen loses elastin compliance and tenocyte cellularity; the metabolic repair cycle for tendons and pulleys extends from weeks to months.
+  - Because internal tendon tension scales with finger length under unscaled conditions, long-fingered climbers subject their PIP and DIP articular cartilage to higher cumulative compressive contact stresses across athletic careers.
+  - In aging athletes, chondrocyte proliferation declines, proteoglycan synthesis decreases, and synovial fluid lubrication diminishes. This cumulative lever-arm history can accelerate **PIP and DIP degenerative osteoarthritis (OA), subchondral sclerosis, and osteophyte formation**.
+  - Furthermore, aging collagen loses compliance; the metabolic repair cycle for tendons and pulleys extends from weeks to months.
 * **Evidence-Informed Practical Recommendations:**
   - **Lever-Arm De-Amplification for Joint Longevity:** Masters climbers—particularly those with longer digits—are encouraged to favor open-hand drags, three-finger drags, and rounded ergonomic holds over aggressive closed crimps. Open-hand postures mechanically reduce the effective external moment arm and significantly lower PIP joint compressive contact forces.
-  - **Submaximal Controlled Isometrics Over Ballistic Power:** Replace dynamic campus boards and explosive limit bouldering with controlled, submaximal hangboard density hangs (60–70% MVC on comfortable $20\text{–}25\text{ mm}$ edges). Controlled isometrics stimulate collagen synthesis and bone mineral density without the destructive peak impact forces of dynos.
+  - **Submaximal Controlled Isometrics Over Ballistic Power:** Replace dynamic campus boards and explosive limit bouldering with controlled, submaximal hangboard density hangs (60–70% MVC on comfortable $20\text{–}25\text{ mm}$ edges). Controlled isometrics stimulate collagen synthesis and bone mineral density without destructive peak impact forces.
   - **Extended Warm-Up & Generous Recovery Intervals:** A thorough 20–30 minute progressive warm-up helps elevate synovial fluid temperature and reduce joint fluid viscosity. Allowing generous recovery (such as 48–72 hours between high-intensity finger sessions) accommodates slower tissue turnover and supports joint comfort.
 
 ---
@@ -205,10 +207,10 @@ Across an athlete's lifespan, phalanx length is **not static**—it transitions 
 
 | Age Cohort | Phalanx Lever Dynamics ($\Delta L / \Delta t$) | Hold Depth Ratio on 15 mm Edge ($\rho = d / L_{DP}$) | Internal Force Scaling ($T_{FDP}, F_{A2}$) | Primary Anatomical Failure Mode | Recommended Grip & Hangboard Focus |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Kids (<12–13 yrs)** | Progressive linear growth ($L_{tot} \approx 50\text{–}65\text{ mm}$) | $\rho > 1.0\text{–}1.2$ (Deep hold on adult edges) | Low absolute torque, but miniature tendon moment arm ($h \approx 3\text{ mm}$) | Uncalcified physis at base of MP (Epiphysiolysis / Salter-Harris) | Avoid isolated hangboards & micro-edges ($d < 12\text{ mm}$); emphasize variety, jugs, slopers. |
-| **Juniors (13–18 yrs)** | **Rapid surge** (+15–25% in 12–18 mo during PHV) | $\rho \approx 0.8\text{–}1.0$ (Transition zone) | **Explosive torque surge (+25–35%)** outstripping tissue remodeling | Pulley tears & avulsion fractures due to 12–24 mo remodeling lag | Prefer bodyweight on generous edges ($\ge 20\text{ mm}$); monitor PHV; moderate dynamic campus volume. |
-| **Adults (18–45 yrs)** | Static length; phenotypic variance ($80\text{–}110\text{ mm}$) | $\rho \in [0.65, 0.95]$ (Hold-depth sensitive) | **$+37.5\%$ penalty** on long digits ($444\text{ N}$ vs $323\text{ N}$) | Acute A2 rupture & chronic sheath yield ($>300\text{ N}$) | Phenotype-aware volume; edge normalization ($0.8 L_{DP}$); open-hand bias. |
-| **Masters (45+ yrs)** | Static length ($80\text{–}110\text{ mm}$) | $\rho \in [0.65, 0.95]$ (Hold-depth sensitive) | High cumulative lifetime joint contact stress ($>15\text{ MPa}$) | Articular cartilage thinning, PIP osteoarthritis, brittle collagen | De-amplify levers (open hand / slopers); submaximal density hangs; thorough warm-up; ample recovery. |
+| **Kids (<12–13 yrs)** | Progressive linear growth ($L_{tot} \approx 50\text{–}65\text{ mm}$) | $\rho > 1.0\text{–}1.2$ (Deep hold on adult edges) | Low absolute torque, but miniature tendon moment arm ($h \approx 3\text{ mm}$) | Uncalcified physis at base of MP (Epiphysiolysis / PPSI) | Avoid isolated hangboards & micro-edges ($d < 12\text{ mm}$); emphasize variety, jugs, slopers. |
+| **Juniors (13–18 yrs)** | **Rapid surge** (+15–25% in 12–18 mo during PHV) | $\rho \approx 0.8\text{–}1.0$ (Transition zone) | Torque surge outstripping tissue remodeling | Primary Periphyseal Stress Injury (PPSI Stages I–IV); pulley tears are rare | Prefer bodyweight on generous edges ($\ge 20\text{ mm}$); monitor PHV; moderate dynamic campus volume. |
+| **Adults (18–45 yrs)** | Static length; phenotypic variance ($80\text{–}110\text{ mm}$) | $\rho \in [0.65, 0.95]$ (Hold-depth sensitive) | **$+15.6\%$ penalty** on long digits (+37.5% vs short) | Acute A2 rupture under shock load ($>400\text{ N}$) & chronic tenosynovitis | Phenotype-aware volume; edge normalization ($0.8 L_{DP}$); open-hand bias. |
+| **Masters (45+ yrs)** | Static length ($80\text{–}110\text{ mm}$) | $\rho \in [0.65, 0.95]$ (Hold-depth sensitive) | High cumulative lifetime joint contact stress | Articular cartilage thinning, PIP osteoarthritis, reduced repair rate | De-amplify levers (open hand / slopers); submaximal density hangs; thorough warm-up; ample recovery. |
 
 ---
 
@@ -216,18 +218,14 @@ Across an athlete's lifespan, phalanx length is **not static**—it transitions 
 
 To illustrate how periodization should diverge based on hand morphology, consider the following weekly training templates:
 
-```
-───────────────────────────────────────────────────────────────────────────────────
-Training Dimension         Short Phenotype (L_tot < 85 mm)    Long Phenotype (L_tot > 105 mm)
-───────────────────────────────────────────────────────────────────────────────────
-Max Hangboard Frequency    2–3 sessions / week                1–2 sessions / week max
-Rest Between Crimp Days    24–48 hours                        48–72 hours recommended
-Preferred Testing Edge     15 mm (d = 0.8 L_DP)               20–22 mm (d = 0.8 L_DP)
-Grip Distribution          50% Half-Crimp, 50% Open Hand      75% Open Hand, 25% Half-Crimp
-Wall Style Specialization  Crimpy overhangs, technical edges  Slopers, compression, pinches
-Connective Tissue Macro    6–8 week overload blocks           12–16 week progressive ramps
-───────────────────────────────────────────────────────────────────────────────────
-```
+| Training Dimension | Short Phenotype ($L_{tot} < 85\text{ mm}$) | Long Phenotype ($L_{tot} > 105\text{ mm}$) |
+| :--- | :--- | :--- |
+| **Max Hangboard Frequency** | 2–3 sessions / week | 1–2 sessions / week max |
+| **Rest Between Crimp Days** | 24–48 hours | 48–72 hours recommended |
+| **Preferred Testing Edge** | 15 mm ($d = 0.8 L_{DP}$) | 20–22 mm ($d = 0.8 L_{DP}$) |
+| **Grip Distribution** | 50% Half-Crimp, 50% Open Hand | 75% Open Hand, 25% Half-Crimp |
+| **Wall Style Specialization** | Crimpy overhangs, technical edges | Slopers, compression, pinches |
+| **Connective Tissue Macro** | 6–8 week overload blocks | 12–16 week progressive ramps |
 
 ---
 
@@ -236,9 +234,10 @@ Connective Tissue Macro    6–8 week overload blocks           12–16 week pro
 For coaches and athletes interested in the underlying mathematical formulations, our 3D model integrates four core mechanical pillars:
 
 1. **Spatial Kinematics (4-DOF Chain):** Kinematic transformation matrices mapping MCP flexion/extension ($\theta_{MCP}$), MCP abduction/adduction ($\phi_{MCP}$), PIP flexion ($\theta_{PIP}$), and DIP flexion ($\theta_{DIP}$).
-2. **Dual-Phalanx Hertzian Contact:** Resolves the contact pressure distribution across the distal phalanx ($s \le L_{DP}$) and middle phalanx ($s > L_{DP}$). Engagement of the middle phalanx activates the A3 pulley skeletal anchor, dropping external DIP moment arms to zero.
+2. **Dual-Phalanx Contact Mechanics:** Resolves the contact pressure distribution across the distal phalanx ($s \le L_{DP}$) and middle phalanx ($s > L_{DP}$). Engagement of the middle phalanx activates the A3 pulley skeletal anchor, dropping external DIP moment arms to zero.
 3. **Capstan Pulley Redirection:** Tendon redirection force is computed from the vector deflection across joints:
-   $$\vec{F}_{A2} = T_{A2} \cdot \left( (\hat{\mathbf{u}}_{wrist} - \hat{\mathbf{u}}_{PP}) + 0.50 (\hat{\mathbf{u}}_{PP} - \hat{\mathbf{u}}_{MP}) \right)$$
+   $$\vec{F}_{A2} = T_{A2} \cdot \left( 0.50 (\hat{\mathbf{u}}_{PP} - \hat{\mathbf{u}}_{MP}) \right)$$
+   $$\vec{F}_{A1} = T_{A1} \cdot (\hat{\mathbf{u}}_{wrist} - \hat{\mathbf{u}}_{PP})$$
    $$\vec{F}_{A4} = T_{A4} \cdot \left( 0.40 (\hat{\mathbf{u}}_{PP} - \hat{\mathbf{u}}_{MP}) \right)$$
 4. **Out-of-Plane Lateral Shearing:** Non-zero radial abduction ($\phi_{MCP} \ne 0$) projects the tendon tension vector into the coronal plane, generating lateral shear forces ($F_z$) that concentrate high peel stresses on fibrocartilaginous margins.
 

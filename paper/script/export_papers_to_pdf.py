@@ -112,7 +112,7 @@ def protect_and_convert_markdown(md_content, base_dir):
     return html_body
 
 
-def build_full_html(body_html, running_title, running_author="Cerovsky (2026)", is_manuscript=True):
+def build_full_html(body_html, running_title, running_author="Cerovsky", doc_date="October 7, 2026", is_manuscript=True):
     """Wraps body HTML in a publication-grade HTML template with KaTeX and CSS Paged Media."""
     base_font = "'Times New Roman', Times, 'Liberation Serif', Georgia, serif" if is_manuscript else "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
     header_font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
@@ -151,13 +151,19 @@ window.addEventListener("DOMContentLoaded", () => {{
         padding-bottom: 4px;
     }}
     @top-right {{
-        content: "{running_author}";
+        content: "{running_author} · {doc_date}";
         font-family: {header_font};
         font-size: 7.5pt;
         font-weight: 600;
         color: #64748b;
         border-bottom: 0.5pt solid #cbd5e1;
         padding-bottom: 4px;
+    }}
+    @bottom-left {{
+        content: "Document Date: {doc_date}";
+        font-family: {header_font};
+        font-size: 7.5pt;
+        color: #94a3b8;
     }}
     @bottom-center {{
         content: "Page " counter(page) " of " counter(pages);
@@ -170,10 +176,23 @@ window.addEventListener("DOMContentLoaded", () => {{
 @page :first {{
     @top-left {{ content: normal; border: none; }}
     @top-right {{ content: normal; border: none; }}
+    @bottom-left {{
+        content: "Document Date: {doc_date}";
+        font-family: {header_font};
+        font-size: 7.5pt;
+        color: #94a3b8;
+    }}
+}}
+
+::-webkit-scrollbar {{
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }}
 
 * {{
     box-sizing: border-box;
+    scrollbar-width: none !important;
 }}
 
 body {{
@@ -284,19 +303,19 @@ blockquote p:last-child {{
 table {{
     width: 100%;
     border-collapse: collapse;
-    margin: 14px 0;
-    font-size: 8.5pt;
+    margin: 12px 0;
+    font-size: 8pt;
     font-family: {header_font};
     break-inside: avoid;
     page-break-inside: avoid;
 }}
 
 th, td {{
-    padding: 5px 8px;
+    padding: 4px 6px;
     border-top: 0.5pt solid #cbd5e1;
     border-bottom: 0.5pt solid #cbd5e1;
     text-align: left;
-    vertical-align: top;
+    vertical-align: middle;
 }}
 
 th {{
@@ -305,6 +324,7 @@ th {{
     border-top: 1.5pt solid #334155;
     border-bottom: 1.5pt solid #334155;
     color: #0f172a;
+    font-size: 8pt;
 }}
 
 tr:hover {{
@@ -323,19 +343,22 @@ img {{
 
 code {{
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 8.5pt;
+    font-size: 8pt;
     background-color: #f1f5f9;
     padding: 1px 4px;
     border-radius: 3px;
 }}
 
 pre {{
-    background-color: #0f172a;
-    color: #f8fafc;
-    padding: 10px 14px;
+    background-color: #f8fafc;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
     border-radius: 4px;
-    font-size: 8pt;
-    overflow-x: auto;
+    font-size: 7.5pt;
+    overflow: hidden;
+    white-space: pre-wrap;
+    word-break: break-word;
     break-inside: avoid;
     page-break-inside: avoid;
 }}
@@ -412,7 +435,9 @@ def export_document(src_md, dest_pdf, running_title, is_manuscript=True, chrome_
         md_content = f.read()
 
     body_html = protect_and_convert_markdown(md_content, base_dir=str(src_path.parent))
-    full_html = build_full_html(body_html, running_title=running_title, is_manuscript=is_manuscript)
+    date_match = re.search(r"\*\*Date:\*\*\s*(.+)", md_content)
+    doc_date = date_match.group(1).strip() if date_match else "October 7, 2026"
+    full_html = build_full_html(body_html, running_title=running_title, doc_date=doc_date, is_manuscript=is_manuscript)
 
     with tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8") as tmp_file:
         tmp_file.write(full_html)

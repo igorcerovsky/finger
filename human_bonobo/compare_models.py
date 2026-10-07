@@ -1,11 +1,11 @@
 """
-compare_models.py — PeerJ Validation vs Our 3D Climbing Model (Iter 14)
+compare_models.py — PeerJ 7470 Validation vs Our 3D Climbing Model (Iter 14)
 ========================================================================
 Compares our climbing_finger_3d.py predictions against the cadaver direct-force
-measurements from the PeerJ 7470 paper (Vigouroux et al. 2019).
+measurements from the PeerJ 7470 paper (Synek et al. 2019).
 
 Iteration 14 upgrade: Uses the actual cadaver force plate measurements
-(mean of 3 specimens) as the external load input, instead of setting
+(mean of 3 specimens: H01, H02, H03) as the external load input, instead of setting
 F_ext = total tendon force. This enables absolute force magnitude validation.
 
 The cadaver setup: known tendon forces are applied → fingertip reaction

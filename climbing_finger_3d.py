@@ -103,7 +103,7 @@ class Config:
     use_pulp_compression = True
     pulp_compress_k      = 1.15
     pulp_compress_F0     = 10.0
-    pulp_compress_max    = 4.0
+    pulp_compress_max    = 2.5
     
     # ── Extensor (EDC) Stiffness / Co-Contraction ─────────────
     use_edc_stiffness = True
@@ -164,6 +164,20 @@ class Config:
     show_figures  = False
     output_prefix = "climbing_3d"
 
+    # ── Anthropometric Moment Arm Scaling (Review Rec A1) ────────
+    # True  : Isometric baseline where internal tendon moment arms scale proportionally
+    #         with bone dimensions (ma ∝ f). Under isometric scaling on relative hold depths
+    #         (d/L_DP = const), tendon force is scale-invariant.
+    # False : Allometric / fixed moment arm mode (unscaled ma), which isolates lever penalty.
+    scale_moment_arms_with_geometry = True
+
+    # ── A2 Pulley MCP vs PIP Bowstringing Isolation (Review Rec A4) ──
+    # False : Anatomical model where A2 sits on the proximal phalanx diaphysis and
+    #         restrains PIP joint bowstringing (matching Schweizer 2001 & Vigouroux 2006).
+    #         MCP deflection is restrained separately by the A1 / palmar aponeurosis pulley.
+    # True  : Legacy mode adding wrist-to-MCP deflection vector directly into A2.
+    a2_includes_mcp = False
+
 
 # ─────────────────────────────────────────────────────────────
 #  DATA CLASSES
@@ -175,13 +189,14 @@ class FingerGeometry:
     L2: float = Config.MP_mm
     L3: float = Config.DP_mm
     name: str = "Standard"
+    scale_factor: float = 1.0
 
     @property
     def total(self): return self.L1 + self.L2 + self.L3
 
     def scaled(self, f, label=None):
         tag = label or (f"Long" if f > 1 else "Short")
-        return FingerGeometry(self.L1*f, self.L2*f, self.L3*f, tag)
+        return FingerGeometry(self.L1*f, self.L2*f, self.L3*f, tag, scale_factor=f)
 
 
 @dataclass
@@ -300,7 +315,7 @@ def kinematics_3d(grip, geom):
 #  MOMENT ARMS  (An et al. 1983 + Brand & Hollister 1999)
 # ─────────────────────────────────────────────────────────────
 
-def moment_arms(grip):
+def moment_arms(grip, geom=None, scale_ma=None):
     """Scalar moment arms (mm). Positive = flexion or radial abduction.
     
     Two calibration sources (selected by Config.moment_arm_source):
@@ -309,7 +324,7 @@ def moment_arms(grip):
       Linear fits to tabulated moment arm data across joint angle ranges.
       These are population averages, not specimen-specific.
     
-    'peerj' — PeerJ 7470 CT-calibrated path points (Iterations 15-16).
+    'peerj' — Synek et al. 2019 (PeerJ 7470) CT-calibrated path points (Iterations 15-16).
       Linear fits to moment arms computed from cadaver-specific tendon
       path points (Geometry_Middle_Cal_Hum/) at 4 postures (R2>=0.99).
       Iteration 16 extends to ALL muscles (LU, EDC, not just FDP/FDS):
@@ -333,13 +348,13 @@ def moment_arms(grip):
         wrist_boost = float(getattr(Config, 'k_wrist_ma', 0.04) * np.clip(w_deg, 0.0, 45.0))
 
     if Config.moment_arm_source == 'peerj':
-        # PeerJ 7470 CT-calibrated (Iterations 15-16)
+        # Synek et al. 2019 (PeerJ 7470) CT-calibrated (Iterations 15-16)
         # Fits from Geometry_Middle_Cal_Hum path points at 4 postures (R2>=0.99)
         # Iteration 16: extends calibration to LU (extensor mechanism) and EDC
         # Iteration 17: Interossei (RI and UI) linear fits + extensor mechanism fractions
         edc_dip = min(-4.07 + 0.025*np.clip(td,-30,90), -1.5)
         edc_pip = min(-6.48 + 0.042*np.clip(tp,  0,120), -2.0)
-        return dict(
+        ma_dict = dict(
             FDP_DIP=max( 6.00 + 0.045*np.clip(td,-30,90),  2.0),  # An1983: PeerJ 4.7mm incompatible with 3-DOF solver (RI/UI intrinsics absent)
             FDP_PIP=max( 8.24 + 0.050*np.clip(tp,  0,120), 4.0),
             FDP_MCP=max( 9.89 + 0.087*np.clip(tm,-30,90),  6.0) + wrist_boost,
@@ -371,7 +386,7 @@ def moment_arms(grip):
     else:
         # An et al. 1983 literature averages (original)
         # Iteration 17: backward compatible interossei average values
-        return dict(
+        ma_dict = dict(
             FDP_DIP=max(6.0 + 0.045*np.clip(td,-30,90),  2.0),
             FDP_PIP=max(9.0 + 0.033*np.clip(tp,  0,120), 4.0),
             FDP_MCP=max(8.0 + 0.053*np.clip(tm,  0,90),  6.0) + wrist_boost,
@@ -397,6 +412,15 @@ def moment_arms(grip):
             RI_PIP=0.612 * -6.0,
             UI_PIP=0.612 * -6.0,
         )
+
+    # Anthropometric scaling: internal moment arms scale with skeletal size (Review Rec A1)
+    do_scale = scale_ma if scale_ma is not None else getattr(Config, 'scale_moment_arms_with_geometry', True)
+    if do_scale and geom is not None:
+        f = getattr(geom, 'scale_factor', 1.0)
+        if f != 1.0:
+            ma_dict = {k: float(v * f) for k, v in ma_dict.items()}
+
+    return ma_dict
 
 
 # ─────────────────────────────────────────────────────────────
@@ -734,7 +758,7 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
         g = GripAngles(grip_base.name, grip_base.theta_MCP, grip_base.phi_MCP,
                        float(pip), float(dip), grip_base.color, grip_base.emg_ratio)
         kin  = kinematics_3d(g, geom)
-        ma   = moment_arms(g)
+        ma   = moment_arms(g, geom=geom)
         F_mag = float(np.linalg.norm(F_ext[:2]))
         F_ext_dir = contact_force_vector(1.0, contact)
         p_C_DP, p_C_MP, F_DP, F_MP, d_eff, _ = compute_contact_point(g, geom, contact, kin, F_mag)
@@ -916,7 +940,7 @@ def solve_all_methods(grip: GripAngles,
     If contact is None:     force applied at TIP (original behaviour, backward compat).
     """
     kin = kinematics_3d(grip, geom)
-    ma  = moment_arms(grip)
+    ma  = moment_arms(grip, geom=geom)
 
     # ── Determine application point and force vector ──────────
     if contact is not None:
@@ -1141,7 +1165,10 @@ def compute_pulley_angles(kin, geom):
     f_A2_pip = 0.50
     f_A4_pip = 0.40
     
-    theta_A2 = theta_MCP + f_A2_pip * theta_PIP
+    if getattr(Config, 'a2_includes_mcp', False):
+        theta_A2 = theta_MCP + f_A2_pip * theta_PIP
+    else:
+        theta_A2 = f_A2_pip * theta_PIP
     theta_A4 = f_A4_pip * theta_PIP
     
     # Resultant bowstringing vector directions: delta_u = u_in - u_out
@@ -1162,8 +1189,12 @@ def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
     
     # Both FDP and FDS pass under A2
     T_A2 = (F_FDP + F_FDS) * np.exp(Config.mu_tendon * theta_A2)
-    # A2 restrains MCP tendon entry deflection + distal PIP bowstringing
-    F_A2_vec = T_A2 * (delta_MCP + f_A2_pip * delta_PIP)
+    # When a2_includes_mcp is True: legacy mode adding wrist-to-MCP deflection
+    # When False (default): A2 restrains PIP bowstringing on PP shaft (Schweizer 2001, Vigouroux 2006)
+    if getattr(Config, 'a2_includes_mcp', False):
+        F_A2_vec = T_A2 * (delta_MCP + f_A2_pip * delta_PIP)
+    else:
+        F_A2_vec = T_A2 * (f_A2_pip * delta_PIP)
     F_A2_mag = float(np.linalg.norm(F_A2_vec))
     
     # Only FDP passes under A4 (FDS inserts onto MP)
@@ -1172,9 +1203,19 @@ def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
     F_A4_vec = T_A4 * (f_A4_pip * delta_PIP)
     F_A4_mag = float(np.linalg.norm(F_A4_vec))
 
+    # A1 pulley restrains MCP tendon entry at the volar plate / metacarpal head
+    u_PP_hat = kin['R_MCP'] @ np.array([1., 0., 0.])
+    u_wrist_vec = kin['p_MCP'] - Config.wrist_pos
+    u_wrist_hat = u_wrist_vec / (np.linalg.norm(u_wrist_vec) + 1e-9)
+    theta_MCP_val = np.arccos(np.clip(np.dot(u_wrist_hat, u_PP_hat), -1.0, 1.0))
+    T_A1 = (F_FDP + F_FDS) * np.exp(Config.mu_tendon * theta_MCP_val)
+    F_A1_vec = T_A1 * delta_MCP
+    F_A1_mag = float(np.linalg.norm(F_A1_vec))
+
     # Pressure distribution mappings
     P_A2_MPa = F_A2_mag / (Config.L_A2_mm * Config.w_tendon_mm)
     P_A4_MPa = F_A4_mag / (Config.L_A4_mm * Config.w_tendon_mm)
+    P_A1_MPa = F_A1_mag / (Config.L_A2_mm * Config.w_tendon_mm)
 
     return dict(
         p_A2=p_A2, theta_A2=theta_A2, theta_A4=theta_A4,
@@ -1182,6 +1223,8 @@ def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
         P_A2_MPa=P_A2_MPa,
         p_A4=p_A4, F_A4_vec=F_A4_vec, F_A4_mag=F_A4_mag, F_A4_lat=abs(float(F_A4_vec[2])),
         P_A4_MPa=P_A4_MPa,
+        F_A1_vec=F_A1_vec, F_A1_mag=F_A1_mag, F_A1_lat=abs(float(F_A1_vec[2])),
+        P_A1_MPa=P_A1_MPa,
     )
 
 

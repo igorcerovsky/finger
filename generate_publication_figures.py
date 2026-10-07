@@ -80,7 +80,7 @@ ax1b.fill_between(s, 0, p_shallow, color='#1E88E5', alpha=0.15)
 ax1b.fill_between(s, 0, p_deep, color='#8E24AA', alpha=0.15)
 ax1b.axvline(L_DP, color='#6A1B9A', ls='--', lw=1.8, label=f'DIP Crease ($L_{{DP}}={L_DP:.0f}$ mm)')
 
-ax1b.annotate('DP Contact\n(Hertzian peak)', xy=(3, 1.1), xytext=(8, 1.4),
+ax1b.annotate('DP Contact\n(Linear triangular peak)', xy=(3, 1.1), xytext=(8, 1.4),
              arrowprops=dict(arrowstyle='->', lw=1.2, color='#1E88E5'), fontsize=8.5)
 ax1b.annotate('MP Load Transfer\n(A3 Pulley Anchor)', xy=(28, 0.5), xytext=(24, 0.9),
              arrowprops=dict(arrowstyle='->', lw=1.2, color='#8E24AA'), fontsize=8.5)
@@ -95,7 +95,7 @@ ax1b.legend(loc='upper right', frameon=True, framealpha=0.9)
 
 # Panel 1C: Cadaver Validation
 ax1c = fig1.add_subplot(1, 3, 3)
-postures = ['MinorFlex\n(Half-Crimp)', 'MajorFlex\n(Deep Flex)', 'HyperExt\n(Full Crimp)', 'Hook\n(Curled)']
+postures = ['MinorFlex\n(Half-Crimp)', 'MajorFlex\n(Deep Flex)', 'HyperExt\n(MCP hyperext.)', 'Hook\n(Curled)']
 exp_ratios = [1.20, 1.20, 1.75, 1.20]
 pred_ratios = [1.20, 1.20, 1.75, 1.20] # 100% agreement
 pred_app_300 = [0.45, 0.59, 15.9, 3.82]
@@ -108,7 +108,7 @@ rects1 = ax1c.bar(x_pos - width/2, pred_app_300, width, label='Pred/Applied (300
 rects2 = ax1c.bar(x_pos + width/2, pred_app_950, width, label='Pred/Applied (950g Load)', color='#1565C0', edgecolor='k', lw=0.6)
 
 ax1c.axhline(1.0, color='red', ls='--', lw=1.5, label='Ideal Ratio = 1.0')
-ax1c.set_title("C) Experimental Cadaver Validation (PeerJ 7470)", fontweight='bold')
+ax1c.set_title("C) Experimental Cadaver Validation (Synek et al. 2019)", fontweight='bold')
 ax1c.set_ylabel("Predicted / Applied Force Ratio")
 ax1c.set_xticks(x_pos)
 ax1c.set_xticklabels(postures)
@@ -159,12 +159,17 @@ for g, col, lbl, ldp in styles:
     idx_cr = np.where(diff < 0)[0]
     if len(idx_cr) > 0:
         d_cr = d_sweep[idx_cr[0]]
+        ratio_ldp = d_cr / ldp
         ax2a.plot(d_cr, fdp_arr[idx_cr[0]], 'o', color=col, ms=7, zorder=5)
         ax2a.axvline(d_cr, color=col, ls=':', lw=1.2, alpha=0.7)
-        ax2a.annotate(f'Crossover\n{d_cr:.1f} mm', xy=(d_cr, fdp_arr[idx_cr[0]]),
-                     xytext=(d_cr - 4.5, fdp_arr[idx_cr[0]] - 45),
+        ax2a.annotate(f'Crossover: {d_cr:.1f} mm\n({ratio_ldp:.2f} $L_{{DP}}$)', xy=(d_cr, fdp_arr[idx_cr[0]]),
+                     xytext=(d_cr - 5.5, fdp_arr[idx_cr[0]] - 48),
                      arrowprops=dict(arrowstyle='->', color=col, lw=1.0),
-                     fontsize=8.5, fontweight='bold', color=col)
+                     fontsize=8.0, fontweight='bold', color=col)
+
+ax2a.text(0.03, 0.94, r'Scale-Invariant Crossover: $\tilde{d} = d / L_{DP} \approx 1.52$',
+          transform=ax2a.transAxes, fontsize=8.5, fontweight='bold',
+          bbox=dict(boxstyle='round,pad=0.35', facecolor='white', edgecolor='#6A1B9A', alpha=0.85))
 
 ax2a.axvspan(0, 22.0, color='#FFF9C4', alpha=0.25, label=r'DP Only Region ($d \leq L_{DP}$)')
 ax2a.axvspan(22.0, 42.0, color='#E1BEE7', alpha=0.20, label=r'Dual DP+MP Region ($d > L_{DP}$)')
@@ -228,30 +233,42 @@ for phi in phi_deg:
     f_a4_lat.append(jr['pulley']['F_A4_lat'])
     pip_ml_shear.append(jr['PIP']['shear_ML'])
 
-ax3a.plot(phi_deg, f_a2_lat, '-', color='#E53935', lw=2.6, label='A2 Pulley Transverse Shear ($F_{A2,lat}$)')
-ax3a.plot(phi_deg, f_a4_lat, '-', color='#FB8C00', lw=2.4, label='A4 Pulley Transverse Shear ($F_{A4,lat}$)')
+ax3a.plot(phi_deg, f_a2_lat, '-', color='#E53935', lw=2.6, label='A2 Pulley Transverse Force ($F_{A2,lat}$)')
+ax3a.plot(phi_deg, f_a4_lat, '-', color='#FB8C00', lw=2.4, label='A4 Pulley Transverse Force ($F_{A4,lat}$)')
 ax3a.plot(phi_deg, pip_ml_shear, '--', color='#1E88E5', lw=2.2, label='PIP Mediolateral Joint Shear ($F_{ML}$)')
 
 ax3a.axhline(0, color='gray', ls=':', lw=1.0)
 ax3a.axvline(15.0, color='purple', ls='--', lw=1.5, label='Severe Side-Pull Abduction ($\phi=15^\circ$)')
 
-ax3a.annotate('Dangerous Lateral Shear\n($F_{A2,lat} > 60$ N)', xy=(15.0, f_a2_lat[int(15.0/20.0*49)]), xytext=(7.0, 75),
+ax3a.annotate(r'Elevated Transverse Load' + '\n' + r'($F_{A2,lat} \approx 110$ N)', xy=(15.0, f_a2_lat[int(15.0/20.0*49)]), xytext=(6.0, 125),
              arrowprops=dict(arrowstyle='->', lw=1.2, color='#E53935'),
              fontsize=9, fontweight='bold', color='#E53935')
 
-ax3a.set_title("A) Out-of-Plane Pulley & Joint Shearing (Side-Pulls / Gastons)", fontweight='bold')
+ax3a.set_title("A) Out-of-Plane Pulley & Joint Loads (Side-Pulls / Gastons)", fontweight='bold')
 ax3a.set_xlabel("MCP Radial Abduction $\phi_{MCP}$ (deg)")
-ax3a.set_ylabel("Lateral Shearing Force (N)")
+ax3a.set_ylabel("Transverse Load (N)")
 ax3a.set_xlim(0, 20)
-ax3a.set_ylim(0, 110)
+ax3a.set_ylim(0, 160)
 ax3a.grid(True, alpha=0.3)
 ax3a.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8.5)
 
-# Panel 3B: Phenotypic Scaling of Annular Pulley Loads vs Structural Limits (100 N Hang Benchmark)
+# Panel 3B: Phenotypic Scaling of Annular Pulley Loads (100 N Hang Benchmark, Unscaled Moment Arms)
 phenotypes = ['Short\n(−15%)', 'Standard\n(Nominal)', 'Long\n(+15%)']
-a2_crimp = [265.2, 314.2, 363.3]
-a2_hc    = [322.9, 383.5, 444.0]
-a4_crimp = [138.3, 163.9, 189.5]
+
+# Dynamically compute pulley loads under unscaled moment arms to demonstrate lever arm sensitivity
+c3d.Config.scale_moment_arms_with_geometry = False
+F_ext_100 = np.array([100.0, 0.0, 0.0])
+a2_crimp, a2_hc, a4_crimp = [], [], []
+
+for g in [geom_short, geom_std, geom_long]:
+    r_cr = c3d.solve_all_methods(c3d.GRIPS['crimp'], g, F_ext_100, contact=ct_10mm)['emg']
+    jr_cr = c3d.joint_reactions_3d(r_cr, F_ext_100, g)
+    r_hc = c3d.solve_all_methods(c3d.GRIPS['half_crimp'], g, F_ext_100, contact=ct_10mm)['emg']
+    jr_hc = c3d.joint_reactions_3d(r_hc, F_ext_100, g)
+    a2_crimp.append(jr_cr['pulley']['F_A2_mag'])
+    a2_hc.append(jr_hc['pulley']['F_A2_mag'])
+    a4_crimp.append(jr_cr['pulley']['F_A4_mag'])
+c3d.Config.scale_moment_arms_with_geometry = True # Restore default
 
 x_p = np.arange(len(phenotypes))
 w = 0.26
@@ -260,22 +277,26 @@ rects_cr = ax3b.bar(x_p - w, a2_crimp, w, label='Full Crimp A2 Pulley Load (N)',
 rects_hc = ax3b.bar(x_p, a2_hc, w, label='Half-Crimp A2 Pulley Load (N)', color='#FB8C00', edgecolor='k', lw=0.6)
 rects_a4 = ax3b.bar(x_p + w, a4_crimp, w, label='Full Crimp A4 Pulley Load (N)', color='#8E24AA', edgecolor='k', lw=0.6)
 
-# Annotate percentage penalty from Short to Long
-ax3b.annotate('+37.0%', xy=(2 - w, 363.3), xytext=(2 - w, 385),
-             ha='center', fontsize=9, fontweight='bold', color='#E53935')
-ax3b.annotate('+37.5%', xy=(2, 444.0), xytext=(2, 465),
-             ha='center', fontsize=9, fontweight='bold', color='#FB8C00')
-ax3b.annotate('+37.0%', xy=(2 + w, 189.5), xytext=(2 + w, 210),
-             ha='center', fontsize=9, fontweight='bold', color='#8E24AA')
+# Annotate percentage penalty from Standard to Long (+15.6%) and Short to Long (+36.9%)
+pct_cr_std = (a2_crimp[2] - a2_crimp[1]) / a2_crimp[1] * 100.0
+pct_cr_sh = (a2_crimp[2] - a2_crimp[0]) / a2_crimp[0] * 100.0
+pct_hc_std = (a2_hc[2] - a2_hc[1]) / a2_hc[1] * 100.0
+pct_a4_std = (a4_crimp[2] - a4_crimp[1]) / a4_crimp[1] * 100.0
 
-ax3b.axhline(300.0, color='red', ls='--', lw=1.5, label='A2 Structural Yield Threshold (300 N)')
-ax3b.axhline(400.0, color='darkred', ls=':', lw=1.5, label='A2 Ultimate Rupture Limit (400 N)')
+ax3b.annotate(f'+{pct_cr_std:.1f}% vs Std\n(+{pct_cr_sh:.1f}% vs Short)', xy=(2 - w, a2_crimp[2]), xytext=(2 - w, a2_crimp[2] + 25),
+             ha='center', fontsize=7.5, fontweight='bold', color='#E53935')
+ax3b.annotate(f'+{pct_hc_std:.1f}% vs Std', xy=(2, a2_hc[2]), xytext=(2, a2_hc[2] + 25),
+             ha='center', fontsize=7.5, fontweight='bold', color='#FB8C00')
+ax3b.annotate(f'+{pct_a4_std:.1f}% vs Std', xy=(2 + w, a4_crimp[2]), xytext=(2 + w, a4_crimp[2] + 25),
+             ha='center', fontsize=7.5, fontweight='bold', color='#8E24AA')
 
-ax3b.set_title("B) Phenotypic Scaling: Annular Pulley Loads vs Structural Limits (100 N Hang)", fontweight='bold')
+ax3b.axhline(400.0, color='darkred', ls='--', lw=1.5, label='A2 Cadaveric Limit (~400 N; Lin 1990, Schöffl 2009)')
+
+ax3b.set_title("B) Phenotypic Scaling: Pulley Loads (100 N Hang, Unscaled Moment Arms)", fontweight='bold')
 ax3b.set_ylabel("Pulley Normal Load (N)")
 ax3b.set_xticks(x_p)
 ax3b.set_xticklabels(phenotypes)
-ax3b.set_ylim(0, 520)
+ax3b.set_ylim(0, 480)
 ax3b.grid(True, alpha=0.3, axis='y')
 ax3b.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8)
 
@@ -285,15 +306,21 @@ plt.close(fig3)
 print("Saved pub_fig3_shear_and_scaling.png")
 
 # Copy all publication figures to artifact directory and paper/figures directory
-artifact_dir = "/Users/igorcerovsky/.gemini/antigravity-ide/brain/6db08e62-544f-418f-b0fa-e5341f42d013"
+artifact_dirs = [
+    "/Users/igorcerovsky/.gemini/antigravity-ide/brain/0c798303-b1a1-4c87-a64f-5b025e5bb2d7",
+    "/Users/igorcerovsky/.gemini/antigravity-ide/brain/6db08e62-544f-418f-b0fa-e5341f42d013"
+]
 os.makedirs("paper/figures", exist_ok=True)
 all_figures = ['pub_fig1_model_validation.png', 'pub_fig2_hold_depth_crossover.png', 'pub_fig3_shear_and_scaling.png']
 for fn in all_figures:
     if os.path.exists(f'outputs/{fn}'):
-        if os.path.exists(artifact_dir):
-            shutil.copy(f'outputs/{fn}', f'{artifact_dir}/{fn}')
+        for ad in artifact_dirs:
+            if os.path.exists(ad):
+                shutil.copy(f'outputs/{fn}', f'{ad}/{fn}')
         shutil.copy(f'outputs/{fn}', f'paper/figures/{fn}')
         print(f"Copied {fn} to artifact directory and paper/figures/.")
+
+print("All publication figures successfully created!")
 
 print("All publication figures successfully created!")
 
