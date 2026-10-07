@@ -1,2 +1,6 @@
 .mplcache
 *.pyc
+.venv/
+.history/
+data/
+.pycache

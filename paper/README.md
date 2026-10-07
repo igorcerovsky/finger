@@ -14,8 +14,13 @@ This directory contains the publication-ready academic manuscript, companion ath
 ```
 paper/
 ├── README.md                     # Overview and reproducibility guide (this file)
-├── paper_draft.md                # Primary academic research manuscript (5–8 pages)
+├── paper_draft.md                # Primary academic research manuscript
 ├── practical_training_guide.md   # Companion practical field guide for coaches & athletes
+├── pdf/                          # Publication-ready vector PDFs (KaTeX math + 300 DPI figures)
+│   ├── paper_draft.pdf           # 12-page academic manuscript PDF
+│   └── practical_training_guide.pdf # 11-page field guide PDF
+├── script/                       # Build and export tooling
+│   └── export_papers_to_pdf.py   # Automated PDF export script (uses .venv python)
 └── figures/                      # High-resolution (300 DPI) publication-grade figures
     ├── pub_fig1_model_validation.png
     ├── pub_fig2_hold_depth_crossover.png
@@ -27,10 +32,11 @@ paper/
 ## 1. Publications
 
 ### Primary Academic Manuscript
-- **File:** [`paper_draft.md`](file:///Users/igorcerovsky/Documents/finger/paper/paper_draft.md)
+- **Markdown Source:** [`paper_draft.md`](file:///Users/igorcerovsky/Documents/finger/paper/paper_draft.md)
+- **Publication PDF:** [`paper_draft.pdf`](file:///Users/igorcerovsky/Documents/finger/paper/pdf/paper_draft.pdf) (12 pages, vector formulas & figures)
 - **Title:** *A Three-Dimensional Musculoskeletal Model of the Climbing Finger: Dual-Phalanx Contact Mechanics, Anthropometric Phenotypic Scaling, and Out-of-Plane Annular Pulley Shearing*
 - **Target Venues:** *Journal of Biomechanics*, *Frontiers in Bioengineering and Biotechnology*, or *Sports Biomechanics*.
-- **Length:** ~7.5 pages (standard two-column academic formatting, ~4,800 words).
+- **Length:** 12 pages (standard academic formatting, ~4,800 words).
 - **Core Scientific Contributions:**
   1. **4-DOF Spatial Kinematics:** Resolves non-sagittal joint actions (MCP flexion/abduction, PIP/DIP flexion) under spatial coordinate transforms.
   2. **Dual-Phalanx Hertzian Contact Mechanics:** Captures hold depth transitions ($s \le L_{DP}$ vs. $s > L_{DP}$) where the middle phalanx engages the hold edge and anchors the A3 pulley, eliminating external DIP moment arms.
@@ -40,7 +46,8 @@ paper/
   6. **Cadaveric & In Vivo Validation:** Validated against cadaveric force-plate measurements across four standardized joint postures under 300 g and 950 g loads.
 
 ### Companion Practical Field Guide
-- **File:** [`practical_training_guide.md`](file:///Users/igorcerovsky/Documents/finger/paper/practical_training_guide.md)
+- **Markdown Source:** [`practical_training_guide.md`](file:///Users/igorcerovsky/Documents/finger/paper/practical_training_guide.md)
+- **Publication PDF:** [`practical_training_guide.pdf`](file:///Users/igorcerovsky/Documents/finger/paper/pdf/practical_training_guide.pdf) (11 pages, tables & training templates)
 - **Title:** *Biomechanical Manual for Finger Training & Injury Prevention in Sport Climbing: A Practical Field Guide for Coaches, Clinicians, and Athletes*
 - **Audience:** Climbing coaches, sports physical therapists, orthopedic clinicians, and dedicated athletes.
 - **Core Practical Content:**
@@ -69,17 +76,27 @@ paper/
 
 ---
 
-## 3. Reproducibility & Regeneration
+## 3. PDF Export & Reproducibility
 
-All figures and simulation outputs are 100% deterministic and reproducible using the project's Python virtual environment:
+Both manuscripts can be compiled into publication-grade vector PDFs with embedded KaTeX mathematics and 300 DPI figures using the Python virtual environment:
 
 ```bash
-# From workspace root:
-source .venv/bin/activate
+# From repository root, execute the PDF export pipeline:
+.venv/bin/python paper/script/export_papers_to_pdf.py
 
+# Optional flags:
+# Export only the scientific paper:
+.venv/bin/python paper/script/export_papers_to_pdf.py --paper-only
+
+# Export only the practical guide:
+.venv/bin/python paper/script/export_papers_to_pdf.py --guide-only
+```
+
+### Full Simulation & Figure Reproduction
+```bash
 # Regenerate all high-resolution figures into paper/figures/ and outputs/:
-python3 generate_publication_figures.py
+.venv/bin/python generate_publication_figures.py
 
-# Run regression test suite:
-python3 test_match_human_bonobo.py
+# Run model regression test suite:
+.venv/bin/python test_match_human_bonobo.py
 ```
