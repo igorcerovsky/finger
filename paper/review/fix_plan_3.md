@@ -147,14 +147,17 @@ The independent third-round review ([review_3.md](file:///Users/igorcerovsky/Doc
   - Implemented continuous micro-edge contact centroid transition: $s_{centroid} = (d_{eff} / 3.0) \cdot \tanh(d_{eff} / d_{trans})$ with $d_{trans} = 4.0\text{ mm}$.
   - On micro-edges ($d \le 4\text{ mm}$), the contact centroid shifts toward the hold edge corner, creating a substantial unsupported bony cantilever for longer digits ($22.3\text{ mm}$ vs $15.7\text{ mm}$ at $d = 2\text{ mm}$) and resolving the unrealistic curve convergence at $d \approx 3\text{ mm}$.
 
-- [ ] **Task 6.3: Chain-Wide Kinematic Posture Optimization (Point 2C - Deferred for Future Update)**
-  - Retained for future milestone: full kinematic optimization across the three-segment phalangeal chain (DIP hyperextension, PIP flexion, MCP elevation) to model adaptive postural compensation on marginal holds.
+- [x] **Task 6.3: Chain-Wide Kinematic Posture Optimization (Point 2C)**
+  - Implemented 3-DOF kinematic chain optimization across $(\theta_{MCP}, \theta_{PIP}, \theta_{DIP})$ in `find_equilibrium_posture`.
+  - Formulated composite cost functional balancing muscular effort ($F_{total}$), A2 pulley protection ($w_{pulley} F_{A2}$), friction feasibility, and hand-to-wall spatial reach ($x_{reach}$).
+  - Bounded optimization by physiological envelopes per grip style (Crimp, Half-Crimp, Open-Hand) with smooth L-BFGS-B convergence and parametric warm-starts.
+  - Documented physical formulation in Section 11.5 of `physics.md`.
 
 - [x] **Task 6.4: Numerical Recomputation, Figure Regeneration & Documentation**
   - Updated `generate_publication_figures.py` and regenerated high-resolution publication figures (`pub_fig1_model_validation.png`, `pub_fig2_hold_depth_crossover.png`, `pub_fig3_shear_and_scaling.png`).
   - Synchronized Tables 2 and 3 into `paper/short_vs_long_finger_advantage.md` via `sync_paper_tables.py`.
   - Updated narrative, captions, and clinical guidance in `paper/short_vs_long_finger_advantage.md` and `paper/practical_training_guide.md`.
-  - Added comprehensive theoretical derivations in `physics.md` as **Section 11: Allometric Scaling, Micro-Edge Contact Mechanics & The Long-Finger Crimp Dilemma**.
+  - Added comprehensive theoretical derivations in `physics.md` as **Section 11: Allometric Scaling, Micro-Edge Contact Mechanics & The Long-Finger Crimp Dilemma** (§11.1–§11.5).
   - Recompiled publication-quality PDFs via `paper/script/export_papers_to_pdf.py`.
 
 ---
@@ -170,7 +173,7 @@ The independent third-round review ([review_3.md](file:///Users/igorcerovsky/Doc
 | **A1 / N8: Evaluation of Long-Finger Crimp Hypothesis** | Paper abstract, §4.3, §5.2, guide, Fig 3B | **Completed** | Unscaled moment arms removed. Hypothesis confirmed via sub-linear allometry, contact mechanics, and body mass scaling. |
 | **Point 2A: Sub-linear Condyle Allometry ($k=0.50$)** | `climbing_finger_3d.py`, paper, `physics.md` | **Completed** | $ma \propto f^{0.50}$; $+17.7\%$ intrinsic leverage penalty on 6 mm edge under fixed 100 N external load ($297.3\text{ N}$ vs $252.6\text{ N}$). |
 | **Point 2B: Pulp Pad Scaling & Corner Concentration** | `climbing_finger_3d.py`, paper, `physics.md` | **Completed** | $s_{centroid} = (d_{eff}/3)\tanh(d_{eff}/d_{trans})$; clear force gap at $d = 2\text{--}5\text{ mm}$ in Fig 2A; unsupported cantilever resolved. |
-| **Point 2C: Multi-Joint Kinematic Optimization** | Simulation solver | **Deferred** | Kept for future development milestone as agreed. |
+| **Point 2C: Multi-Joint Kinematic Optimization** | `climbing_finger_3d.py`, `physics.md` | **Completed** | 3-DOF MCP/PIP/DIP posture optimization in `find_equilibrium_posture` balancing effort, A2 load, and spatial reach. |
 | **A2: Crossover Threshold ($f_{DP} \approx 0.79$)** | `climbing_finger_3d.py`, paper §4.1 | **Completed** | Half-crimp threshold corrected to $f_{DP} \approx 0.79$; load partitioning disclosed as mechanistic hypothesis. |
 | **A3: Forward Validation** | `climbing_finger_3d.py`, paper §3 | **Completed** | Forward force comparison reported; Synek 2019 properly attributed; Schweizer & Vigouroux benchmarks contextualized. |
 | **B6: Sensitivity Analysis** | `global_sensitivity_analysis.py` | **Completed** | Dynamic parameter injection ($r_{base}$, $a2_{share}$ inside solve); GSA confirms crossover depth shift of $18.4\text{ mm}$ (55.4%). |

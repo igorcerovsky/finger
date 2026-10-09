@@ -114,6 +114,13 @@ class Config:
     # Characteristic transition depth (mm) for fingertip pulp corner concentration on micro-edges
     d_pulp_corner_transition: float = 4.0
 
+    # ── Chain-Wide Kinematic Posture Optimization (Point 2C) ─────
+    # True : Optimize full 3-segment phalangeal chain (MCP elevation, PIP flexion, DIP hyperextension)
+    # False: Legacy 2-DOF posture optimization (PIP/DIP with fixed MCP)
+    optimize_chain_posture: bool = True
+    weight_posture_pulley: float = 0.20   # Pulley bowstringing penalty weight in posture optimizer
+    weight_posture_spatial: float = 0.15  # Hand-to-wall horizontal reach penalty weight
+
     # ── Extensor (EDC) Stiffness / Co-Contraction ─────────────
     use_edc_stiffness = True
     k_EDC_stiff       = 1.5     # N per exponential joint limit modifier
@@ -747,69 +754,105 @@ def get_emg_ratio(r_base, frac_DP):
 def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
                              F_ext: np.ndarray,
                              contact: 'ContactGeometry',
-                             pip0: float = None, dip0: float = None) -> GripAngles:
+                             pip0: float = None, dip0: float = None,
+                             mcp0: float = None,
+                             optimize_chain: bool = None) -> GripAngles:
     """
-    Find the finger posture (DIP, PIP angles) that minimises total tendon force
+    Find the finger posture that minimises total tendon force and pulley stress
     for a given hold depth and grip type.
 
-    pip0, dip0: optional warm-start angles (deg). When provided (e.g. from the
-    previous depth in a sweep), the grid search is skipped in favour of a local
-    Nelder-Mead optimisation seeded from the warm-start. This enforces posture
-    continuity along the depth sweep and eliminates basin-hopping artefacts.
+    Parameters:
+      grip_base     : Baseline GripAngles specifying nominal grip posture and style.
+      geom          : FingerGeometry specifying phalanx lengths and allometric scale.
+      F_ext         : Applied 3D external force vector at the hold (N).
+      contact       : ContactGeometry specifying hold depth, edge radius, wall angle.
+      pip0, dip0    : Optional warm-start angles for PIP and DIP (deg).
+      mcp0          : Optional warm-start angle for MCP (deg).
+      optimize_chain: If True, performs 3-DOF kinematic chain optimization across
+                      (MCP elevation, PIP flexion, DIP hyperextension) [Point 2C].
+                      If False, optimizes (PIP, DIP) with fixed MCP [2-DOF mode].
+                      Defaults to Config.optimize_chain_posture.
 
-    Biological rationale:
-      For a given grip constraint (hold depth and grip style), the nervous system
-      selects the posture with the lowest total muscular effort — a well-established
-      principle in motor neuroscience (Uno et al. 1989, Latash 2012). Since the
-      external moment distribution changes with joint angles, the optimal posture
-      depends non-trivially on hold depth.
-
-    Algorithm (grid search + L-BFGS-B local refinement):
-      1. 9x9 grid over:  PIP in [theta_PIP_base ± 20°], DIP in [theta_DIP_base ± 20°]
-      2. At each grid point: solve direct (3×3) to get total tendon force
-      3. Select best grid point as warm-start
-      4. scipy.optimize.minimize over (PIP, DIP) for smooth refinement
-      5. Return GripAngles at optimum. MCP and phi_MCP are held fixed.
-
-    NOTE: This model assumes passive mechanical optimisation only. In reality,
-    neural coactivation patterns further constrain the feasible posture space.
-    This is a known simplification flagged for future improvement.
+    Biological & Mechanical Principles (Point 2C):
+      1. Muscle Stress Minimisation: The motor control system coordinates multi-articular
+         flexors and extensors to minimise metabolic cost (Uno et al. 1989, Latash 2012).
+      2. Pulley Stress Protection: Extreme acute PIP flexion (>105°) spikes A2 bowstringing
+         force non-linearly. Including a pulley stress penalty prevents unrealistic over-curling.
+      3. Hand-to-Wall Kinematics: The climber maintains forearm/hand alignment with the wall
+         to prevent peeling off shallow ledges. Total finger reach (x_reach = x_TIP - x_MCP)
+         is constrained near nominal ergonomics.
+      4. Grip Style Consistency: Optimisation operates within physiological envelopes
+         specific to the grip (crimp, half-crimp, open-hand) to prevent unphysiological mode hopping.
 
     References:
       Vigouroux L. et al. (2011) J Biomechanics 44(8):1443-1449.
       Schweizer A. (2001) J Biomechanics 34(2):217-223.
       Uno Y. et al. (1989) Biological Cybernetics 61(2):89-101.
     """
-    theta_PIP_0 = pip0 if pip0 is not None else grip_base.theta_PIP
-    theta_DIP_0 = dip0 if dip0 is not None else grip_base.theta_DIP
+    if optimize_chain is None:
+        optimize_chain = getattr(Config, 'optimize_chain_posture', True)
 
-    def total_force_for_angles(pip, dip):
-        g = GripAngles(grip_base.name, grip_base.theta_MCP, grip_base.phi_MCP,
-                       float(pip), float(dip), grip_base.color, grip_base.emg_ratio)
-        kin  = kinematics_3d(g, geom)
-        ma   = moment_arms(g, geom=geom)
-        F_mag = float(np.linalg.norm(F_ext[:2]))
-        F_ext_dir = contact_force_vector(1.0, contact)
+    mcp_nom = grip_base.theta_MCP
+    pip_nom = grip_base.theta_PIP
+    dip_nom = grip_base.theta_DIP
+
+    theta_MCP_0 = mcp0 if mcp0 is not None else mcp_nom
+    theta_PIP_0 = pip0 if pip0 is not None else pip_nom
+    theta_DIP_0 = dip0 if dip0 is not None else dip_nom
+
+    F_mag = float(np.linalg.norm(F_ext[:2]))
+    F_ext_dir = contact_force_vector(1.0, contact)
+
+    kin_ref = kinematics_3d(grip_base, FingerGeometry())
+    target_reach_x = float(kin_ref['p_TIP'][0] - kin_ref['p_MCP'][0])
+
+    w_pulley  = getattr(Config, 'weight_posture_pulley', 0.20)
+    w_spatial = getattr(Config, 'weight_posture_spatial', 0.15)
+
+    name_lower = grip_base.name.lower()
+    if 'crimp' in name_lower and 'half' not in name_lower:
+        # Full crimp corridor: MCP elevated (0-25°), PIP flexed (95-118°), DIP hyperextended (-25 to 5°)
+        bounds_3d = [(0.0, 25.0), (95.0, 118.0), (-25.0, 5.0)]
+    elif 'half' in name_lower:
+        # Half crimp corridor: MCP moderate (10-35°), PIP (75-105°), DIP neutral/flexed (0-25°)
+        bounds_3d = [(10.0, 35.0), (75.0, 105.0), (0.0, 25.0)]
+    elif 'open' in name_lower:
+        # Open hand corridor: MCP flexed (15-45°), PIP extended (20-45°), DIP flexed (15-50°)
+        bounds_3d = [(15.0, 45.0), (20.0, 45.0), (15.0, 50.0)]
+    else:
+        bounds_3d = [(max(0.0, mcp_nom - 20.0), min(60.0, mcp_nom + 20.0)),
+                     (max(10.0, pip_nom - 25.0), min(120.0, pip_nom + 25.0)),
+                     (max(-30.0, dip_nom - 25.0), min(80.0, dip_nom + 25.0))]
+
+    def evaluate_posture_cost(mcp_val, pip_val, dip_val):
+        g = GripAngles(grip_base.name, float(mcp_val), grip_base.phi_MCP,
+                       float(pip_val), float(dip_val), grip_base.color, grip_base.emg_ratio)
+        kin = kinematics_3d(g, geom)
+        ma = moment_arms(g, geom=geom)
+
         p_C_DP, p_C_MP, F_DP, F_MP, d_eff, _ = compute_contact_point(g, geom, contact, kin, F_mag)
         ext = external_moments(kin, F_ext_dir, g,
                                p_contact_DP=p_C_DP, p_contact_MP=p_C_MP,
                                F_mag_DP=F_DP, F_mag_MP=F_MP)
 
-        # frac_DP: fraction of load still on DP — the direct physiological driver
-        # of FDP recruitment (governs DIP moment magnitude).
         frac_DP = float(F_DP / (F_DP + F_MP + 1e-9))
         r_emg = get_emg_ratio(grip_base.emg_ratio, frac_DP)
-        
-        # Apply Capstan friction mechanical advantage
-        from scipy.optimize import lsq_linear
+
         theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
         C_A2 = np.exp(Config.mu_tendon * theta_A2) if getattr(Config, 'use_capstan', True) else 1.0
         C_A4 = np.exp(Config.mu_tendon * theta_A4) if getattr(Config, 'use_capstan', True) else 1.0
-        
-        F_EDC_min = get_min_EDC_force(float(dip))
+
+        F_EDC_min = get_min_EDC_force(float(dip_val))
+
+        from scipy.optimize import lsq_linear
+        sigma_max = getattr(Config, 'sigma_max_N_cm2', 35.0)
+        F_flex_ub = 1500.0
+        F_LU_ub   = Config.PCSA_LU * sigma_max
+        F_EDC_ub  = Config.PCSA_EDC * sigma_max
+        F_RI_ub   = Config.PCSA_RI * sigma_max
+        F_UI_ub   = Config.PCSA_UI * sigma_max
 
         if getattr(Config, 'use_interossei', False):
-            # 4x5 interossei system: balances DIP, PIP, MCP flexion + MCP abduction
             A4e = np.array([
                 [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'],  ma['EDC_DIP'],  ma['RI_DIP'],  ma['UI_DIP']],
                 [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'],  ma['EDC_PIP'],  ma['RI_PIP'],  ma['UI_PIP']],
@@ -817,139 +860,97 @@ def find_equilibrium_posture(grip_base: GripAngles, geom: FingerGeometry,
                 [r_emg*ma['FDP_abd'] + ma['FDS_abd'],            ma['LU_abd'],  ma['EDC_abd'],  ma['RI_abd'],  ma['UI_abd']],
             ])
             b4e = np.array([ext['DIP'], ext['PIP'], ext['MCP'], ext['abd']])
-            
-            # Stacked L2 regularization to minimize muscle stress/effort (resolve null-space redundancy)
+
             lam = 1e-4
             W = np.diag([np.sqrt(r_emg**2 + 1.0), 1.0, 1.0, 1.0, 1.0])
             A_stacked = np.vstack([A4e, lam * W])
             b_stacked = np.concatenate([b4e, np.zeros(5)])
-            
-            bounds = ([0.0, 0.0, F_EDC_min, 0.0, 0.0], [np.inf, np.inf, np.inf, np.inf, np.inf])
+
+            bounds = ([0.0, 0.0, F_EDC_min, 0.0, 0.0],
+                      [F_flex_ub, F_LU_ub, F_EDC_ub, F_RI_ub, F_UI_ub])
             res = lsq_linear(A_stacked, b_stacked, bounds=bounds)
             x_clip = res.x
-            
+
             F_FDS_clip = x_clip[0]
             F_LU_clip  = x_clip[1]
             F_EDC_clip = x_clip[2]
             F_RI_clip  = x_clip[3]
             F_UI_clip  = x_clip[4]
             F_FDP_clip = r_emg * F_FDS_clip
-            
+
             raw_total = F_FDP_clip + F_FDS_clip + F_LU_clip + F_EDC_clip + F_RI_clip + F_UI_clip
             M_muscle = A4e.dot(x_clip)
             residual_error = float(np.linalg.norm(M_muscle - b4e))
         else:
-            # Legacy 3x3 system: balances DIP, PIP, MCP flexion
             A3e = np.array([
                 [r_emg*ma['FDP_DIP']*C_A2*C_A4,                  ma['LU_DIP'], ma['EDC_DIP']],
                 [r_emg*ma['FDP_PIP']*C_A2 + ma['FDS_PIP']*C_A2,  ma['LU_PIP'], ma['EDC_PIP']],
                 [r_emg*ma['FDP_MCP'] + ma['FDS_MCP'],            ma['LU_MCP'], ma['EDC_MCP']],
             ])
             b3e = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
-            bounds = ([0.0, 0.0, F_EDC_min], [np.inf, np.inf, np.inf])
+            bounds = ([0.0, 0.0, F_EDC_min], [F_flex_ub, F_LU_ub, F_EDC_ub])
             res = lsq_linear(A3e, b3e, bounds=bounds)
             x_clip = res.x
-            
+
             F_FDS_clip = x_clip[0]
             F_LU_clip  = x_clip[1]
             F_EDC_clip = x_clip[2]
             F_FDP_clip = r_emg * F_FDS_clip
-            
+
             raw_total = F_FDP_clip + F_FDS_clip + F_LU_clip + F_EDC_clip
             M_muscle = A3e.dot(x_clip)
             residual_error = float(np.linalg.norm(M_muscle - b3e))
-        
-        penalty = 10.0 * residual_error
-        
-        # Smooth penalty for anatomically impossible joint angles
-        # PIP max extension ~0°, max flexion ~120°
-        # DIP max extension ~-25°, max flexion ~90°
-        if float(pip) < 0.0:   penalty += 1000.0 * float(pip)**2
-        if float(pip) > 120.0: penalty += 1000.0 * (float(pip) - 120.0)**2
-        if float(dip) < -25.0: penalty += 1000.0 * (float(dip) + 25.0)**2
-        if float(dip) > 90.0:  penalty += 1000.0 * (float(dip) - 90.0)**2
 
-        # Grip-mode continuity: penalise leaving the grip's natural DIP regime.
-        # This prevents the optimizer jumping from open-hand into the crimp basin.
-        # Soft ceiling: 20 deg above the nominal grip DIP (open-hand: 30+20=50 deg max).
-        dip_max_grip = grip_base.theta_DIP + 20.0
-        if float(dip) > dip_max_grip:
-            penalty += 500.0 * (float(dip) - dip_max_grip)**2
+        pf = pulley_forces_3d(F_FDP_clip, F_FDS_clip, kin, geom)
+        F_A2 = pf['F_A2_mag']
 
-        # Friction feasibility: soft penalty when friction cone is approached/violated.
-        # ratio = |F_friction| / (mu * F_normal):  ratio > 1 → slip (physically impossible).
-        # Penalty activates above 0.8 (10% safety margin) and stiffens past 1.0.
-        # Scale: 200 N^2 per unit ratio squared — comparable to the residual error term
-        # but not so stiff that it overrides the primary force minimisation.
-        try:
-            feas = check_friction_feasibility(F_ext_dir * F_mag, contact, kin)
-            fr = float(feas.get('friction_ratio', 0.0))
-            if fr > 0.8:
-                k_fr = 200.0 if fr <= 1.0 else 2000.0   # stiffen past cone violation
-                penalty += k_fr * (fr - 0.8) ** 2
-        except Exception:
-            pass   # never let friction check crash the optimizer
+        feas = check_friction_feasibility(F_ext_dir * F_mag, contact, kin)
+        fr = float(feas.get('friction_ratio', 0.0))
+        pen_fr = 0.0
+        if fr > 0.8:
+            k_fr = 200.0 if fr <= 1.0 else 2000.0
+            pen_fr = k_fr * (fr - 0.8) ** 2
 
-        return float(raw_total + penalty)
+        reach_x = kin['p_TIP'][0] - kin['p_MCP'][0]
+        pen_reach = w_spatial * (reach_x - target_reach_x) ** 2
 
-    # ── 1. Fast Continuation / Grid search ────────────────────────────
-    # Numerical continuation: if warm-start angles (pip0, dip0) are provided from
-    # the immediately adjacent depth step, evaluate and refine locally first.
-    # Biological finger postures move continuously with edge depth.
-    # Fall back to the full global grid only if no warm-start exists or if the
-    # local continuation encounters a mechanical discontinuity / high penalty.
-    need_global = True
-    best_pip, best_dip, best_f = theta_PIP_0, theta_DIP_0, np.inf
+        pen_posture = (
+            0.06 * (mcp_val - mcp_nom) ** 2 +
+            0.06 * (pip_val - pip_nom) ** 2 +
+            0.06 * (dip_val - dip_nom) ** 2
+        )
 
-    if pip0 is not None and dip0 is not None:
-        try:
-            f_warm = total_force_for_angles(pip0, dip0)
-            if f_warm < 4000.0:
-                from scipy.optimize import minimize  # type: ignore
-                def obj_w(xy):
-                    try:
-                        return total_force_for_angles(xy[0], xy[1])
-                    except Exception:
-                        return 1e9
-                res_w = minimize(obj_w, [pip0, dip0], method='Nelder-Mead',
-                                 options={'xatol': 0.8, 'fatol': 1.0, 'maxiter': 40})
-                if res_w.fun < 3500.0:
-                    best_pip, best_dip, best_f = float(res_w.x[0]), float(res_w.x[1]), float(res_w.fun)
-                    need_global = False
-        except Exception:
-            need_global = True
+        return float(raw_total + w_pulley * F_A2 + 100.0 * residual_error + pen_fr + pen_reach + pen_posture)
 
-    if need_global:
-        pip_grid_g = np.linspace(0.0, 110.0, 10)   # global: 10 pts
-        dip_grid_g = np.linspace(-25.0, 90.0, 10)
-        best_f_global, best_pip_g, best_dip_g = np.inf, theta_PIP_0, theta_DIP_0
+    from scipy.optimize import minimize  # type: ignore
 
-        for pip in pip_grid_g:
-            for dip in dip_grid_g:
-                try:
-                    f = total_force_for_angles(pip, dip)
-                    if f < best_f_global:
-                        best_f_global, best_pip_g, best_dip_g = f, pip, dip
-                except Exception:
-                    pass
+    if optimize_chain:
+        x0 = [theta_MCP_0, theta_PIP_0, theta_DIP_0]
+        bnds = bounds_3d
+        def obj_chain(xy):
+            try:
+                return evaluate_posture_cost(xy[0], xy[1], xy[2])
+            except Exception:
+                return 1e9
 
-        best_pip, best_dip, best_f = best_pip_g, best_dip_g, best_f_global
+        res = minimize(obj_chain, x0, method='L-BFGS-B', bounds=bnds,
+                       options={'ftol': 1e-4, 'gtol': 1e-3, 'maxiter': 50})
+        best_mcp, best_pip, best_dip = float(res.x[0]), float(res.x[1]), float(res.x[2])
+    else:
+        x0 = [theta_PIP_0, theta_DIP_0]
+        bnds = [bounds_3d[1], bounds_3d[2]]
+        def obj_2dof(xy):
+            try:
+                return evaluate_posture_cost(mcp_nom, xy[0], xy[1])
+            except Exception:
+                return 1e9
 
-        # ── 2. Local refinement ───────────────────────────────────────────
-        try:
-            from scipy.optimize import minimize  # type: ignore
-            def obj(xy):
-                try:
-                    return total_force_for_angles(xy[0], xy[1])
-                except Exception:
-                    return 1e9
-            res = minimize(obj, [best_pip, best_dip], method='Nelder-Mead',
-                           options={'xatol': 1.0, 'fatol': 1.0, 'maxiter': 50})
-            best_pip, best_dip = float(res.x[0]), float(res.x[1])
-        except Exception:
-            pass  # grid solution is used as fallback
+        res = minimize(obj_2dof, x0, method='L-BFGS-B', bounds=bnds,
+                       options={'ftol': 1e-4, 'gtol': 1e-3, 'maxiter': 50})
+        best_mcp = mcp_nom
+        best_pip, best_dip = float(res.x[0]), float(res.x[1])
 
-    return GripAngles(grip_base.name, grip_base.theta_MCP, grip_base.phi_MCP,
+    return GripAngles(grip_base.name, best_mcp, grip_base.phi_MCP,
                       best_pip, best_dip, grip_base.color, grip_base.emg_ratio)
 
 
@@ -1699,20 +1700,21 @@ def run_simulation():
         ax_f, ax_r, ax_p, ax_ang = axes
 
         for geom, gc, gl in zip(geoms, gcols, ['Short (\u221215%)', 'Standard', 'Long (+15%)']):
-            fdp_eq, fds_eq, a2_eq, pip_eq, dip_eq = [], [], [], [], []
-            prev_pip, prev_dip = None, None
+            fdp_eq, fds_eq, a2_eq, mcp_eq, pip_eq, dip_eq = [], [], [], [], [], []
+            prev_mcp, prev_pip, prev_dip = None, None, None
             for d in d_sw:
                 ct = ContactGeometry(d_hold=d, r_edge=Config.r_edge_mm,
                                      t_DP=Config.t_DP_mm, mu=Config.mu_friction,
                                      beta_wall=Config.beta_wall_deg)
                 eq_g = find_equilibrium_posture(base_grip, geom, F_ext, ct,
-                                                pip0=prev_pip, dip0=prev_dip)
-                prev_pip, prev_dip = eq_g.theta_PIP, eq_g.theta_DIP
+                                                mcp0=prev_mcp, pip0=prev_pip, dip0=prev_dip)
+                prev_mcp, prev_pip, prev_dip = eq_g.theta_MCP, eq_g.theta_PIP, eq_g.theta_DIP
                 r  = solve_all_methods(eq_g, geom, F_ext, contact=ct)['emg']
                 pf = pulley_forces_3d(r['F_FDP'], r['F_FDS'], r['kin'], geom)
                 fdp_eq.append(r['F_FDP'])
                 fds_eq.append(r['F_FDS'])
                 a2_eq.append(pf['F_A2_mag'])
+                mcp_eq.append(eq_g.theta_MCP)
                 pip_eq.append(eq_g.theta_PIP)
                 dip_eq.append(eq_g.theta_DIP)
 
@@ -1739,6 +1741,7 @@ def run_simulation():
             ax_p.plot(d_sw, a2_eq, '-', color=gc, lw=2.5, label=gl)
 
             # Panel D: posture
+            ax_ang.plot(d_sw, mcp_eq, ':',  color=gc, lw=1.8, alpha=0.85, label=f'{gl} MCP')
             ax_ang.plot(d_sw, pip_eq, '-',  color=gc, lw=2.5, label=f'{gl} PIP')
             ax_ang.plot(d_sw, dip_eq, '--', color=gc, lw=2.0, alpha=0.85, label=f'{gl} DIP')
 
@@ -1778,7 +1781,7 @@ def run_simulation():
         ax_p.legend(fontsize=8, ncol=2, loc='upper right')
 
         ax_ang.set_ylabel('Joint Angle (deg)', fontsize=11)
-        ax_ang.set_title('D) Equilibrium Posture: PIP (solid) & DIP (dashed)', fontsize=10, fontweight='bold')
+        ax_ang.set_title('D) Equilibrium Posture: PIP (solid), DIP (dashed) & MCP (dotted)', fontsize=10, fontweight='bold')
         ax_ang.set_xlabel('Hold Depth d_hold (mm)', fontsize=11)
         ax_ang.legend(fontsize=8, ncol=2, loc='upper right')
 
@@ -1846,14 +1849,14 @@ def run_simulation():
 
         for gk in grip_keys:
             bg = GRIPS[gk]
-            forces, prev_pip, prev_dip = [], None, None
+            forces, prev_mcp, prev_pip, prev_dip = [], None, None, None
             for d in d_cmp:
                 ct = ContactGeometry(d_hold=d, r_edge=Config.r_edge_mm,
                                      t_DP=Config.t_DP_mm, mu=Config.mu_friction,
                                      beta_wall=Config.beta_wall_deg)
                 eq_g = find_equilibrium_posture(bg, geom, F_ext, ct,
-                                                pip0=prev_pip, dip0=prev_dip)
-                prev_pip, prev_dip = eq_g.theta_PIP, eq_g.theta_DIP
+                                                mcp0=prev_mcp, pip0=prev_pip, dip0=prev_dip)
+                prev_mcp, prev_pip, prev_dip = eq_g.theta_MCP, eq_g.theta_PIP, eq_g.theta_DIP
                 r = solve_all_methods(eq_g, geom, F_ext, contact=ct)['emg']
                 forces.append(r['F_total'])
             all_forces[gk] = np.array(forces)

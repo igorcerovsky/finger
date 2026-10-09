@@ -197,7 +197,7 @@ for gk, col, name in [('crimp', '#E53935', 'Full Crimp'),
     ax2b.plot(d_cmp, all_forces[gk], '-', color=col, lw=2.6, label=name)
 
 # Shaded optimal zones
-ax2b.axvspan(2.0, 8.0, color='#FFE0B2', alpha=0.35, label='Half-Crimp Feasible (Micro-Edge)')
+ax2b.axvspan(2.0, 8.0, color='#FFE0B2', alpha=0.35, label='Half-Crimp Feasible (<8 mm)')
 ax2b.axvspan(8.0, 18.0, color='#FFF9C4', alpha=0.30, label='Transition Zone (8–18 mm)')
 ax2b.axvspan(18.0, 40.0, color='#C8E6C9', alpha=0.35, label='Open Hand Dominant (>18 mm)')
 

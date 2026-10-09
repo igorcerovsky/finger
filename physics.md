@@ -474,3 +474,30 @@ The overall difficulty experienced by long-fingered climbers is therefore the co
 
 This multi-layer formulation demonstrates that while pure leverage provides an initial disadvantage, it is the combination of **sub-linear allometric condyle scaling, micro-edge cantilever mechanics, and allometric bodyweight surge** that renders small crimps physically punishing for long-fingered athletes.
 
+### 11.5 Multi-Segment Kinematic Chain Optimization (Point 2C)
+
+In real human climbing, fingers do not remain locked at static, invariant angles across all edge depths and phalangeal proportions. Instead, the central nervous system coordinates a multi-articular kinematic chain:
+$$\boldsymbol{\theta} = (\theta_{MCP}, \theta_{PIP}, \theta_{DIP})^T$$
+subject to biological motor control and equilibrium constraints (Uno et al. 1989; Vigouroux et al. 2011; Latash 2012).
+
+#### Mathematical Formulation of Chain Optimization:
+The optimal posture $\boldsymbol{\theta}^*$ is found by minimizing a composite physiological cost functional:
+$$\min_{\boldsymbol{\theta} \in \Omega_{\text{grip}}} J(\boldsymbol{\theta}) = J_{\text{effort}}(\boldsymbol{\theta}) + w_{\text{pulley}} F_{A2}(\boldsymbol{\theta}) + 100 \|\mathbf{M}_{\text{muscle}} - \mathbf{M}_{\text{ext}}\| + J_{\text{friction}}(\boldsymbol{\theta}) + J_{\text{reach}}(\boldsymbol{\theta}) + J_{\text{corridor}}(\boldsymbol{\theta})$$
+
+where:
+1. **Muscular Effort ($J_{\text{effort}}$):** Total flexor, extensor, and intrinsic recruitment:
+   $$J_{\text{effort}} = F_{FDP} + F_{FDS} + F_{EDC} + F_{LU} + F_{RI} + F_{UI}$$
+   subject to physiological cross-sectional capacity limits ($F_i \le \text{PCSA}_i \cdot \sigma_{max}$).
+2. **Pulley Protection ($w_{\text{pulley}} F_{A2}$):** As PIP flexion increases, Capstan friction mechanical advantage ($e^{\mu \theta_{PIP}}$) initially reduces the required active muscle tension at the forearm. However, A2 pulley bowstringing tension scales as $F_{A2} = 2 T \sin(\Delta\theta/2)$. Weighting $w_{\text{pulley}} \approx 0.20$ prevents unrealistic acute hyper-flexion slamming into the joint limits.
+3. **Friction Cone Feasibility ($J_{\text{friction}}$):** If the shear-to-normal ratio $|F_f| / (\mu F_N) > 0.8$, a steep quadratic penalty activates, reflecting the loss of contact traction on the hold lip.
+4. **Hand-to-Wall Kinematic Closure ($J_{\text{reach}}$):** When grasping a rock edge, the climber's forearm and palm maintain a constrained spatial distance from the wall plane. Horizontal reach $x_{\text{reach}} = p_{TIP,x} - p_{MCP,x}$ is penalized against the ergonomic baseline:
+   $$J_{\text{reach}} = w_{\text{spatial}} (x_{\text{reach}}(\boldsymbol{\theta}) - x_{\text{reach,nominal}})^2$$
+5. **Grip Envelope Corridor ($\Omega_{\text{grip}}$):** Optimization operates within bounded physiological corridors to preserve grip identity (e.g. Crimp: $\theta_{DIP} \in [-25^\circ, 5^\circ], \theta_{PIP} \in [95^\circ, 118^\circ]$; Half-Crimp: $\theta_{DIP} \in [0^\circ, 25^\circ], \theta_{PIP} \in [75^\circ, 105^\circ]$; Open-Hand: $\theta_{DIP} \in [15^\circ, 50^\circ], \theta_{PIP} \in [20^\circ, 45^\circ]$).
+
+#### Kinematic Impact on Phenotypic Leverage:
+When applied to digit length scaling:
+- **Short Digits:** Achieve stable equilibrium with modest MCP elevation ($\theta_{MCP} \approx 30^\circ\text{–}35^\circ$) and moderate PIP flexion ($\theta_{PIP} \approx 90^\circ\text{–}105^\circ$), keeping A2 pulley tension low ($241.2\text{ N}$ on 6 mm edge).
+- **Long Digits:** Because the distal phalanx cantilever is $42\%$ longer, maintaining spatial reach and contact stability forces the longer finger to elevate the MCP joint and maintain acute PIP flexion. The resulting pulley stress reaches $282.5\text{ N}$ on 6 mm edge ($+17.1\%$ elevation).
+- This establishes that even when athletes actively optimize their multi-joint posture across the full kinematic chain, the underlying anatomical lever penalty cannot be eliminated by joint repositioning alone.
+
+
