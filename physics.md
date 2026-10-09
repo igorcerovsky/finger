@@ -410,3 +410,67 @@ Our model intentionally retains the cadaveric CT-calibrated moment arms ($5.0\te
 1. They reflect empirical human finger anatomy where annular pulleys and fibrous sheaths are physically intact and resist tendon bowstringing collapse.
 2. They produce tendon and pulley forces that align with in vivo climbing EMG data (Vigouroux et al. 2006) and experimental pulley failure thresholds (Schweizer 2001; Lin et al. 1990).
 3. This cross-model benchmark illustrates that general-purpose robotics/neuromuscular simulators (such as MyoSuite) require the addition of annular pulley constraints and wrapping cylinders before they can be applied to sport climbing or hand surgery pulley biomechanics.
+
+---
+
+## 11. Allometric Scaling, Micro-Edge Contact Mechanics & The Long-Finger Crimp Dilemma
+
+A recurring question in climbing biomechanics is why athletes with longer fingers find small crimping holds ($\le 8\text{ mm}$) disproportionately difficult to hold. Our 3D framework reconciles this empirical observation by resolving the underlying physics across four distinct analytical layers:
+
+### 11.1 Sub-Linear Condyle Allometry ($ma \propto L^{0.50}$) vs. Linear Isometry
+
+Prior theoretical models historically suffered from two opposing simplifications:
+1. **Unscaled Levers ($ma = \text{const}$, $k = 0$):** Assuming that flexor moment arms remain completely static while bones elongate artificially inflates external torque demand by $+15.4\%$ to $+36.3\%$, conflicting with musculoskeletal imaging showing that joint dimensions covary with skeletal frame.
+2. **Strict Linear Isometry ($ma \propto L^1$, $k = 1.0$):** Assuming that joint condyle radii expand $1:1$ with phalangeal length introduces an algebraic cancellation in the micro-edge limit ($d \to 0$):
+   $$F_{FDP} \approx \frac{F_{ext} \cdot L_{DP}}{ma_{DIP}} = \frac{F_{ext} \cdot (\lambda L_{DP,0})}{\lambda ma_{DIP,0}} = \frac{F_{ext} \cdot L_{DP,0}}{ma_{DIP,0}} = \text{const}$$
+   This linear cancellation artificially predicts identical tendon forces across all finger lengths ($<0.2\%$ variance at $d \approx 2\text{--}3\text{ mm}$), contradicting real-world athletic observations.
+
+**Realistic Biological Formulation:**
+In primate and human skeletal allometry (Synek et al. 2019; Schmidt & Krause 2011; Roloff et al. 2006), digit elongation is primarily mediated by longitudinal growth of the bony diaphysis (shaft). Joint condyle caliber, trochlear depth, and flexor sheath clearance scale with transverse bone thickness rather than shaft length, following an empirical sub-linear allometric exponent $k \approx 0.50$:
+$$ma(L) = ma_0 \cdot \left(\frac{L}{L_0}\right)^k, \quad k = 0.50$$
+
+Consequently, the ratio of external phalangeal lever arm to internal moment arm increases with digit elongation:
+$$\frac{L_{DP}}{ma_{DIP}(L_{DP})} \propto \frac{L_{DP}}{L_{DP}^{0.50}} = L_{DP}^{0.50}$$
+
+For a $+15\%$ longer distal phalanx ($L_{DP} = 25.3\text{ mm}$ vs $18.7\text{ mm}$ for short), this sub-linear caliber scaling establishes an intrinsic **$+17.7\%$ mechanical disadvantage** in required flexor tendon tension even under identical external tip loads ($100\text{ N}$).
+
+### 11.2 Micro-Edge Cantilever Mechanics & Corner Stress Concentration
+
+On wide ledges ($d_{hold} \ge 10\text{ mm}$), the compliant fingertip pulp pad flattens across the contact surface, and the pressure distribution follows a broad triangular profile with centroid at $s_{centroid} = d_{eff}/3$ from the distal tip.
+
+On microscopic edges ($d_{hold} \le 5\text{ mm}$), the contact interface is geometrically bounded by the outer edge lip. In contact mechanics of compliant layers over sharp corners (Johnson 1985; Serina et al. 1997; Wu et al. 2003), high compressive stress concentrates at the outer corner, shifting the effective center of pressure toward the edge lip:
+$$s_{centroid} = \frac{d_{eff}}{3.0} \cdot \tanh\left(\frac{d_{eff}}{d_{trans}}\right)$$
+where $d_{trans} \approx 4.0\text{ mm}$ is the characteristic pulp transition depth.
+
+As $d_{eff} \to 0$, $s_{centroid} \to 0$, which extends the **unsupported bone cantilever**:
+$$L_{cantilever} = L_{DP} - s_{centroid} \to L_{DP}$$
+
+On a $3\text{ mm}$ micro-edge:
+- Short digit ($L_{DP} = 18.7\text{ mm}$): unsupported cantilever = **$15.7\text{ mm}$** ($16\%$ of DP supported by hold).
+- Long digit ($L_{DP} = 25.3\text{ mm}$): unsupported cantilever = **$22.3\text{ mm}$** ($+42\%$ longer cantilever arm).
+
+The longer distal phalanx acts as an extended unsupported lever, magnifying the external moment arm $(\vec{p}_C - \vec{p}_{DIP})$ applied to the DIP joint.
+
+### 11.3 Palmar Pulp Caliber Scaling & Roll-Off Shear Torque
+
+The palmar-dorsal thickness of the distal phalanx pad scales with skeletal caliber:
+$$t_{DP}(L) = t_{DP,0} \cdot \left(\frac{L}{L_0}\right)^k, \quad k = 0.50$$
+Yielding palmar radius $r_{palmar} \approx 4.82\text{ mm}$ for long digits compared to $4.15\text{ mm}$ for short digits.
+
+When holding a microscopic incut, the downward reaction component of bodyweight ($F_y$) acts at the contact interface offset by $r_{palmar}$ from the bone axis. This produces an unstable **rotational roll-off shear torque**:
+$$\vec{M}_{shear} = r_{palmar} (\hat{n}_{palm} \times \vec{F}_{ext})$$
+This rolling moment attempts to peel the compliant pad off the edge lip, tilting the distal phalanx into extension and demanding higher compensatory stabilizing tension from the FDP tendon.
+
+### 11.4 Summary of Interacting Mechanisms
+
+The overall difficulty experienced by long-fingered climbers is therefore the compound result of four interacting physical factors:
+
+| Physical Mechanism | Parameter / Formulation | Biomechanical Impact on Long Digits |
+| :--- | :--- | :--- |
+| **Sub-Linear Caliber Scaling** | $ma \propto L^{0.50}$ | **$+17.7\%$ leverage gap** on 6 mm edge at identical 100 N tip load |
+| **Unsupported Bone Cantilever** | $L_{cantilever} = L_{DP} - s_C$ | $+42\%$ longer unsupported cantilever arm on micro-edges |
+| **Dual-Phalanx Transition Boundary** | $\rho = d / L_{DP}$ | Short digits transition to MP contact at $\rho \ge 1.0$ (saving 20.9% A2 load); long digits remain in single-phalanx point loading |
+| **Allometric Mass Scaling** | $m \propto L^2\text{–}L^3$ | **$+118.1\%$ pulley load surge** during bodyweight hangs ($380.0\text{ N}$ vs $174.2\text{ N}$) |
+
+This multi-layer formulation demonstrates that while pure leverage provides an initial disadvantage, it is the combination of **sub-linear allometric condyle scaling, micro-edge cantilever mechanics, and allometric bodyweight surge** that renders small crimps physically punishing for long-fingered athletes.
+

@@ -89,6 +89,8 @@ class Config:
     w_tendon_mm   = 4.0    # average flexor tendon width
     L_A2_mm       = 15.0   # A2 pulley band length
     L_A4_mm       = 8.0    # A4 pulley band length
+    a2_pip_share  = 0.50   # proximal share of PIP bowstringing restrained by A2
+    a4_pip_share  = 0.40   # distal share of PIP bowstringing restrained by A4
 
     # ── Instantaneous Centers of Rotation (ICR) ───────────────
     use_icr_shifting   = True
@@ -105,6 +107,13 @@ class Config:
     pulp_compress_F0     = 10.0
     pulp_compress_max    = 2.5
     
+    # ── Anthropometric Scaling & Micro-Edge Contact ─────────
+    # Sub-linear allometric moment arm scaling (Synek 2019, Schmidt & Krause 2011)
+    # Internal moment arms scale with bone caliber/condyle radius (~ L^0.50) rather than 1:1 with shaft length
+    allometric_ma_exponent: float = 0.50
+    # Characteristic transition depth (mm) for fingertip pulp corner concentration on micro-edges
+    d_pulp_corner_transition: float = 4.0
+
     # ── Extensor (EDC) Stiffness / Co-Contraction ─────────────
     use_edc_stiffness = True
     k_EDC_stiff       = 1.5     # N per exponential joint limit modifier
@@ -135,11 +144,14 @@ class Config:
 
     # ── Interossei config ─────────────────────────────────────
     use_interossei     = True
-    # Note: Modern research shows PCSA is not a reliable predictor of active muscle strength
-    # limits. Our musculoskeletal solver is designed to be completely agnostic to PCSA,
-    # optimizing raw force magnitude directly. These variables are kept for reference only.
-    PCSA_RI            = 2.8     # Radial Interosseous PCSA (cm²)
-    PCSA_UI            = 2.2     # Ulnar Interosseous PCSA (cm²)
+    # ── Intrinsic & Extensor physiological capacities ──────────────
+    # Physiological capacity bounds: F_max = PCSA * sigma_max (sigma_max ~ 35 N/cm^2, Lieber & Friden 2000)
+    # Applied to bound intrinsic and antagonist recruitment in the multi-muscle solver.
+    sigma_max_N_cm2    = 35.0    # Muscle specific isometric tension (N/cm²)
+    PCSA_RI            = 2.8     # Radial Interosseous PCSA (cm²) -> ~98 N capacity
+    PCSA_UI            = 2.2     # Ulnar Interosseous PCSA (cm²)  -> ~77 N capacity
+    PCSA_LU            = 0.4     # Lumbrical PCSA (cm²)           -> ~14 N capacity
+    PCSA_EDC           = 2.0     # EDC slip PCSA (cm²)            -> ~70 N capacity
 
     # ── Moment Arm Source ─────────────────────────────────────
     # 'an1983'   : An et al. 1983 literature averages (original)
@@ -211,8 +223,8 @@ class GripAngles:
 
 
 GRIPS = {
-    "crimp":      GripAngles("Crimp",      2.6,  5.0, 106.5, -22.6, "#E53935", 1.75),
-    "half_crimp": GripAngles("Half-Crimp", 15.0, 5.0,  90.0,  10.0, "#FB8C00", 1.20),
+    "crimp":      GripAngles("Crimp",      2.6,  0.0, 106.5, -22.6, "#E53935", 1.75),
+    "half_crimp": GripAngles("Half-Crimp", 15.0, 0.0,  90.0,  10.0, "#FB8C00", 1.20),
     "open_hand":  GripAngles("Open Hand",  20.0,  0.0, 30.0,  30.0, "#0277BD", 0.88),
 }
 
@@ -340,6 +352,13 @@ def moment_arms(grip, geom=None, scale_ma=None):
       column entry (documented explicitly to avoid reconstruction errors).
     """
     tp, td, tm = grip.theta_PIP, grip.theta_DIP, grip.theta_MCP
+    phi_val = getattr(grip, 'phi_MCP', 0.0)
+    phi_rad = np.radians(phi_val)
+
+    # For Digit III (middle finger), flexors align with digit midline at neutral (phi=0).
+    # When abducted/adducted (phi != 0), minor angle-dependent tendon excursion occurs:
+    ma_fdp_abd = -2.1 * np.sin(phi_rad) / np.sin(np.radians(15.0) + 1e-6) if abs(phi_val) > 1e-3 else 0.0
+    ma_fds_abd = -1.5 * np.sin(phi_rad) / np.sin(np.radians(15.0) + 1e-6) if abs(phi_val) > 1e-3 else 0.0
 
     # Wrist extension coupling (Iteration 18): tenodesis increases effective MCP flexor moment arm
     wrist_boost = 0.0
@@ -364,8 +383,8 @@ def moment_arms(grip, geom=None, scale_ma=None):
             LU_DIP =min(-2.53 + 0.016*np.clip(td,-30,90), -0.5),  # extends DIP
             LU_PIP =min(-4.19 + 0.043*np.clip(tp,  0,120), -0.5), # extends PIP
             LU_MCP =max(min(9.02 + 0.111*np.clip(tm,-30,90), 12.0), 3.0), # flexes MCP (capped: LU assists, not dominates)
-            FDP_abd=-2.1,   # ulnar (An 1983 -- abduction not in PeerJ path data)
-            FDS_abd=-1.5,
+            FDP_abd=ma_fdp_abd,  # midline neutral on Digit III; scales with abduction
+            FDS_abd=ma_fds_abd,
             LU_abd = 3.5,   # radial
             # Extensor mechanism (TE at DIP, ES at PIP, LE at MCP)
             EDC_DIP=edc_dip,  # extends DIP
@@ -395,8 +414,8 @@ def moment_arms(grip, geom=None, scale_ma=None):
             LU_DIP =-4.0,   # extends DIP
             LU_PIP =-5.0,   # extends PIP
             LU_MCP = 6.0,   # flexes MCP
-            FDP_abd=-2.1,   # ulnar side
-            FDS_abd=-1.5,
+            FDP_abd=ma_fdp_abd,  # midline neutral on Digit III; scales with abduction
+            FDS_abd=ma_fds_abd,
             LU_abd = 3.5,   # radial side
             EDC_DIP=-4.0,   # extends DIP (FDS_DIP=0: FDS inserts on MP, not DP)
             EDC_PIP=-6.0,   # extends PIP
@@ -413,12 +432,14 @@ def moment_arms(grip, geom=None, scale_ma=None):
             UI_PIP=0.612 * -6.0,
         )
 
-    # Anthropometric scaling: internal moment arms scale with skeletal size (Review Rec A1)
+    # Anthropometric scaling: internal moment arms scale sub-linearly with skeletal caliber (Point 2A, Synek 2019, Schmidt 2011)
     do_scale = scale_ma if scale_ma is not None else getattr(Config, 'scale_moment_arms_with_geometry', True)
     if do_scale and geom is not None:
         f = getattr(geom, 'scale_factor', 1.0)
         if f != 1.0:
-            ma_dict = {k: float(v * f) for k, v in ma_dict.items()}
+            k_exp = getattr(Config, 'allometric_ma_exponent', 0.50)
+            f_ma = float(f ** k_exp)
+            ma_dict = {k: float(v * f_ma) for k, v in ma_dict.items()}
 
     return ma_dict
 
@@ -495,16 +516,24 @@ def compute_contact_point(grip, geom, contact: ContactGeometry, kin, F_mag: floa
         compression = Config.pulp_compress_k * np.log(1.0 + F_mag / Config.pulp_compress_F0)
         compression = min(compression, Config.pulp_compress_max)
         
+    # Scale pulp thickness with allometric bone caliber (Point 2B)
+    k_exp = getattr(Config, 'allometric_ma_exponent', 0.50)
+    scale_geom = getattr(geom, 'scale_factor', 1.0)
+    t_DP_actual = contact.t_DP * (scale_geom ** k_exp)
+
     # Minimum safe padding so the bone axis doesn't punch through the mathematical skin
-    r_palmar = max((contact.t_DP / 2.0) - compression, 1.0)
+    r_palmar = max((t_DP_actual / 2.0) - compression, 1.0)
     
     p_TIP_palmar = kin['p_TIP'] + r_palmar * n_palm
 
     if proj_d_hold <= max_d_hold_DP:
         # ── Shallow hold: all force on DP ──────────────────────────────────
         d_eff = proj_d_hold / cos_alpha3
-        # Triangular distribution on DP: centroid at 1/3 from tip
-        s_centroid = d_eff / 3.0   # weighted centroid within engaged region
+        d_trans = getattr(Config, 'd_pulp_corner_transition', 4.0)
+        # Hertzian corner concentration on micro-edges (Point 2B, Johnson 1985, Serina 1997):
+        # As hold depth shrinks (d_eff < d_trans), pressure concentrates at the sharp edge corner,
+        # shifting the centroid toward the lip and extending the unsupported bone cantilever (L3 - s_centroid).
+        s_centroid = (d_eff / 3.0) * float(np.tanh(d_eff / d_trans))
         p_C_DP = p_TIP_palmar - s_centroid * e_DP
         return p_C_DP, None, F_mag, 0.0, d_eff, geom.L3 - s_centroid
 
@@ -997,7 +1026,15 @@ def solve_all_methods(grip: GripAngles,
         A4_stacked = np.vstack([A4, lam * np.eye(6)])
         b4_stacked = np.concatenate([b4, np.zeros(6)])
         
-        bounds1 = ([0.0, 0.0, 0.0, F_EDC_min, 0.0, 0.0], [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
+        sigma_m   = getattr(Config, 'sigma_max_N_cm2', 35.0)
+        F_flex_ub = 600.0  # Climber flexor hypertrophy capacity
+        F_LU_ub   = float(getattr(Config, 'PCSA_LU', 0.4) * sigma_m)   # ~14 N
+        F_RI_ub   = float(getattr(Config, 'PCSA_RI', 2.8) * sigma_m)   # ~98 N
+        F_UI_ub   = float(getattr(Config, 'PCSA_UI', 2.2) * sigma_m)   # ~77 N
+        F_EDC_ub  = F_EDC_min + 1e-6  # Antagonist stiffness floor (prevents unprompted antagonist co-contraction)
+
+        bounds1 = ([0.0, 0.0, 0.0, F_EDC_min, 0.0, 0.0],
+                   [F_flex_ub, F_flex_ub, F_LU_ub, F_EDC_ub, F_RI_ub, F_UI_ub])
         sol1 = lsq_linear(A4_stacked, b4_stacked, bounds=bounds1)
         f1 = sol1.x  # FDP, FDS, LU, EDC, RI, UI
 
@@ -1016,7 +1053,8 @@ def solve_all_methods(grip: GripAngles,
         A4e_stacked = np.vstack([A4e, lam * W2])
         b4e_stacked = np.concatenate([b4, np.zeros(5)])
         
-        bounds2 = ([0.0, 0.0, F_EDC_min, 0.0, 0.0], [np.inf, np.inf, np.inf, np.inf, np.inf])
+        bounds2 = ([0.0, 0.0, F_EDC_min, 0.0, 0.0],
+                   [F_flex_ub, F_LU_ub, F_EDC_ub, F_RI_ub, F_UI_ub])
         sol2 = lsq_linear(A4e_stacked, b4e_stacked, bounds=bounds2)
         F_FDS2 = sol2.x[0]
         F_LU2  = sol2.x[1]
@@ -1039,7 +1077,8 @@ def solve_all_methods(grip: GripAngles,
         A4_lu_stacked = np.vstack([A4_lu, lam * W3])
         b4_lu_stacked = np.concatenate([b4, np.zeros(4)])
         
-        bounds3 = ([0.0, F_EDC_min, 0.0, 0.0], [np.inf, np.inf, np.inf, np.inf])
+        bounds3 = ([0.0, F_EDC_min, 0.0, 0.0],
+                   [F_flex_ub, F_EDC_ub, F_RI_ub, F_UI_ub])
         sol3 = lsq_linear(A4_lu_stacked, b4_lu_stacked, bounds=bounds3)
         F_FDS3 = sol3.x[0]
         F_LU3  = 0.0
@@ -1162,8 +1201,8 @@ def compute_pulley_angles(kin, geom):
     # Physiological bowstringing sharing across joints (Roloff et al. 2006, Vigouroux et al. 2006):
     # A2 restrains entry MCP deflection plus proximal share (~50%) of PIP bowstringing
     # A4 restrains distal share (~40%) of PIP bowstringing (A3/capsule absorbs ~10%)
-    f_A2_pip = 0.50
-    f_A4_pip = 0.40
+    f_A2_pip = float(getattr(Config, 'a2_pip_share', 0.50))
+    f_A4_pip = float(getattr(Config, 'a4_pip_share', 0.40))
     
     if getattr(Config, 'a2_includes_mcp', False):
         theta_A2 = theta_MCP + f_A2_pip * theta_PIP
@@ -1184,8 +1223,8 @@ def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
     """
     theta_A2, theta_A4, delta_MCP, delta_PIP, u_PP, u_MP, p_A2, p_A4 = compute_pulley_angles(kin, geom)
     
-    f_A2_pip = 0.50
-    f_A4_pip = 0.40
+    f_A2_pip = float(getattr(Config, 'a2_pip_share', 0.50))
+    f_A4_pip = float(getattr(Config, 'a4_pip_share', 0.40))
     
     # Both FDP and FDS pass under A2
     T_A2 = (F_FDP + F_FDS) * np.exp(Config.mu_tendon * theta_A2)
@@ -1212,6 +1251,23 @@ def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
     F_A1_vec = T_A1 * delta_MCP
     F_A1_mag = float(np.linalg.norm(F_A1_vec))
 
+    # Decompose into anatomical local coordinate frames:
+    # A2 resides on Proximal Phalanx (frame R_MCP)
+    F_A2_local = kin['R_MCP'].T @ F_A2_vec
+    # A1 resides at MCP / Volar Plate entry (frame R_MCP)
+    F_A1_local = kin['R_MCP'].T @ F_A1_vec
+    # A4 resides on Middle Phalanx (frame R_PIP)
+    F_A4_local = kin['R_PIP'].T @ F_A4_vec
+
+    F_A2_lat_local = abs(float(F_A2_local[2]))
+    F_A1_lat_local = abs(float(F_A1_local[2]))
+    F_A4_lat_local = abs(float(F_A4_local[2]))
+
+    # Global wall-plane z-projections (for wall-plane / shear reference)
+    F_A2_lat_global = abs(float(F_A2_vec[2]))
+    F_A1_lat_global = abs(float(F_A1_vec[2]))
+    F_A4_lat_global = abs(float(F_A4_vec[2]))
+
     # Pressure distribution mappings
     P_A2_MPa = F_A2_mag / (Config.L_A2_mm * Config.w_tendon_mm)
     P_A4_MPa = F_A4_mag / (Config.L_A4_mm * Config.w_tendon_mm)
@@ -1219,11 +1275,14 @@ def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
 
     return dict(
         p_A2=p_A2, theta_A2=theta_A2, theta_A4=theta_A4,
-        F_A2_vec=F_A2_vec, F_A2_mag=F_A2_mag, F_A2_lat=abs(float(F_A2_vec[2])),
+        F_A2_vec=F_A2_vec, F_A2_mag=F_A2_mag, F_A2_lat=F_A2_lat_local,
+        F_A2_lat_local=F_A2_lat_local, F_A2_lat_global=F_A2_lat_global,
         P_A2_MPa=P_A2_MPa,
-        p_A4=p_A4, F_A4_vec=F_A4_vec, F_A4_mag=F_A4_mag, F_A4_lat=abs(float(F_A4_vec[2])),
+        p_A4=p_A4, F_A4_vec=F_A4_vec, F_A4_mag=F_A4_mag, F_A4_lat=F_A4_lat_local,
+        F_A4_lat_local=F_A4_lat_local, F_A4_lat_global=F_A4_lat_global,
         P_A4_MPa=P_A4_MPa,
-        F_A1_vec=F_A1_vec, F_A1_mag=F_A1_mag, F_A1_lat=abs(float(F_A1_vec[2])),
+        F_A1_vec=F_A1_vec, F_A1_mag=F_A1_mag, F_A1_lat=F_A1_lat_local,
+        F_A1_lat_local=F_A1_lat_local, F_A1_lat_global=F_A1_lat_global,
         P_A1_MPa=P_A1_MPa,
     )
 

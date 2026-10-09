@@ -98,8 +98,8 @@ ax1c = fig1.add_subplot(1, 3, 3)
 postures = ['MinorFlex\n(Half-Crimp)', 'MajorFlex\n(Deep Flex)', 'HyperExt\n(MCP hyperext.)', 'Hook\n(Curled)']
 exp_ratios = [1.20, 1.20, 1.75, 1.20]
 pred_ratios = [1.20, 1.20, 1.75, 1.20] # 100% agreement
-pred_app_300 = [0.45, 0.59, 15.9, 3.82]
-pred_app_950 = [0.54, 0.74, 16.3, 4.19]
+pred_app_300 = [0.43, 0.58, 24.85, 5.05]
+pred_app_950 = [0.52, 0.73, 25.28, 5.46]
 
 x_pos = np.arange(len(postures))
 width = 0.35
@@ -113,7 +113,7 @@ ax1c.set_ylabel("Predicted / Applied Force Ratio")
 ax1c.set_xticks(x_pos)
 ax1c.set_xticklabels(postures)
 ax1c.set_yscale('log')
-ax1c.set_ylim(0.2, 30)
+ax1c.set_ylim(0.2, 35)
 ax1c.grid(True, alpha=0.3, which='both')
 ax1c.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8)
 
@@ -197,15 +197,19 @@ for gk, col, name in [('crimp', '#E53935', 'Full Crimp'),
     ax2b.plot(d_cmp, all_forces[gk], '-', color=col, lw=2.6, label=name)
 
 # Shaded optimal zones
-ax2b.axvspan(2.0, 8.0, color='#FFE0B2', alpha=0.35, label='Half-Crimp Optimal (Micro-Edge)')
+ax2b.axvspan(2.0, 8.0, color='#FFE0B2', alpha=0.35, label='Half-Crimp Feasible (Micro-Edge)')
 ax2b.axvspan(8.0, 18.0, color='#FFF9C4', alpha=0.30, label='Transition Zone (8–18 mm)')
 ax2b.axvspan(18.0, 40.0, color='#C8E6C9', alpha=0.35, label='Open Hand Dominant (>18 mm)')
+
+ax2b.text(0.04, 0.08, 'Feasibility Note: Open Hand yields lowest theoretical tension,\nbut Half-Crimp is practically required on micro-edges (<8 mm)\nto prevent pad roll-off and maintain normal friction.',
+          transform=ax2b.transAxes, fontsize=8.0,
+          bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='#E65100', alpha=0.9))
 
 ax2b.set_title("B) Grip-Optimal Minimum-Effort Frontier", fontweight='bold')
 ax2b.set_xlabel("Hold Depth $d_{hold}$ (mm)")
 ax2b.set_ylabel("Total Tendon Force $\sum F_m$ (N)")
 ax2b.set_xlim(2, 40)
-ax2b.set_ylim(200, 1400)
+ax2b.set_ylim(200, 800)
 ax2b.grid(True, alpha=0.3)
 ax2b.legend(loc='upper right', frameon=True, framealpha=0.9, fontsize=8.5)
 
@@ -223,80 +227,108 @@ fig3, (ax3a, ax3b) = plt.subplots(1, 2, figsize=(16, 5.8), dpi=300)
 
 # Panel 3A: Out-of-Plane Shearing vs MCP Abduction (phi = 0 to 20 deg)
 phi_deg = np.linspace(0, 20, 50)
-f_a2_lat, f_a4_lat, pip_ml_shear = [], [], []
+f_a1_lat, f_a2_lat_glob, f_a2_lat_loc, pip_ml_shear = [], [], [], []
 
 for phi in phi_deg:
     g = c3d.GripAngles('Crimp_test', 2.6, phi, 106.5, -22.6)
     r = c3d.solve_all_methods(g, geom_std, F_ext, contact=ct_10mm)['emg']
     jr = c3d.joint_reactions_3d(r, F_ext, geom_std)
-    f_a2_lat.append(jr['pulley']['F_A2_lat'])
-    f_a4_lat.append(jr['pulley']['F_A4_lat'])
+    p = jr['pulley']
+    f_a1_lat.append(p['F_A1_lat'])
+    f_a2_lat_glob.append(p['F_A2_lat_global'])
+    f_a2_lat_loc.append(p['F_A2_lat_local'])
     pip_ml_shear.append(jr['PIP']['shear_ML'])
 
-ax3a.plot(phi_deg, f_a2_lat, '-', color='#E53935', lw=2.6, label='A2 Pulley Transverse Force ($F_{A2,lat}$)')
-ax3a.plot(phi_deg, f_a4_lat, '-', color='#FB8C00', lw=2.4, label='A4 Pulley Transverse Force ($F_{A4,lat}$)')
+ax3a.plot(phi_deg, f_a1_lat, '-', color='#B71C1C', lw=2.6, label='A1 Entrance Redirection Shear ($F_{A1,lat}$)')
+ax3a.plot(phi_deg, f_a2_lat_glob, '-', color='#E53935', lw=2.2, label='A2 Global Lateral Projection ($F_{A2,lat\\_global}$)')
 ax3a.plot(phi_deg, pip_ml_shear, '--', color='#1E88E5', lw=2.2, label='PIP Mediolateral Joint Shear ($F_{ML}$)')
+ax3a.plot(phi_deg, f_a2_lat_loc, ':', color='#2E7D32', lw=2.0, label='A2 Local Lateral Shear ($F_{A2,lat\\_local} \\approx 0$ N)')
 
 ax3a.axhline(0, color='gray', ls=':', lw=1.0)
 ax3a.axvline(15.0, color='purple', ls='--', lw=1.5, label='Severe Side-Pull Abduction ($\phi=15^\circ$)')
 
-ax3a.annotate(r'Elevated Transverse Load' + '\n' + r'($F_{A2,lat} \approx 110$ N)', xy=(15.0, f_a2_lat[int(15.0/20.0*49)]), xytext=(6.0, 125),
-             arrowprops=dict(arrowstyle='->', lw=1.2, color='#E53935'),
-             fontsize=9, fontweight='bold', color='#E53935')
+ax3a.annotate(f'A1 Entrance Redirection\n({f_a1_lat[int(15.0/20.0*49)]:.1f} N)',
+             xy=(15.0, f_a1_lat[int(15.0/20.0*49)]), xytext=(8.0, 150),
+             arrowprops=dict(arrowstyle='->', lw=1.2, color='#B71C1C'),
+             fontsize=8.5, fontweight='bold', color='#B71C1C')
+ax3a.annotate(f'PIP Collateral Shear\n({pip_ml_shear[int(15.0/20.0*49)]:.1f} N)',
+             xy=(15.0, pip_ml_shear[int(15.0/20.0*49)]), xytext=(8.5, 65),
+             arrowprops=dict(arrowstyle='->', lw=1.2, color='#1E88E5'),
+             fontsize=8.5, fontweight='bold', color='#1E88E5')
 
 ax3a.set_title("A) Out-of-Plane Pulley & Joint Loads (Side-Pulls / Gastons)", fontweight='bold')
 ax3a.set_xlabel("MCP Radial Abduction $\phi_{MCP}$ (deg)")
-ax3a.set_ylabel("Transverse Load (N)")
+ax3a.set_ylabel("Transverse / Redirection Load (N)")
 ax3a.set_xlim(0, 20)
-ax3a.set_ylim(0, 160)
+ax3a.set_ylim(-5, 185)
 ax3a.grid(True, alpha=0.3)
-ax3a.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8.5)
+ax3a.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8)
 
-# Panel 3B: Phenotypic Scaling of Annular Pulley Loads (100 N Hang Benchmark, Unscaled Moment Arms)
-phenotypes = ['Short\n(−15%)', 'Standard\n(Nominal)', 'Long\n(+15%)']
+# Panel 3B: Scientific Evaluation of the Long-Finger Crimp Hypothesis
+# Compares phenotypes across:
+# 1. Fixed 100 N Load on Micro-Edge (6 mm) -> demonstrates scale invariance per unit tip load
+# 2. Fixed 100 N Load on Testing Ledge (20 mm) -> demonstrates dual-phalanx relief for short digits (rho >= 1.0)
+# 3. Allometric Bodyweight Hang (10 mm edge, mass proportional to stature L^2) -> demonstrates bodyweight penalty
 
-# Dynamically compute pulley loads under unscaled moment arms to demonstrate lever arm sensitivity
-c3d.Config.scale_moment_arms_with_geometry = False
+c3d.Config.scale_moment_arms_with_geometry = True # Realistic anatomical scaling
+groups = ['Micro-Edge (6 mm)\nFixed 100 N', 'Testing Ledge (20 mm)\nFixed 100 N', 'BW Hang (10 mm)\nStature Scaled ($L^2$)']
+
+# Compute values
 F_ext_100 = np.array([100.0, 0.0, 0.0])
-a2_crimp, a2_hc, a4_crimp = [], [], []
+ct_6mm = c3d.ContactGeometry(d_hold=6.0, r_edge=2.0, t_DP=9.0, beta_wall=0.0)
+ct_20mm = c3d.ContactGeometry(d_hold=20.0, r_edge=2.0, t_DP=9.0, beta_wall=0.0)
+ct_10mm = c3d.ContactGeometry(d_hold=10.0, r_edge=2.0, t_DP=9.0, beta_wall=0.0)
 
+# Group 1: 6 mm fixed 100 N (Half-Crimp A2)
+a2_g1 = []
 for g in [geom_short, geom_std, geom_long]:
-    r_cr = c3d.solve_all_methods(c3d.GRIPS['crimp'], g, F_ext_100, contact=ct_10mm)['emg']
-    jr_cr = c3d.joint_reactions_3d(r_cr, F_ext_100, g)
-    r_hc = c3d.solve_all_methods(c3d.GRIPS['half_crimp'], g, F_ext_100, contact=ct_10mm)['emg']
-    jr_hc = c3d.joint_reactions_3d(r_hc, F_ext_100, g)
-    a2_crimp.append(jr_cr['pulley']['F_A2_mag'])
-    a2_hc.append(jr_hc['pulley']['F_A2_mag'])
-    a4_crimp.append(jr_cr['pulley']['F_A4_mag'])
-c3d.Config.scale_moment_arms_with_geometry = True # Restore default
+    r = c3d.solve_all_methods(c3d.GRIPS['half_crimp'], g, F_ext_100, contact=ct_6mm)['emg']
+    a2_g1.append(c3d.joint_reactions_3d(r, F_ext_100, g)['pulley']['F_A2_mag'])
 
-x_p = np.arange(len(phenotypes))
-w = 0.26
+# Group 2: 20 mm fixed 100 N (Half-Crimp A2)
+a2_g2 = []
+for g in [geom_short, geom_std, geom_long]:
+    r = c3d.solve_all_methods(c3d.GRIPS['half_crimp'], g, F_ext_100, contact=ct_20mm)['emg']
+    a2_g2.append(c3d.joint_reactions_3d(r, F_ext_100, g)['pulley']['F_A2_mag'])
 
-rects_cr = ax3b.bar(x_p - w, a2_crimp, w, label='Full Crimp A2 Pulley Load (N)', color='#E53935', edgecolor='k', lw=0.6)
-rects_hc = ax3b.bar(x_p, a2_hc, w, label='Half-Crimp A2 Pulley Load (N)', color='#FB8C00', edgecolor='k', lw=0.6)
-rects_a4 = ax3b.bar(x_p + w, a4_crimp, w, label='Full Crimp A4 Pulley Load (N)', color='#8E24AA', edgecolor='k', lw=0.6)
+# Group 3: 10 mm Bodyweight Hang (Half-Crimp A2)
+# Short: 50.6 kg (72.3 N), Std: 70.0 kg (100.0 N), Long: 92.5 kg (132.3 N)
+a2_g3 = []
+for g, bw_f in [(geom_short, 72.3), (geom_std, 100.0), (geom_long, 132.3)]:
+    F_bw = np.array([bw_f, 0.0, 0.0])
+    r = c3d.solve_all_methods(c3d.GRIPS['half_crimp'], g, F_bw, contact=ct_10mm)['emg']
+    a2_g3.append(c3d.joint_reactions_3d(r, F_bw, g)['pulley']['F_A2_mag'])
 
-# Annotate percentage penalty from Standard to Long (+15.6%) and Short to Long (+36.9%)
-pct_cr_std = (a2_crimp[2] - a2_crimp[1]) / a2_crimp[1] * 100.0
-pct_cr_sh = (a2_crimp[2] - a2_crimp[0]) / a2_crimp[0] * 100.0
-pct_hc_std = (a2_hc[2] - a2_hc[1]) / a2_hc[1] * 100.0
-pct_a4_std = (a4_crimp[2] - a4_crimp[1]) / a4_crimp[1] * 100.0
+x_g = np.arange(len(groups))
+w = 0.24
 
-ax3b.annotate(f'+{pct_cr_std:.1f}% vs Std\n(+{pct_cr_sh:.1f}% vs Short)', xy=(2 - w, a2_crimp[2]), xytext=(2 - w, a2_crimp[2] + 25),
-             ha='center', fontsize=7.5, fontweight='bold', color='#E53935')
-ax3b.annotate(f'+{pct_hc_std:.1f}% vs Std', xy=(2, a2_hc[2]), xytext=(2, a2_hc[2] + 25),
-             ha='center', fontsize=7.5, fontweight='bold', color='#FB8C00')
-ax3b.annotate(f'+{pct_a4_std:.1f}% vs Std', xy=(2 + w, a4_crimp[2]), xytext=(2 + w, a4_crimp[2] + 25),
-             ha='center', fontsize=7.5, fontweight='bold', color='#8E24AA')
+vals_short = [a2_g1[0], a2_g2[0], a2_g3[0]]
+vals_std   = [a2_g1[1], a2_g2[1], a2_g3[1]]
+vals_long  = [a2_g1[2], a2_g2[2], a2_g3[2]]
+
+rects_sh = ax3b.bar(x_g - w, vals_short, w, label='Short Phenotype (−15% length)', color='#1E88E5', edgecolor='k', lw=0.6)
+rects_st = ax3b.bar(x_g,     vals_std,   w, label='Standard Phenotype (Nominal)',    color='#FB8C00', edgecolor='k', lw=0.6)
+rects_lo = ax3b.bar(x_g + w, vals_long,  w, label='Long Phenotype (+15% length)',     color='#E53935', edgecolor='k', lw=0.6)
+
+# Annotations
+pct_g1 = (a2_g1[2] - a2_g1[0]) / a2_g1[0] * 100.0
+ax3b.annotate(f'Allometric Leverage Gap\n+{pct_g1:.1f}% ({a2_g1[2]:.1f} N vs {a2_g1[0]:.1f} N)', xy=(0, a2_g1[1]), xytext=(0, a2_g1[1] + 30),
+             ha='center', fontsize=7.5, fontweight='bold', color='#2E7D32')
+ax3b.annotate(f'Dual-Phalanx Relief\nShort: {a2_g2[0]:.1f} N ($\\rho=1.07$)', xy=(1 - w, a2_g2[0]), xytext=(1, a2_g2[0] + 35),
+             ha='center', fontsize=7.5, fontweight='bold', color='#1E88E5',
+             arrowprops=dict(arrowstyle='->', lw=1.0, color='#1E88E5'))
+pct_bw_lo = (a2_g3[2] - a2_g3[0]) / a2_g3[0] * 100.0
+ax3b.annotate(f'+{pct_bw_lo:.1f}% Mass Surge\nLong: {a2_g3[2]:.1f} N', xy=(2 + w, a2_g3[2]), xytext=(2 + w, 440),
+             ha='center', fontsize=7.5, fontweight='bold', color='#B71C1C',
+             arrowprops=dict(arrowstyle='->', lw=1.0, color='#B71C1C'))
 
 ax3b.axhline(400.0, color='darkred', ls='--', lw=1.5, label='A2 Cadaveric Limit (~400 N; Lin 1990, Schöffl 2009)')
 
-ax3b.set_title("B) Phenotypic Scaling: Pulley Loads (100 N Hang, Unscaled Moment Arms)", fontweight='bold')
-ax3b.set_ylabel("Pulley Normal Load (N)")
-ax3b.set_xticks(x_p)
-ax3b.set_xticklabels(phenotypes)
-ax3b.set_ylim(0, 480)
+ax3b.set_title("B) Evaluation of Long-Finger Crimp Hypothesis: Edge & Mass Scaling", fontweight='bold')
+ax3b.set_ylabel("Half-Crimp A2 Normal Load (N)")
+ax3b.set_xticks(x_g)
+ax3b.set_xticklabels(groups)
+ax3b.set_ylim(0, 520)
 ax3b.grid(True, alpha=0.3, axis='y')
 ax3b.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8)
 
@@ -307,6 +339,7 @@ print("Saved pub_fig3_shear_and_scaling.png")
 
 # Copy all publication figures to artifact directory and paper/figures directory
 artifact_dirs = [
+    "/Users/igorcerovsky/.gemini/antigravity-ide/brain/1f1e58ff-8327-4199-b198-c8ec2caea2e2",
     "/Users/igorcerovsky/.gemini/antigravity-ide/brain/0c798303-b1a1-4c87-a64f-5b025e5bb2d7",
     "/Users/igorcerovsky/.gemini/antigravity-ide/brain/6db08e62-544f-418f-b0fa-e5341f42d013"
 ]
@@ -319,8 +352,6 @@ for fn in all_figures:
                 shutil.copy(f'outputs/{fn}', f'{ad}/{fn}')
         shutil.copy(f'outputs/{fn}', f'paper/figures/{fn}')
         print(f"Copied {fn} to artifact directory and paper/figures/.")
-
-print("All publication figures successfully created!")
 
 print("All publication figures successfully created!")
 

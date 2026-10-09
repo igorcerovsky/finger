@@ -85,10 +85,10 @@ def compute_myohand_moment_arms(model, data, addrs, mcp_deg, abd_deg, pip_deg, d
         
         for t in tendons:
             tid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_TENDON, t)
-            # dl/dq: positive dl/dq means tendon shortens when joint extends, so tension produces flexion!
-            # We record moment arm magnitude in mm
-            dl_dq = (l1[tid] - l0[tid]) / dq * 1000.0 # mm
-            ma_dict[t][dof_names[idx]] = dl_dq
+            # dl/dq: positive dl/dq means tendon lengthens during joint flexion (extensor action).
+            # Effective anatomical moment arm for joint flexion is -dl/dq (+ = flexor, - = extensor).
+            ma_val = - (l1[tid] - l0[tid]) / dq * 1000.0  # mm
+            ma_dict[t][dof_names[idx]] = ma_val
             
     return ma_dict
 
@@ -111,7 +111,7 @@ def run_benchmark():
         'MajorFlex (Synek)': c3d.GripAngles('MajorFlex', 55.0, 0.0, 57.0, 25.0)
     }
     
-    print("\nSECTION 1: TENDON MOMENT ARM COMPARISON (in mm)")
+    print("\nSECTION 1: SIGNED TENDON MOMENT ARM COMPARISON (in mm; + = flexor, - = extensor)")
     print("-------------------------------------------------------------------------------------")
     print(f"{'Grip':<18} | {'Muscle':<6} | {'Our MCP':<8} {'Myo MCP':<8} | {'Our PIP':<8} {'Myo PIP':<8} | {'Our DIP':<8} {'Myo DIP':<8}")
     print("-------------------------------------------------------------------------------------")
@@ -132,9 +132,9 @@ def run_benchmark():
             our_pip = our_ma.get(f'{m}_PIP', 0.0)
             our_dip = our_ma.get(f'{m}_DIP', 0.0)
             
-            myo_mcp = abs(myo_ma[tname]['MCP_flex'])
-            myo_pip = abs(myo_ma[tname]['PIP_flex'])
-            myo_dip = abs(myo_ma[tname]['DIP_flex'])
+            myo_mcp = myo_ma[tname]['MCP_flex']
+            myo_pip = myo_ma[tname]['PIP_flex']
+            myo_dip = myo_ma[tname]['DIP_flex']
             
             print(f"{gname:<18} | {m:<6} | {our_mcp:8.2f} {myo_mcp:8.2f} | {our_pip:8.2f} {myo_pip:8.2f} | {our_dip:8.2f} {myo_dip:8.2f}")
         print("-" * 85)
