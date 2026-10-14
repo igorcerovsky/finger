@@ -4,3 +4,4 @@
 .history/
 data/
 .pycache
+.distiled/

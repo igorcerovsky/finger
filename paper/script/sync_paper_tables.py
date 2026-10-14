@@ -132,7 +132,7 @@ def main():
     )
 
     # Update Table 3 heading and content
-    t3_heading = "### Table 3: Scientific Evaluation of Phenotypic Scaling Across Hold Geometries (Middle Finger, Sub-Linear Allometric Scaling $ma \\propto L^{0.50}$ & Cantilever Mechanics)"
+    t3_heading = "### Table 3: Phenotype Comparison Across Hold Geometries (Middle Finger, Moment Arms Scaled as $ma \\propto L^{0.50}$, Assumed)"
     text = re.sub(
         r'### Table 3:[^\n]+\n\n\| Loading Condition \|.*?(?=\n\n\*Note: In the Fixed 100 N)',
         lambda m: t3_heading + '\n\n' + t3_md,
