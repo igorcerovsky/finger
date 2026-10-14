@@ -704,6 +704,8 @@ def external_moments(kin, F_ext_dir, grip, passive_frac=None,
 
     if grip.theta_DIP < 0:
         M_DIP *= (1.0 - passive_frac)
+    if grip.theta_MCP < 0:
+        M_MCP *= (1.0 - passive_frac)
 
     return dict(DIP=M_DIP, PIP=M_PIP, MCP=M_MCP, abd=M_abd)
 
@@ -1090,11 +1092,14 @@ def solve_all_methods(grip: GripAngles,
         f3 = np.array([F_FDP3, F_FDS3, F_LU3, F_EDC3, F_RI3, F_UI3])
 
     else:
-        # Legacy 3-muscle flexion systems
+        # Legacy 3-muscle flexion systems (with consistent Capstan multipliers)
+        theta_A2, theta_A4, *_ = compute_pulley_angles(kin, geom)
+        C_A2 = np.exp(Config.mu_tendon * theta_A2) if getattr(Config, 'use_capstan', True) else 1.0
+        C_A4 = np.exp(Config.mu_tendon * theta_A4) if getattr(Config, 'use_capstan', True) else 1.0
         A3 = np.array([
-            [ma['FDP_DIP'],  0.0,          ma['LU_DIP']],
-            [ma['FDP_PIP'],  ma['FDS_PIP'], ma['LU_PIP']],
-            [ma['FDP_MCP'],  ma['FDS_MCP'], ma['LU_MCP']],
+            [ma['FDP_DIP']*C_A2*C_A4,  0.0,               ma['LU_DIP']],
+            [ma['FDP_PIP']*C_A2,       ma['FDS_PIP']*C_A2, ma['LU_PIP']],
+            [ma['FDP_MCP'],            ma['FDS_MCP'],      ma['LU_MCP']],
         ])
         b3 = np.array([ext['DIP'], ext['PIP'], ext['MCP']])
 
@@ -1295,16 +1300,23 @@ def pulley_forces_3d(F_FDP, F_FDS, kin, geom):
 def joint_reactions_3d(res, F_ext, geom):
     kin   = res['kin']
     F_FDP = res['F_FDP']; F_FDS = res['F_FDS']; F_LU = res['F_LU']
-    ex    = np.array([1.,0.,0.])
+    F_EDC = res.get('F_EDC', 0.0); F_RI = res.get('F_RI', 0.0); F_UI = res.get('F_UI', 0.0)
+    ex    = np.array([1.,0.,0.]); ez = np.array([0.,0.,1.])
     pulley = pulley_forces_3d(F_FDP, F_FDS, kin, geom)
 
-    t_FDP_DP = -(kin['R_DIP'] @ ex)
-    t_FDS_MP = -(kin['R_PIP'] @ ex)
-    t_LU_PP  = -(kin['R_MCP'] @ ex)
+    t_DP = -(kin['R_DIP'] @ ex)
+    t_MP = -(kin['R_PIP'] @ ex)
+    t_PP = -(kin['R_MCP'] @ ex)
 
-    R_DIP_vec = -(F_ext + F_FDP*t_FDP_DP)
-    R_PIP_vec = -(-R_DIP_vec + pulley['F_A4_vec'] + F_FDS*t_FDS_MP)
-    R_MCP_vec = -(-R_PIP_vec + pulley['F_A2_vec'] + F_LU*t_LU_PP)
+    F_ext_hood_DIP = F_EDC + 0.621 * F_LU + 0.232 * (F_RI + F_UI)
+    F_ext_hood_PIP = 0.379 * F_LU + 0.612 * (F_RI + F_UI)
+    sin10, cos10   = np.sin(np.radians(10.0)), np.cos(np.radians(10.0))
+    vec_RI_MCP     = F_RI * (cos10 * t_PP - sin10 * (kin['R_MCP'] @ ez))
+    vec_UI_MCP     = F_UI * (cos10 * t_PP + sin10 * (kin['R_MCP'] @ ez))
+
+    R_DIP_vec = -(F_ext + (F_FDP + F_ext_hood_DIP) * t_DP)
+    R_PIP_vec = -(-R_DIP_vec + pulley['F_A4_vec'] + (F_FDS + F_ext_hood_PIP) * t_MP)
+    R_MCP_vec = -(-R_PIP_vec + pulley['F_A2_vec'] + F_LU * t_PP + vec_RI_MCP + vec_UI_MCP)
 
     def decompose(F_vec, R_local):
         ey = np.array([0.,1.,0.]); ez = np.array([0.,0.,1.])
@@ -1355,7 +1367,7 @@ def run_simulation():
     fig1 = plt.figure(figsize=(20, 6))
     fig1.suptitle(f"3D Finger Kinematics  |  Load: {F_tip:.1f} N", fontsize=13, fontweight='bold')
     for col, (key, grip) in enumerate(GRIPS.items()):
-        ax  = fig1.add_subplot(1, 4, col+1, projection='3d')
+        ax  = fig1.add_subplot(1, 3, col+1, projection='3d')
         kin = all_res[key][1]['emg']['kin']
         pts = [kin['p_MCP'], kin['p_PIP'], kin['p_DIP'], kin['p_TIP']]
         xs  = [p[0] for p in pts]; ys = [p[1] for p in pts]; zs = [p[2] for p in pts]
@@ -1656,7 +1668,7 @@ def run_simulation():
         if col == 0: ax1.set_ylabel('% Force Increase\nLong vs Short', fontsize=8)
         ax1.set_xlim(d_range[0], d_range[-1])
         ax1.grid(True, alpha=0.2)
-        if col == 3: ax1.legend(fontsize=7)
+        if col == 2: ax1.legend(fontsize=7)
 
     # Shared legend for Row 0
     g_lines = [plt.Line2D([0],[0], color=c, lw=2, label=gl)

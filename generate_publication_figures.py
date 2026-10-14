@@ -98,8 +98,8 @@ ax1c = fig1.add_subplot(1, 3, 3)
 postures = ['MinorFlex\n(Half-Crimp)', 'MajorFlex\n(Deep Flex)', 'HyperExt\n(MCP hyperext.)', 'Hook\n(Curled)']
 # Pred/App = sum of predicted tendon forces (FDP+FDS+RI+UI, EMG-constrained solve)
 # divided by summed applied tendon load; values from human_bonobo/compare_models.py
-pred_app_300 = [0.41, 0.53, 0.13, 0.10]
-pred_app_950 = [0.48, 0.67, 0.11, 0.01]
+pred_app_300 = [0.44, 0.57, 0.18, 0.13]
+pred_app_950 = [0.52, 0.71, 0.17, 0.04]
 
 x_pos = np.arange(len(postures))
 width = 0.35

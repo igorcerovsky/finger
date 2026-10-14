@@ -25,7 +25,7 @@ def generate_table2():
     for gk, g_title in [('crimp', '**Full Crimp**'), ('half_crimp', '**Half-Crimp**'), ('open_hand', '**Open Hand**')]:
         g = c3d.GRIPS[gk]
         res = c3d.solve_all_methods(g, geom_std, F_ext_171, contact=ct10)
-        for idx, (m, m_label) in enumerate([('direct', 'Direct (3×3)'), ('emg', 'EMG-Constrained'), ('lu_min', 'LU-Minimizing')]):
+        for idx, (m, m_label) in enumerate([('direct', 'Direct (4×6)'), ('emg', 'EMG-Constrained'), ('lu_min', 'LU-Minimizing')]):
             r = res[m]
             jr = c3d.joint_reactions_3d(r, F_ext_171, geom_std)
             p = jr['pulley']
@@ -33,12 +33,12 @@ def generate_table2():
             ratio_str = f"{r['ratio']:.2f}" if r['ratio'] < 99 else "—"
             rows.append(
                 f"| {col_grip:<14} | {m_label:<15} | {r['F_FDP']:7.1f} | {r['F_FDS']:7.1f} | {r['F_LU']:6.1f} | "
-                f"{r['F_EDC']:7.1f} | {r['F_RI']:6.1f} | {r['F_total']:9.1f} | {ratio_str:^13} | {p['P_A2_MPa']:9.2f} |"
+                f"{r['F_EDC']:7.1f} | {r['F_RI']:6.1f} | {r['F_total']:9.1f} | {ratio_str:^13} | {p['F_A2_mag']:8.1f} | {p['P_A2_MPa']:9.2f} |"
             )
             
     header = (
-        "| Grip Type | Solver Method | $F_{FDP}$ (N) | $F_{FDS}$ (N) | $F_{LU}$ (N) | $F_{EDC}$ (N) | $F_{RI}$ (N) | Total Force (N) | FDP/FDS Ratio | A2 Stress (MPa) |\n"
-        "| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n"
+        "| Grip Type | Solver Method | $F_{FDP}$ (N) | $F_{FDS}$ (N) | $F_{LU}$ (N) | $F_{EDC}$ (N) | $F_{RI}$ (N) | Total Force (N) | FDP/FDS Ratio | A2 Force (N) | A2 Stress (MPa) |\n"
+        "| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n"
     )
     return header + "\n".join(rows)
 

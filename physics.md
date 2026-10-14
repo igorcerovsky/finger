@@ -175,9 +175,8 @@ This replaces the previous `d_hold`-based linear interpolation (Iteration 8), wh
 
 ## 4. Posture Optimization
 
-The biological system dynamically adopts joint angles (PIP, DIP) that minimize total tendon tension.
-This is achieved by minimizing an objective function $J$:
-$$ J = F_{FDP} + F_{FDS} + F_{LU} + F_{EDC} + \Phi(\text{Residual}) + \Phi(\text{Joint Limits}) $$
+The biological system dynamically adopts 3-DOF joint angles $(\theta_{MCP}, \theta_{PIP}, \theta_{DIP})$ that minimize total tendon tension and A2 pulley bowstringing via bounded `L-BFGS-B` optimization with warm-start depth continuation (see §11.5):
+$$J(\boldsymbol{\theta}) = \sum_m F_m + w_{\text{pulley}} F_{A2} + 100 \Vert{}\mathbf{M}_{\text{muscle}} - \mathbf{M}_{\text{ext}}\Vert{} + J_{\text{friction}} + J_{\text{reach}} + J_{\text{corridor}}$$
 where $\Phi$ are severe geometric penalty functions. The EDC stiffness floor is incorporated during optimization, ensuring that the posture solver never settles on mechanically impossible hyperextended states without physiological cost.
 
 ## 5. Pulley Forces and Joint Reactions
@@ -188,7 +187,7 @@ $$ \theta_{wrap} = \arccos(\hat{d}_{in} \cdot \hat{d}_{out}) $$
 Due to tendon-sheath friction ($\mu_t$), the required proximal muscle tension is reduced as the localized tension builds distally across the wraps:
 $$ T_{distal} = T_{proximal} \cdot e^{\mu_t \theta_{wrap}} $$
 The total integrated vector force on the pulley is derived using this distally amplified tension:
-$$ \vec{F}_{pulley} = T_{local} (\hat{d}_{in} + \hat{d}_{out}) $$
+$$ \vec{F}_{pulley} = T_{local} \cdot f_{share} (\hat{u}_{prox} - \hat{u}_{dist}) $$
 
 This raw vector is then transformed into a distributed peak physiological tissue pressure to represent actual injury risk over the sheath bandwidth:
 $$ P_{MPa} = \frac{\|\vec{F}_{pulley}\|}{L_{pulley} \cdot w_{tendon}} $$
@@ -298,7 +297,7 @@ Linear regressions were fit to the PeerJ moment arms at 4 postures (R² ≥ 0.99
 Config.moment_arm_source = 'peerj'   # default (Iterations 15-16)
 
 # Iteration 15 — FDP and FDS
-FDP_DIP = 4.70 − 0.011·θ_DIP    (was 6.0 + 0.045·θ_DIP)
+FDP_DIP = 6.00 + 0.045·θ_DIP    (An1983 baseline retained in climbing_finger_3d.py; pure PeerJ fit is 4.70 − 0.011·θ_DIP)
 FDP_PIP = 8.24 + 0.050·θ_PIP    (was 9.0 + 0.033·θ_PIP)
 FDP_MCP = 9.89 + 0.087·θ_MCP    (was 8.0 + 0.053·θ_MCP)
 FDS_PIP = 4.44 + 0.050·θ_PIP    (was 7.5 + 0.020·θ_PIP)
@@ -354,8 +353,7 @@ where $\mu_0 = 0.50$, $F_{ref} = 20.0\text{ N}$, and $n = 0.85$. Under light exp
 ### 9.3 Numerical Continuation Optimizer
 Parametric optimization across hold depth sweeps ($d_{hold} \in [2.0, 45.0]\text{ mm}$) leverages parametric continuation:
 1. Because biological finger posture changes continuously along edge depth, the solution from the adjacent depth $[\theta_{PIP}^*, \theta_{DIP}^*]$ serves as an initial seed.
-2. A localized Nelder-Mead search refines the posture directly within the established basin.
-3. If local refinement encounters mechanical instability or friction boundary violation ($J > 3500\text{ N}$), the optimizer automatically falls back to the full $10 \times 10$ global grid search.
+2. A bounded `L-BFGS-B` quasi-Newton search refines the 3-DOF posture $(\theta_{MCP}, \theta_{PIP}, \theta_{DIP})$ directly within the grip-specific physiological corridor ($\Omega_{\text{grip}}$).
 
 ---
 

@@ -73,7 +73,7 @@ Three methods solve the system (3 flexion moments + 1 abduction moment) for 3 mu
 
 ### 3.4 Equilibrium Posture Finder
 
-For each hold depth, `find_equilibrium_posture()` searches the full anatomical PIP/DIP angle space (grid search, then Nelder-Mead refinement) to find the posture minimising total tendon force. It uses the **EMG-constrained 3×2 lstsq** for scoring. Crucially, the solver applies an **equilibrium residual penalty**: if an external load vector passes such that the finger naturally extends (e.g., negative MCP moments on a steep overhang), the flexor muscles cannot balance it without extensors, and the posture is heavily penalised as mechanically unviable (the joint would collapse).
+For each hold depth, `find_equilibrium_posture()` optimizes the full 3-DOF phalangeal chain (`theta_MCP, theta_PIP, theta_DIP`) using bounded `L-BFGS-B` optimization with warm-start depth continuation to minimise total tendon force and A2 pulley bowstringing. It uses the **EMG-constrained 3×2 lstsq** for scoring. Crucially, the solver applies an **equilibrium residual penalty**: if an external load vector passes such that the finger naturally extends (e.g., negative MCP moments on a steep overhang), the flexor muscles cannot balance it without extensors, and the posture is heavily penalised as mechanically unviable (the joint would collapse).
 
 ### 3.5 Model Selection & Validation Against PeerJ 7470
 
@@ -138,7 +138,7 @@ Run `python human_bonobo/compare_models.py` to compare predictions on overlappin
 
 ### 4.7 Deep Hold Phenotype Analysis (Figs 8–10 — Key Result)
 
-**The central figures for phenotype/genotype research.** Three per-grip depth sweeps — Fig 8: Open Hand 2–45 mm, Fig 9: Full Crimp 2–22 mm, Fig 10: Half-Crimp 2–35 mm — each with 4 panels:
+**The central figures for phenotype/genotype research.** Three per-grip depth sweeps — Fig 8: Open Hand 2–45 mm, Fig 9: Full Crimp 2–30 mm, Fig 10: Half-Crimp 2–35 mm — each with 4 panels:
 
 - **Panel A:** FDP vs FDS forces — crossover annotated per phenotype where present
 - **Panel B:** FDP/FDS ratio with Vigouroux 2006 reference lines
