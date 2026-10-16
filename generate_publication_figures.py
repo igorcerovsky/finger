@@ -220,11 +220,11 @@ print("Generating Publication Figure 3...")
 fig3, (ax3a, ax3b) = plt.subplots(1, 2, figsize=(16, 5.8), dpi=300)
 
 # Panel 3A: Out-of-Plane Shearing vs MCP Abduction (phi = 0 to 20 deg)
-phi_deg = np.linspace(0, 20, 50)
+phi_deg = np.linspace(0, 20, 41)  # step 0.5 deg, so phi=15.0 deg is exact at idx 30
 f_a1_lat, f_a2_lat_glob, f_a2_lat_loc, pip_ml_shear = [], [], [], []
 
 for phi in phi_deg:
-    g = c3d.GripAngles('Crimp_test', 2.6, phi, 106.5, -22.6)
+    g = c3d.GripAngles('Crimp_test', 2.6, phi, 106.5, -22.6, emg_ratio=1.75)
     r = c3d.solve_all_methods(g, geom_std, F_ext, contact=ct_10mm)['emg']
     jr = c3d.joint_reactions_3d(r, F_ext, geom_std)
     p = jr['pulley']
@@ -241,12 +241,13 @@ ax3a.plot(phi_deg, f_a2_lat_loc, ':', color='#2E7D32', lw=2.0, label='A2 Local L
 ax3a.axhline(0, color='gray', ls=':', lw=1.0)
 ax3a.axvline(15.0, color='purple', ls='--', lw=1.5, label='$\phi=15^\circ$')
 
-ax3a.annotate(f'A1 Entrance Redirection\n({f_a1_lat[int(15.0/20.0*49)]:.1f} N)',
-             xy=(15.0, f_a1_lat[int(15.0/20.0*49)]), xytext=(8.0, 150),
+idx_15 = 30  # exact phi = 15.0 deg
+ax3a.annotate(f'A1 Entrance Redirection\n({f_a1_lat[idx_15]:.1f} N)',
+             xy=(15.0, f_a1_lat[idx_15]), xytext=(8.0, 150),
              arrowprops=dict(arrowstyle='->', lw=1.2, color='#B71C1C'),
              fontsize=8.5, fontweight='bold', color='#B71C1C')
-ax3a.annotate(f'PIP ML Shear\n({pip_ml_shear[int(15.0/20.0*49)]:.1f} N)',
-             xy=(15.0, pip_ml_shear[int(15.0/20.0*49)]), xytext=(8.5, 65),
+ax3a.annotate(f'PIP ML Shear\n({pip_ml_shear[idx_15]:.1f} N)',
+             xy=(15.0, pip_ml_shear[idx_15]), xytext=(8.5, 65),
              arrowprops=dict(arrowstyle='->', lw=1.2, color='#1E88E5'),
              fontsize=8.5, fontweight='bold', color='#1E88E5')
 
@@ -306,9 +307,9 @@ rects_lo = ax3b.bar(x_g + w, vals_long,  w, label='Long Phenotype (+15% length)'
 
 # Annotations
 pct_g1 = (a2_g1[2] - a2_g1[0]) / a2_g1[0] * 100.0
-ax3b.annotate(f'k = 0.5 assumption\n+{pct_g1:.1f}% ({a2_g1[2]:.1f} N vs {a2_g1[0]:.1f} N)', xy=(0, a2_g1[1]), xytext=(0, a2_g1[1] + 30),
+ax3b.annotate(f'k = 0.5 assumption\n+{pct_g1:.1f}% ({a2_g1[2]:.1f} N vs {a2_g1[0]:.1f} N)', xy=(0, a2_g1[1]), xytext=(0, 335),
              ha='center', fontsize=7.5, fontweight='bold', color='#2E7D32')
-ax3b.annotate(f'Dual-Phalanx Relief\nShort: {a2_g2[0]:.1f} N ($\\rho=1.07$)', xy=(1 - w, a2_g2[0]), xytext=(1, a2_g2[0] + 35),
+ax3b.annotate(f'Dual-Phalanx Relief\nShort: {a2_g2[0]:.1f} N ($\\rho=1.07$)', xy=(1 - w, a2_g2[0]), xytext=(1 - w, 315),
              ha='center', fontsize=7.5, fontweight='bold', color='#1E88E5',
              arrowprops=dict(arrowstyle='->', lw=1.0, color='#1E88E5'))
 pct_bw_lo = (a2_g3[2] - a2_g3[0]) / a2_g3[0] * 100.0
@@ -331,14 +332,50 @@ fig3.savefig('outputs/pub_fig3_shear_and_scaling.png', dpi=300, bbox_inches='tig
 plt.close(fig3)
 print("Saved pub_fig3_shear_and_scaling.png")
 
+# Standalone Figure 3B (Phenotype Scaling) for Main Paper
+fig3b_standalone, ax_s = plt.subplots(figsize=(8.5, 5.5), dpi=300)
+rects_sh_s = ax_s.bar(x_g - w, vals_short, w, label='Short Phenotype (−15% length)', color='#1E88E5', edgecolor='k', lw=0.6)
+rects_st_s = ax_s.bar(x_g,     vals_std,   w, label='Standard Phenotype (Nominal)',    color='#FB8C00', edgecolor='k', lw=0.6)
+rects_lo_s = ax_s.bar(x_g + w, vals_long,  w, label='Long Phenotype (+15% length)',     color='#E53935', edgecolor='k', lw=0.6)
+
+ax_s.annotate(f'k = 0.5 assumption\n+{pct_g1:.1f}% ({a2_g1[2]:.1f} N vs {a2_g1[0]:.1f} N)', xy=(0, a2_g1[1]), xytext=(0, 335),
+             ha='center', fontsize=8.0, fontweight='bold', color='#2E7D32')
+ax_s.annotate(f'Dual-Phalanx Relief\nShort: {a2_g2[0]:.1f} N ($\\rho=1.07$)', xy=(1 - w, a2_g2[0]), xytext=(1 - w, 315),
+             ha='center', fontsize=8.0, fontweight='bold', color='#1E88E5',
+             arrowprops=dict(arrowstyle='->', lw=1.0, color='#1E88E5'))
+ax_s.annotate(f'+{pct_bw_lo:.1f}% (load $\\propto L^2$)\nLong: {a2_g3[2]:.1f} N', xy=(2 + w, a2_g3[2]), xytext=(2 + w, 440),
+             ha='center', fontsize=8.0, fontweight='bold', color='#B71C1C',
+             arrowprops=dict(arrowstyle='->', lw=1.0, color='#B71C1C'))
+
+ax_s.axhline(400.0, color='darkred', ls='--', lw=1.5, label='~400 N elderly cadaveric reference (Lin 1990)')
+
+ax_s.set_title("Phenotype Comparison Across Hold Geometries ($ma \\propto L^{0.50}$, assumed)", fontweight='bold', pad=10)
+ax_s.set_ylabel("Half-Crimp A2 Normal Load (N)")
+ax_s.set_xticks(x_g)
+ax_s.set_xticklabels(groups)
+ax_s.set_ylim(0, 520)
+ax_s.grid(True, alpha=0.3, axis='y')
+ax_s.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8.5)
+
+plt.tight_layout()
+fig3b_standalone.savefig('outputs/pub_fig3b_phenotype_scaling.png', dpi=300, bbox_inches='tight')
+plt.close(fig3b_standalone)
+print("Saved pub_fig3b_phenotype_scaling.png")
+
 # Copy all publication figures to artifact directory and paper/figures directory
 artifact_dirs = [
     "/Users/igorcerovsky/.gemini/antigravity-ide/brain/1f1e58ff-8327-4199-b198-c8ec2caea2e2",
     "/Users/igorcerovsky/.gemini/antigravity-ide/brain/0c798303-b1a1-4c87-a64f-5b025e5bb2d7",
-    "/Users/igorcerovsky/.gemini/antigravity-ide/brain/6db08e62-544f-418f-b0fa-e5341f42d013"
+    "/Users/igorcerovsky/.gemini/antigravity-ide/brain/6db08e62-544f-418f-b0fa-e5341f42d013",
+    "/Users/igorcerovsky/.gemini/antigravity-ide/brain/c77003a8-8d93-415e-b9a2-f0caa7f4ea57"
 ]
 os.makedirs("paper/figures", exist_ok=True)
-all_figures = ['pub_fig1_model_validation.png', 'pub_fig2_hold_depth_crossover.png', 'pub_fig3_shear_and_scaling.png']
+all_figures = [
+    'pub_fig1_model_validation.png',
+    'pub_fig2_hold_depth_crossover.png',
+    'pub_fig3_shear_and_scaling.png',
+    'pub_fig3b_phenotype_scaling.png'
+]
 for fn in all_figures:
     if os.path.exists(f'outputs/{fn}'):
         for ad in artifact_dirs:

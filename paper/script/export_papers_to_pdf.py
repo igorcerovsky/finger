@@ -341,6 +341,25 @@ img {{
     page-break-inside: avoid;
 }}
 
+p:has(img) {{
+    text-align: center;
+    margin-bottom: 2px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: avoid;
+    page-break-after: avoid;
+}}
+
+p:has(> em:first-child) {{
+    font-size: 8.5pt;
+    line-height: 1.4;
+    color: #475569;
+    margin-top: 2px;
+    margin-bottom: 14px;
+    break-before: avoid;
+    page-break-before: avoid;
+}}
+
 code {{
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 8pt;

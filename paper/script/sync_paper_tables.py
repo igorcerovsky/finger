@@ -125,7 +125,7 @@ def main():
 
     # Sync Table 2
     text = re.sub(
-        r'(### Table 2:[^\n]+\n\n)\| Grip Type \|.*?(?=\n\n\*Note: Values computed)',
+        r'(### Table 2:[^\n]+\n\n)\| Grip Type \|.*?(?=\n\n\*Note:)',
         lambda m: m.group(1) + t2_md,
         text,
         flags=re.DOTALL
@@ -134,7 +134,7 @@ def main():
     # Update Table 3 heading and content
     t3_heading = "### Table 3: Phenotype Comparison Across Hold Geometries (Middle Finger, Moment Arms Scaled as $ma \\propto L^{0.50}$, Assumed)"
     text = re.sub(
-        r'### Table 3:[^\n]+\n\n\| Loading Condition \|.*?(?=\n\n\*Note: In the Fixed 100 N)',
+        r'### Table 3:[^\n]+\n\n\| Loading Condition \|.*?(?=\n\n(?:---|!\[Figure))',
         lambda m: t3_heading + '\n\n' + t3_md,
         text,
         flags=re.DOTALL
