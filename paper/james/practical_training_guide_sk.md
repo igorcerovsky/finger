@@ -13,27 +13,27 @@
 ## Obsah
 
 - **[Úvod: Prepojenie biomechaniky s lezeckou praxou](#úvod-prepojenie-biomechaniky-s-lezeckou-praxou)** ........................................................................... 3
-- **[1. Základné biomechanické odporúčania pre tréning prstov](#1-základné-biomechanické-odporúčania-pre-tréning-prstov)** ........... 3
-  - [1.1 Dávkovanie úchopov a otvorený úchop ako ochrana pútok](#11-dávkovanie-úchopov-a-otvorený-úchop-ako-ochrana-pútok-odvodené-z-modelu-a-podložené-literatúrou) ... 3
-  - [1.2 Kolinearita predlaktia a optimalizácia ťahového vektora](#12-kolinearita-predlaktia-a-optimalizácia-ťahového-vektora-odvodené-z-modelu-a-technická-heuristika) ... 4
-  - [1.3 Periodizácia tréningu pre lezcov s dlhými prstami](#13-periodizácia-tréningu-pre-lezcov-s-dlhými-prstami-odvodené-z-modelu-a-periodizačná-hypotéza) ... 5
-  - [1.4 Práca nôh ako prevencia rázového preťaženia pútok](#14-práca-nôh-ako-prevencia-rázového-preťaženia-pútok-podložené-literatúrou-a-biomechanická-extrapolácia) ... 5
-  - [1.5 Rozdielna dĺžka prstov a ergonomický výber líšt](#15-rozdielna-dĺžka-prstov-a-ergonomický-výber-líšt-klinická-heuristika-podložená-literatúrou) ... 6
-  - [1.6 Ochrana kĺbového puzdra pri zošmyknutí ruky z chytu](#16-ochrana-kĺbového-puzdra-pri-zošmyknutí-ruky-z-chytu-klinické-pozorovanie-a-mechanistická-hypotéza) ... 6
-  - [1.7 Voľba hĺbky testovacej lišty podľa dĺžky prstov](#17-voľba-hĺbky-testovacej-lišty-podľa-dĺžky-prstov-hypotéza-odvodená-z-modelu) ... 7
-  - [1.8 Tribológia kože, teplota a práca s trením](#18-tribológia-kože-teplota-a-práca-s-trením-podložené-literatúrou-a-tribologická-heuristika) ... 8
-- **[2. Diagnostické sebahodnotenie preťaženia pútok a kĺbov](#2-diagnostické-sebahodnotenie-preťaženia-pútok-a-kĺbov)** ... 8
-- **[3. Biomechanické odporúčania podľa vekových kategórií](#3-biomechanické-odporúčania-podľa-vekových-kategórií)** ................... 9
-  - [3.0 Zmena pákových pomerov počas rastu a vývoja](#30-zmena-pákových-pomerov-počas-rastu-a-vývoja) ... 9
-  - [3.1 Deti (do 12–13 rokov / predpubertálne obdobie)](#31-deti-do-1213-rokov--predpubertálne-obdobie) ... 9
-  - [3.2 Mládež a juniori (13–18 rokov / rastový špurt)](#32-mládež-a-juniori-1318-rokov--rastový-špurt) ... 10
-  - [3.3 Dospelí lezci (18–45 rokov / kostrová zrelosť)](#33-dospelí-lezci-1845-rokov--kostrová-zrelosť) ... 11
-  - [3.4 Starší dospelí a kategória masters (nad 45 rokov)](#34-starší-dospelí-a-kategória-masters-nad-45-rokov) ... 11
-  - [3.5 Prehľad pákových pomerov a rizík podľa veku](#35-prehľad-pákových-pomerov-a-rizík-podľa-veku) ... 12
-- **[4. Periodizácia podľa morfotypu prsta a návrh mikrocyklov](#4-periodizácia-podľa-morfotypu-prsta-a-návrh-mikrocyklov-biomechanická-hypotéza-a-navrhovaný-metodický-rámec)** .......... 12
-- **[5. Stručný fyzikálny prehľad: Teoretické východiská modelu](#5-stručný-fyzikálny-prehľad-teoretické-východiská-modelu)** ..................... 13
-- **[Záver: Dlhodobo udržateľné zdravie ako predpoklad výkonnosti](#záver-dlhodobo-udržateľné-zdravie-ako-predpoklad-výkonnosti)** ...................................................................................................................... 14
-- **[Literatúra](#literatúra)** ............................................................................................................ 14
+- **[1. Základné biomechanické odporúčania pre tréning prstov](#1-základné-biomechanické-odporúčania-pre-tréning-prstov)** ........... 4
+  - [1.1 Dávkovanie úchopov a otvorený úchop ako ochrana pútok](#11-dávkovanie-úchopov-a-otvorený-úchop-ako-ochrana-pútok-odvodené-z-modelu-a-podložené-literatúrou) ... 4
+  - [1.2 Kolinearita predlaktia a optimalizácia ťahového vektora](#12-kolinearita-predlaktia-a-optimalizácia-ťahového-vektora-odvodené-z-modelu-a-technická-heuristika) ... 5
+  - [1.3 Periodizácia tréningu pre lezcov s dlhými prstami](#13-periodizácia-tréningu-pre-lezcov-s-dlhými-prstami-odvodené-z-modelu-a-periodizačná-hypotéza) ... 6
+  - [1.4 Práca nôh ako prevencia rázového preťaženia pútok](#14-práca-nôh-ako-prevencia-rázového-preťaženia-pútok-podložené-literatúrou-a-biomechanická-extrapolácia) ... 7
+  - [1.5 Rozdielna dĺžka prstov a ergonomický výber líšt](#15-rozdielna-dĺžka-prstov-a-ergonomický-výber-líšt-klinická-heuristika-podložená-literatúrou) ... 8
+  - [1.6 Ochrana kĺbového puzdra pri zošmyknutí ruky z chytu](#16-ochrana-kĺbového-puzdra-pri-zošmyknutí-ruky-z-chytu-klinické-pozorovanie-a-mechanistická-hypotéza) ... 8
+  - [1.7 Voľba hĺbky testovacej lišty podľa dĺžky prstov](#17-voľba-hĺbky-testovacej-lišty-podľa-dĺžky-prstov-hypotéza-odvodená-z-modelu) ... 10
+  - [1.8 Tribológia kože, teplota a práca s trením](#18-tribológia-kože-teplota-a-práca-s-trením-podložené-literatúrou-a-tribologická-heuristika) ... 11
+- **[2. Diagnostické sebahodnotenie preťaženia pútok a kĺbov](#2-diagnostické-sebahodnotenie-preťaženia-pútok-a-kĺbov)** ... 12
+- **[3. Biomechanické odporúčania podľa vekových kategórií](#3-biomechanické-odporúčania-podľa-vekových-kategórií)** ................... 13
+  - [3.0 Zmena pákových pomerov počas rastu a vývoja](#30-zmena-pákových-pomerov-počas-rastu-a-vývoja) ... 13
+  - [3.1 Deti (do 12–13 rokov / predpubertálne obdobie)](#31-deti-do-1213-rokov--predpubertálne-obdobie) ... 13
+  - [3.2 Mládež a juniori (13–18 rokov / rastový špurt)](#32-mládež-a-juniori-1318-rokov--rastový-špurt) ... 14
+  - [3.3 Dospelí lezci (18–45 rokov / kostrová zrelosť)](#33-dospelí-lezci-1845-rokov--kostrová-zrelosť) ... 15
+  - [3.4 Starší dospelí a kategória masters (nad 45 rokov)](#34-starší-dospelí-a-kategória-masters-nad-45-rokov) ... 15
+  - [3.5 Prehľad pákových pomerov a rizík podľa veku](#35-prehľad-pákových-pomerov-a-rizík-podľa-veku) ... 16
+- **[4. Periodizácia podľa morfotypu prsta a návrh mikrocyklov](#4-periodizácia-podľa-morfotypu-prsta-a-návrh-mikrocyklov-biomechanická-hypotéza-a-navrhovaný-metodický-rámec)** .......... 17
+- **[5. Stručný fyzikálny prehľad: Teoretické východiská modelu](#5-stručný-fyzikálny-prehľad-teoretické-východiská-modelu)** ..................... 18
+- **[Záver: Dlhodobo udržateľné zdravie ako predpoklad výkonnosti](#záver-dlhodobo-udržateľné-zdravie-ako-predpoklad-výkonnosti)** ...................................................................................................................... 18
+- **[Literatúra](#literatúra)** ............................................................................................................ 18
 
 ---
 

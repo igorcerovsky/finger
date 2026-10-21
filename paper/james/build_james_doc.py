@@ -21,6 +21,8 @@ def make_toc_header():
     pStyle = OxmlElement('w:pStyle')
     pStyle.set(qn('w:val'), 'Hlavikaobsahu')
     pPr.append(pStyle)
+    pageBreakBefore = OxmlElement('w:pageBreakBefore')
+    pPr.append(pageBreakBefore)
     rPr_p = OxmlElement('w:rPr')
     color_p = OxmlElement('w:color')
     color_p.set(qn('w:val'), 'auto')
@@ -71,6 +73,13 @@ def make_toc_entry(title, page, level=1):
         jc = OxmlElement('w:jc')
         jc.set(qn('w:val'), 'left')
         pPr.append(jc)
+        tabs = OxmlElement('w:tabs')
+        tab = OxmlElement('w:tab')
+        tab.set(qn('w:val'), 'right')
+        tab.set(qn('w:leader'), 'dot')
+        tab.set(qn('w:pos'), '9071')
+        tabs.append(tab)
+        pPr.append(tabs)
         rPr_p = OxmlElement('w:rPr')
         b = OxmlElement('w:b')
         bCs = OxmlElement('w:bCs')
@@ -85,6 +94,13 @@ def make_toc_entry(title, page, level=1):
         jc = OxmlElement('w:jc')
         jc.set(qn('w:val'), 'left')
         pPr.append(jc)
+        tabs = OxmlElement('w:tabs')
+        tab = OxmlElement('w:tab')
+        tab.set(qn('w:val'), 'right')
+        tab.set(qn('w:leader'), 'dot')
+        tab.set(qn('w:pos'), '9071')
+        tabs.append(tab)
+        pPr.append(tabs)
     p.append(pPr)
     
     # Run 1: Chapter title
@@ -103,11 +119,8 @@ def make_toc_entry(title, page, level=1):
     
     # Run 2: Tab with dot leader
     r2 = OxmlElement('w:r')
-    ptab = OxmlElement('w:ptab')
-    ptab.set(qn('w:relativeTo'), 'margin')
-    ptab.set(qn('w:alignment'), 'right')
-    ptab.set(qn('w:leader'), 'dot')
-    r2.append(ptab)
+    tab_el = OxmlElement('w:tab')
+    r2.append(tab_el)
     p.append(r2)
     
     # Run 3: Page number
@@ -154,7 +167,7 @@ def set_cell_borders(cell, top=None, bottom=None, left=None, right=None):
     """Set individual borders for a table cell."""
     tcPr = cell._tc.get_or_add_tcPr()
     tcBorders = OxmlElement('w:tcBorders')
-    borders = {'top': top, 'bottom': bottom, 'left': left, 'right': right}
+    borders = {'top': top, 'bottom': top if False else bottom, 'left': left, 'right': right}
     for b_name, b_val in borders.items():
         if b_val:
             node = OxmlElement(f'w:{b_name}')
@@ -193,7 +206,7 @@ def make_callout_box(doc, title, paragraphs, fill_hex="F2F5F9", border_color="2B
     cell.width = Cm(16.0)
     
     set_cell_background(cell, fill_hex)
-    set_cell_margins(cell, top=140, bottom=140, left=240, right=180)
+    set_cell_margins(cell, top=120, bottom=120, left=200, right=160)
     
     # Left border thick, others none
     set_cell_borders(cell, left={'val': 'single', 'sz': 24, 'color': border_color})
@@ -201,28 +214,42 @@ def make_callout_box(doc, title, paragraphs, fill_hex="F2F5F9", border_color="2B
     # Add title
     p0 = cell.paragraphs[0]
     p0.style = doc.styles['Normal']
-    p0.paragraph_format.first_line_indent = 0
+    p0.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p0.paragraph_format.first_line_indent = Cm(0)
     p0.paragraph_format.line_spacing = 1.2
-    p0.paragraph_format.space_before = Pt(2)
-    p0.paragraph_format.space_after = Pt(4)
+    p0.paragraph_format.space_before = Pt(0)
+    p0.paragraph_format.space_after = Pt(2)
     run_title = p0.add_run(title)
     run_title.font.name = "Times New Roman"
     run_title.font.size = Pt(11)
     run_title.font.bold = True
     run_title.font.color.rgb = RGBColor(0x1F, 0x4E, 0x79)
     
-    for text in paragraphs:
+    for idx, text in enumerate(paragraphs):
         p = cell.add_paragraph()
         p.style = doc.styles['Normal']
-        p.paragraph_format.first_line_indent = 0
+        p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p.paragraph_format.first_line_indent = Cm(0)
         p.paragraph_format.line_spacing = 1.2
-        p.paragraph_format.space_before = Pt(2)
-        p.paragraph_format.space_after = Pt(3)
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(2 if idx < len(paragraphs) - 1 else 0)
         run = p.add_run(text)
         run.font.name = "Times New Roman"
         run.font.size = Pt(10.5)
         
-    doc.add_paragraph() # slight spacing after table
+    # Add tiny trailing buffer paragraph inside cell so Pages row height calculation never clips the last line
+    p_pad = cell.add_paragraph()
+    p_pad.style = doc.styles['Normal']
+    p_pad.paragraph_format.first_line_indent = Cm(0)
+    p_pad.paragraph_format.line_spacing = 1.0
+    p_pad.paragraph_format.space_before = Pt(0)
+    p_pad.paragraph_format.space_after = Pt(0)
+    r_pad = p_pad.add_run(" ")
+    r_pad.font.size = Pt(4)
+        
+    p_after = doc.add_paragraph()
+    p_after.paragraph_format.space_before = Pt(0)
+    p_after.paragraph_format.space_after = Pt(2)
 
 def format_run(run, font_name="Times New Roman", size_pt=12, bold=False, italic=False, color=None):
     run.font.name = font_name
@@ -249,15 +276,28 @@ def add_body_paragraph(doc, text="", bold_prefix="", space_before=0, space_after
         format_run(r_text)
     return p
 
+def _disable_heading_numbering(p):
+    pPr = p._p.get_or_add_pPr()
+    numPr = OxmlElement('w:numPr')
+    ilvl = OxmlElement('w:ilvl')
+    ilvl.set(qn('w:val'), '0')
+    numId = OxmlElement('w:numId')
+    numId.set(qn('w:val'), '0')
+    numPr.append(ilvl)
+    numPr.append(numId)
+    pPr.append(numPr)
+
 def add_heading1(doc, text):
     p = doc.add_paragraph()
     p.style = doc.styles['Heading 1']
     pf = p.paragraph_format
     pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    pf.first_line_indent = 0
+    pf.left_indent = Cm(0)
+    pf.first_line_indent = Cm(0)
     pf.space_before = Pt(16)
     pf.space_after = Pt(6)
     pf.keep_with_next = True
+    _disable_heading_numbering(p)
     
     # clear existing runs and set clean run
     p.text = ""
@@ -270,10 +310,12 @@ def add_heading2(doc, text):
     p.style = doc.styles['Heading 2']
     pf = p.paragraph_format
     pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    pf.first_line_indent = 0
+    pf.left_indent = Cm(0)
+    pf.first_line_indent = Cm(0)
     pf.space_before = Pt(12)
     pf.space_after = Pt(4)
     pf.keep_with_next = True
+    _disable_heading_numbering(p)
     
     p.text = ""
     r = p.add_run(text)
@@ -285,10 +327,12 @@ def add_heading3(doc, text):
     p.style = doc.styles['Heading 3']
     pf = p.paragraph_format
     pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    pf.first_line_indent = 0
+    pf.left_indent = Cm(0)
+    pf.first_line_indent = Cm(0)
     pf.space_before = Pt(8)
     pf.space_after = Pt(2)
     pf.keep_with_next = True
+    _disable_heading_numbering(p)
     
     p.text = ""
     r = p.add_run(text)
@@ -396,6 +440,12 @@ def build_document():
     for r in doc.paragraphs[20].runs:
         format_run(r, size_pt=16, bold=True)
         
+    # Remove 3 excess empty spacer paragraphs (P16..P18) so multi-line title + page break fit on Page 1
+    body = doc._body._element
+    for idx_to_del in [18, 17, 16]:
+        p_del = doc.paragraphs[idx_to_del]._element
+        body.remove(p_del)
+        
     # Populate Table of Contents (sdt)
     sdt = doc._body._element.find(".//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}sdt")
     content = sdt.find(".//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}sdtContent")
@@ -409,27 +459,27 @@ def build_document():
     
     toc_items = [
         ("Úvod: Prepojenie biomechaniky s lezeckou praxou", 3, 1),
-        ("1. Základné biomechanické odporúčania pre tréning prstov", 3, 1),
-        ("1.1 Dávkovanie úchopov a otvorený úchop ako ochrana pútok", 3, 2),
-        ("1.2 Kolinearita predlaktia a optimalizácia ťahového vektora", 4, 2),
-        ("1.3 Periodizácia tréningu pre lezcov s dlhými prstami", 5, 2),
-        ("1.4 Práca nôh ako prevencia rázového preťaženia pútok", 5, 2),
-        ("1.5 Rozdielna dĺžka prstov a ergonomický výber líšt", 6, 2),
-        ("1.6 Ochrana kĺbového puzdra pri zošmyknutí ruky z chytu", 6, 2),
-        ("1.7 Voľba hĺbky testovacej lišty podľa dĺžky prstov", 7, 2),
-        ("1.8 Tribológia kože, teplota a práca s trením", 8, 2),
-        ("2. Diagnostické sebahodnotenie preťaženia pútok a kĺbov", 8, 1),
-        ("3. Biomechanické odporúčania podľa vekových kategórií", 9, 1),
-        ("3.0 Zmena pákových pomerov počas rastu a vývoja", 9, 2),
-        ("3.1 Deti (do 12–13 rokov / predpubertálne obdobie)", 9, 2),
-        ("3.2 Mládež a juniori (13–18 rokov / rastový špurt)", 10, 2),
-        ("3.3 Dospelí lezci (18–45 rokov / kostrová zrelosť)", 11, 2),
-        ("3.4 Starší dospelí a kategória masters (nad 45 rokov)", 11, 2),
-        ("3.5 Prehľad pákových pomerov a rizík podľa veku", 12, 2),
-        ("4. Periodizácia podľa morfotypu prsta a návrh mikrocyklov", 12, 1),
-        ("5. Stručný fyzikálny prehľad: Teoretické východiská modelu", 13, 1),
-        ("Záver: Dlhodobo udržateľné zdravie ako predpoklad výkonnosti", 14, 1),
-        ("Literatúra", 14, 1)
+        ("1. Základné biomechanické odporúčania pre tréning prstov", 4, 1),
+        ("1.1 Dávkovanie úchopov a otvorený úchop ako ochrana pútok", 4, 2),
+        ("1.2 Kolinearita predlaktia a optimalizácia ťahového vektora", 5, 2),
+        ("1.3 Periodizácia tréningu pre lezcov s dlhými prstami", 6, 2),
+        ("1.4 Práca nôh ako prevencia rázového preťaženia pútok", 7, 2),
+        ("1.5 Rozdielna dĺžka prstov a ergonomický výber líšt", 8, 2),
+        ("1.6 Ochrana kĺbového puzdra pri zošmyknutí ruky z chytu", 8, 2),
+        ("1.7 Voľba hĺbky testovacej lišty podľa dĺžky prstov", 10, 2),
+        ("1.8 Tribológia kože, teplota a práca s trením", 11, 2),
+        ("2. Diagnostické sebahodnotenie preťaženia pútok a kĺbov", 12, 1),
+        ("3. Biomechanické odporúčania podľa vekových kategórií", 13, 1),
+        ("3.0 Zmena pákových pomerov počas rastu a vývoja", 13, 2),
+        ("3.1 Deti (do 12–13 rokov / predpubertálne obdobie)", 13, 2),
+        ("3.2 Mládež a juniori (13–18 rokov / rastový špurt)", 14, 2),
+        ("3.3 Dospelí lezci (18–45 rokov / kostrová zrelosť)", 15, 2),
+        ("3.4 Starší dospelí a kategória masters (nad 45 rokov)", 15, 2),
+        ("3.5 Prehľad pákových pomerov a rizík podľa veku", 16, 2),
+        ("4. Periodizácia podľa morfotypu prsta a návrh mikrocyklov", 17, 1),
+        ("5. Stručný fyzikálny prehľad: Teoretické východiská modelu", 18, 1),
+        ("Záver: Dlhodobo udržateľné zdravie ako predpoklad výkonnosti", 18, 1),
+        ("Literatúra", 18, 1)
     ]
     
     for title, page, level in toc_items:
@@ -441,21 +491,16 @@ def build_document():
     doc.settings.element.append(update_fields)
     
     # Manage page breaks and remove template instructions
-    body = doc._body._element
     sdt_idx = None
     for idx, el in enumerate(body):
         if el.tag.endswith('sdt'):
             sdt_idx = idx
             break
             
-    # Page break between Title page (P20) and Table of Contents (sdt)
+    # Page break after Table of Contents (sdt) (make_toc_header already has w:pageBreakBefore)
     ns_w = nsdecls('w')
-    br_before = parse_xml('<w:p ' + ns_w + '><w:r><w:br w:type="page"/></w:r></w:p>')
-    body.insert(sdt_idx, br_before)
-    
-    # Page break after Table of Contents (sdt)
     br_after = parse_xml('<w:p ' + ns_w + '><w:r><w:br w:type="page"/></w:r></w:p>')
-    body.insert(sdt_idx + 2, br_after)
+    body.insert(sdt_idx + 1, br_after)
     
     # Remove old template instructions (everything between br_after and sectPr)
     sectPr = body.find(".//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}sectPr")
