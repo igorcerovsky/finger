@@ -64,6 +64,13 @@ def make_toc_entry(title, page, level=1):
     pStyle.set(qn('w:val'), f'Obsah{level}')
     pPr.append(pStyle)
     if level == 1:
+        ind = OxmlElement('w:ind')
+        ind.set(qn('w:left'), '0')
+        ind.set(qn('w:firstLine'), '0')
+        pPr.append(ind)
+        jc = OxmlElement('w:jc')
+        jc.set(qn('w:val'), 'left')
+        pPr.append(jc)
         rPr_p = OxmlElement('w:rPr')
         b = OxmlElement('w:b')
         bCs = OxmlElement('w:bCs')
@@ -73,7 +80,11 @@ def make_toc_entry(title, page, level=1):
     elif level == 2:
         ind = OxmlElement('w:ind')
         ind.set(qn('w:left'), '216')
+        ind.set(qn('w:firstLine'), '0')
         pPr.append(ind)
+        jc = OxmlElement('w:jc')
+        jc.set(qn('w:val'), 'left')
+        pPr.append(jc)
     p.append(pPr)
     
     # Run 1: Chapter title
@@ -379,8 +390,8 @@ def build_document():
     for r in doc.paragraphs[19].runs:
         format_run(r, size_pt=14)
         
-    # Author at P20 (Cerovský bez mäkčeňa)
-    doc.paragraphs[20].text = "Igor Cerovský"
+    # Author at P20
+    doc.paragraphs[20].text = "Mgr. Igor Cerovský PhD."
     doc.paragraphs[20].alignment = WD_ALIGN_PARAGRAPH.LEFT
     for r in doc.paragraphs[20].runs:
         format_run(r, size_pt=16, bold=True)
@@ -397,27 +408,27 @@ def build_document():
     content.append(make_empty_p())
     
     toc_items = [
-        ("Úvod", 3, 1),
+        ("Úvod: Prepojenie biomechaniky s lezeckou praxou", 3, 1),
         ("1. Základné biomechanické odporúčania pre tréning prstov", 3, 1),
-        ("1.1 Rozpočtovanie úchopového zaťaženia – „pútka-chrániaci“ otvorený úchop", 3, 2),
-        ("1.2 Kolinearita predlaktia a chytu & optimalizácia ťahového vektora", 4, 2),
-        ("1.3 Periodizačný protokol pre dlhé prsty", 5, 2),
-        ("1.4 Práca nôh ako „brnenie pre pútka“ – tlmenie dynamických rázov", 5, 2),
-        ("1.5 Asymetria medzi prstami a ergonomický výber tréningových líšt", 6, 2),
-        ("1.6 Ochrana kĺbového puzdra a kolaterálnych väzov", 6, 2),
-        ("1.7 Normalizácia hĺbky lišty pri športovom testovaní", 7, 2),
-        ("1.8 Tribológia kože, teplota a manažment trenia", 8, 2),
-        ("2. Diagnostické sebahodnotenie: Preťažujete svoje pútka a kĺbové puzdrá?", 8, 1),
-        ("3. Biomechanické usmernenia podľa vekových kategórií: Škálovanie pák článkov prstov a spojivových tkanív počas života", 9, 1),
-        ("3.0 Princíp celoživotného škálovania pák", 9, 2),
-        ("3.1 Deti (pediatrická kategória: <12–13 rokov / prepubertálne obdobie)", 9, 2),
-        ("3.2 Juniori a dospievajúci (pubertálna kategória: ~13–18 rokov / rastový špurt)", 10, 2),
-        ("3.3 Dospelí a hlavná kategória (~18–45 rokov / kostrová zrelosť)", 11, 2),
-        ("3.4 Veteráni a masters (starší dospelí: 45–60+ rokov / pomalšia obnova tkanív)", 11, 2),
-        ("3.5 Zhrnutie: Celoživotné škálovanie pák článkov prstov a biomechanický rizikový profil", 12, 2),
-        ("4. Periodizácia zohľadňujúca fenotyp a návrh mikrocyklov", 12, 1),
-        ("5. Stručný fyzikálny úvod: Veda v pozadí odporúčaní", 13, 1),
-        ("Záver: Dlhovekosť predchádza výkonu", 14, 1),
+        ("1.1 Dávkovanie úchopov a otvorený úchop ako ochrana pútok", 3, 2),
+        ("1.2 Kolinearita predlaktia a optimalizácia ťahového vektora", 4, 2),
+        ("1.3 Periodizácia tréningu pre lezcov s dlhými prstami", 5, 2),
+        ("1.4 Práca nôh ako prevencia rázového preťaženia pútok", 5, 2),
+        ("1.5 Rozdielna dĺžka prstov a ergonomický výber líšt", 6, 2),
+        ("1.6 Ochrana kĺbového puzdra pri zošmyknutí ruky z chytu", 6, 2),
+        ("1.7 Voľba hĺbky testovacej lišty podľa dĺžky prstov", 7, 2),
+        ("1.8 Tribológia kože, teplota a práca s trením", 8, 2),
+        ("2. Diagnostické sebahodnotenie preťaženia pútok a kĺbov", 8, 1),
+        ("3. Biomechanické odporúčania podľa vekových kategórií", 9, 1),
+        ("3.0 Zmena pákových pomerov počas rastu a vývoja", 9, 2),
+        ("3.1 Deti (do 12–13 rokov / predpubertálne obdobie)", 9, 2),
+        ("3.2 Mládež a juniori (13–18 rokov / rastový špurt)", 10, 2),
+        ("3.3 Dospelí lezci (18–45 rokov / kostrová zrelosť)", 11, 2),
+        ("3.4 Starší dospelí a kategória masters (nad 45 rokov)", 11, 2),
+        ("3.5 Prehľad pákových pomerov a rizík podľa veku", 12, 2),
+        ("4. Periodizácia podľa morfotypu prsta a návrh mikrocyklov", 12, 1),
+        ("5. Stručný fyzikálny prehľad: Teoretické východiská modelu", 13, 1),
+        ("Záver: Dlhodobo udržateľné zdravie ako predpoklad výkonnosti", 14, 1),
         ("Literatúra", 14, 1)
     ]
     
@@ -464,17 +475,17 @@ def build_document():
         
     print("Table of Contents generated. Title page, Obsah (Page 2), and Body (Page 3+) cleanly partitioned.")
     
-    # --- PAGE 2 ONWARDS: BODY CONTENT ---
+    # --- PAGE 3 ONWARDS: BODY CONTENT ---
     
-    # Metadata info card at the top of Page 2
+    # Metadata info card at the top of Page 3
     meta_table = doc.add_table(rows=5, cols=2)
     meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     meta_widths = [Cm(4.5), Cm(11.5)]
     meta_data = [
-        ("Autor:", "Igor Cerovský (Nezávislý výskumník v oblasti fyziky a biomechaniky lezenia)"),
-        ("Dátum publikácie:", "14. október 2026"),
+        ("Autor:", "Mgr. Igor Cerovský PhD. (Nezávislý výskumník v oblasti fyziky a biomechaniky lezenia)"),
+        ("Dátum:", "21. október 2026"),
         ("Korešpondencia:", "igor.cerovsky@gmail.com"),
-        ("Projektový repozitár:", "https://github.com/igorcerovsky/finger"),
+        ("Repozitár projektu:", "https://github.com/igorcerovsky/finger"),
         ("Sprievodná vedecká štúdia:", "A Three-Dimensional Musculoskeletal Model of the Human Finger in Rock Climbing: Contact Mechanics, Pulley Shearing, and Phenotypic Scaling (Cerovský, 14. október 2026)")
     ]
     for row_idx, (label, val) in enumerate(meta_data):
@@ -516,32 +527,32 @@ def build_document():
     
     make_callout_box(
         doc,
-        "Klasifikácia úrovne evidencie (Evidence-Tier):",
+        "Klasifikácia úrovne dôkazov:",
         [
-            "V záujme vedeckej transparentnosti je každé odporúčanie klasifikované podľa primárnej úrovne podkladových dôkazov:",
-            "• [Odvodené z modelu]: Kvantitatívne výsledky generované priamo naším simulačným výpočtovým aparátom pre 3D muskuloskeletálnu a kontaktnú mechaniku.",
-            "• [Doložené literatúrou]: Zavedené empirické zistenia z klinickej športovej medicíny, kadaveróznych testov alebo tribologickej literatúry.",
-            "• [Mechanistická hypotéza]: Logické dedukcie alebo trénerské heuristiky založené na mechanických princípoch, ktoré si vyžadujú ďalšiu priamu empirickú validáciu."
+            "Pre prehľadnosť a odbornú korektnosť je každé odporúčanie označené podľa hlavného zdroja podkladov:",
+            "• [Odvodené z modelu]: Kvantitatívne výsledky získané priamo z navrhnutého 3D biomechanického modelu prsta a kontaktnej mechaniky.",
+            "• [Podložené literatúrou]: Publikované empirické poznatky zo športovej medicíny, kadaveróznych meraní alebo tribológie.",
+            "• [Mechanistická hypotéza]: Odborné predpoklady a trénerské odporúčania vychádzajúce z mechanických princípov, ktoré si vyžadujú ďalšie priame experimentálne overenie."
         ]
     )
     
     # Recommendation 1.1
-    add_heading2(doc, "1.1 Rozpočtovanie úchopového zaťaženia – „Pútka-chrániaci“ otvorený úchop [Odvodené z modelu a doložené literatúrou]")
+    add_heading2(doc, "1.1 Dávkovanie úchopov a otvorený úchop ako ochrana pútok [Odvodené z modelu a podložené literatúrou]")
     add_body_paragraph(
         doc,
-        "Pri uzavretom úchope (Full Crimp) núti hyperextenzia v DIP kĺbe šľachu hlbokého ohýbača (FDP) prenášať až 65 % celkového zaťaženia prsta, zatiaľ čo extrémny uhol flexie v PIP kĺbe (105°) smeruje vektor vychýlenia šľachy priamo proti pútku A2. Tým sa normálová sila na pútko A2 zvyšuje na 267,0 N pri štandardnom vise so záťažou 100 N na 10 mm lište (a na 457,5 N pri dynamickom zachytení so záťažou 171,7 N). Naopak, prechod na otvorený úchop (Open Hand) znižuje normálovú silu na pútko A2 na 62,6 N pri vise so záťažou 100 N (a na 107,5 N pri dynamickom zaťažení) – čo predstavuje viac ako 76 % zníženie namáhania pútka (pričom záťaž zostáva stabilne výrazne pod hranicou 100 N v celom rozsahu bežných tréningových záťaží).",
-        bold_prefix="Fyzika úchopu: "
+        "Pri zamknutom úchope (full crimp) spôsobuje hyperextenzia v DIP kĺbe to, že šľacha hlbokého ohýbača prstov (FDP) preberá až 65 % celkového zaťaženia, zatiaľ čo výrazné ohnutie v PIP kĺbe (105°) smeruje výslednicu sily šľachy kolmo proti pútku A2. Normálová sila pôsobiaca na pútko A2 tak pri štandardnom vise so záťažou 100 N na 10 mm lište dosahuje 267,0 N (a pri dynamickom zachytení so záťažou 171,7 N narastá až na 457,5 N). Naopak, pri otvorenom úchope (open hand) klesá normálová sila na pútko A2 na 62,6 N pri záťaži 100 N (resp. na 107,5 N pri dynamickom zaťažení), čo predstavuje zníženie namáhania pútka o viac než 76 % (pričom zaťaženie pútka zostáva v celom rozsahu bežných tréningových váh bezpečne pod hranicou 100 N).",
+        bold_prefix="Biomechanický princíp: "
     )
-    add_body_paragraph(doc, "Praktický tréningový protokol:", bold_prefix="")
-    add_bullet_item(doc, "Približne 80 % celkového tréningového objemu (objemové lezenie, vytrvalostné intervaly, základné bloky na hangboarde) sa odporúča smerovať do otvoreného úchopu (Open Hand) a uvoľnenej polovičnej lišty (Half-Crimp).", bold_prefix="Pomer úchopov 80/20: ")
-    add_bullet_item(doc, "Odporúča sa vnímať uzavretý úchop (full crimp so zámkom palca) ako vysoko intenzívnu rezervnú kapacitu. Je vhodné si ho vyhradiť primárne na kľúčové pokusy v projektoch na lištách pod 8 mm, kde ohybový moment v DIP kĺbe nie je možné vyvinúť alternatívnym úchopom. Odporúča sa vyhnúť trénovaniu uzavretých líšt až do úplného svalového vyčerpania.", bold_prefix="Racionálne dávkovanie uzavretej lišty: ")
+    add_body_paragraph(doc, "Odporúčania pre tréningovú prax:", bold_prefix="")
+    add_bullet_item(doc, "Približne 80 % celkového tréningového objemu (objemové lezenie, vytrvalostné intervaly, základné visy na hangboarde) sa odporúča absolvovať v otvorenom úchope (open hand) a v polouzamknutom úchope (half-crimp).", bold_prefix="Pravidlo 80 / 20: ")
+    add_bullet_item(doc, "Zamknutý úchop (full crimp so zámkom palca) je vhodné vnímať ako špecifickú silovú rezervu. Odporúča sa vyhradiť ho predovšetkým na ostré pokusy v ťažkých cestách a bouldroch na lištách menších ako 8 mm, kde iný úchop neumožňuje udržať potrebný moment v DIP kĺbe, a nevyužívať ho pri tréningu do úplného svalového zlyhania.", bold_prefix="Uvážlivé využívanie zamknutého úchopu: ")
 
     # Recommendation 1.2
-    add_heading2(doc, "1.2 Kolinearita predlaktia a chytu & optimalizácia ťahového vektora – eliminácia priečneho laterálneho strihu [Odvodené z modelu a technická heuristika]")
+    add_heading2(doc, "1.2 Kolinearita predlaktia a optimalizácia ťahového vektora [Odvodené z modelu a technická heuristika]")
     add_body_paragraph(
         doc,
-        "Anulárne pútka (A2, A4) predstavujú anizotropné väzivovo-chrupavkové oblúky prispôsobené na obvodové napätie (udržiavanie šliach pri kosti). V lokálnom anatomickom súradnicovom systéme proximálneho článku vykazuje stred pútka A2 pri čistej sagitálnej flexii minimálne ohybové zaťaženie mimo roviny (FA2,lat_local ≈ 0 N). Keď sa však MCP kĺb dostane do radiálnej abdukcie mimo sagitálnej roviny (15°), vzniká výrazný priečny presmerovací strih koncentrovaný na pútku A1 / vstupnom palmárnom ústí pútka (137,3 N pri zaťažení 171,7 N; 80,4 N pri zaťažení 100 N). To je sprevádzané 44,4 N mediolaterálneho strihu na kolaterálnych väzoch PIP kĺbu (25,9 N pri 100 N zaťažení) a globálnou laterálnou zložkou 93,0 N (54,5 N pri 100 N zaťažení) odtiahnutia šľachy od kosti (bowstringing) na pútku A2.",
-        bold_prefix="Fyzika biomechaniky: "
+        "Anulárne pútka (A2, A4) predstavujú anizotropné väzivovo-chrupavkové oblúky prispôsobené na obvodové napätie (udržiavanie šliach pri kosti). V lokálnom anatomickom súradnicovom systéme proximálneho článku vykazuje stred pútka A2 pri čistej sagitálnej flexii minimálne ohybové zaťaženie mimo roviny (FA2,lat_local ≈ 0 N). Keď sa však MCP kĺb dostane do radiálnej abdukcie mimo sagitálnej roviny (15°), vzniká výrazný priečny presmerovací strih koncentrovaný na pútku A1 / vstupnom palmárnom ústí pútka (137,3 N pri zaťažení 171,7 N; 80,4 N pri zaťažení 100 N). To je sprevádzané 44,4 N mediolaterálneho strihu na kolaterálnych väzoch PIP kĺbu (25,9 N pri zaťažení 100 N) a globálnou laterálnou zložkou 93,0 N (54,5 N pri zaťažení 100 N) odtiahnutia šľachy od kosti (bowstringing) na pútku A2.",
+        bold_prefix="Biomechanický princíp: "
     )
     add_body_paragraph(doc, "Lezecká technika – ťažisko tela (CoG) a optimálny „ťahový vektor“:", bold_prefix="")
     add_bullet_item(doc, "Efektivita lezeckej techniky zásadne závisí od polohy tela. Aktívnym riadením ťažiska (boky, trup a dynamická práca nôh) môžu lezci smerovať výsledný ťahový vektor čo najkolmejšie na využiteľný povrch chytu.", bold_prefix="Ťažisko určuje nároky na prsty: ")
@@ -549,99 +560,100 @@ def build_document():
     add_bullet_item(doc, "Odporúča sa vyhnúť prepadávaniu lakťa dovnútra pri bočných ťahoch (gastonoch) alebo jeho neprimeranému vytáčaniu von („kuracie krídla“) pri zaťažení bočných líšt. Takéto zalomenie rotuje šľachovú pošvu a vytvára zvýšenú koncentráciu strihového napätia na bočných okrajoch pútok.", bold_prefix="Pasca polohy lakťov: ")
     add_body_paragraph(doc, "Bezpečnosť tréningu na hangboarde a so silomermi (Tindeq):", bold_prefix="")
     add_bullet_item(doc, "Pri testovaní alebo tréningu s izometrickými senzormi sily (napr. Tindeq Progressor, závesné váhy či inteligentné dosky) môžu lezci podvedome vytáčať zápästie, rozťahovať lakte alebo krútiť prsty, aby dosiahli vyššiu špičkovú nameranú hodnotu. Tým však vzniká nežiaduci kompenzačný vzorec: páčenie kĺbov a zapájanie svalov ramena a chrbta na úkor asymetrického strihu na vstupe do pútka A1 a preťaženia kolaterálnych väzov.", bold_prefix="Pasca honby za „maximálnym číslom“: ")
-    add_bullet_item(doc, "Na hangboardoch alebo prenosných lištách sa odporúča polohovať prsty kolmo na hranu, aby sa minimalizovalo krútenie. Namiesto maximalizácie nominálneho čísla na senzore je vhodné uprednostniť čistú sagitálnu mechaniku, tréningovú efektivitu a dlhodobé zdravie kĺbov.", bold_prefix="Trénovať pre efektívnosť, nie pre falošné rekordy: ")
+    add_bullet_item(doc, "Na hangboardoch alebo prenosných lištách sa odporúča polohovať prsty kolmo na hranu, aby sa minimalizovalo krútenie. Namiesto maximalizácie nominálneho čísla na senzore je vhodné uprednostniť čistú sagitálnu mechaniku, tréningovú efektivitu a dlhodobé zdravie kĺbov. Pri sledovaní progresu je navyše oveľa dôležitejší dlhodobý trend (pri zachovaní rovnakej techniky úchopu) než samotná absolútna nameraná hodnota.", bold_prefix="Trénovať pre efektívnosť, nie pre falošné rekordy: ")
 
     # Recommendation 1.3
-    add_heading2(doc, "1.3 Periodizačný protokol pre dlhé prsty [Odvodené z modelu a periodizačná hypotéza]")
+    add_heading2(doc, "1.3 Periodizácia tréningu pre lezcov s dlhými prstami [Odvodené z modelu a periodizačná hypotéza]")
     add_body_paragraph(
         doc,
-        "Pri realistickom sublineárnom alometrickom škálovaní kondylov (ma ∝ L^0,50) majú lezci s dlhými prstami prirodzenú mechanickú nevýhodu páky +17,7 % na mikro-lištách (297,3 N oproti 252,6 N na 6 mm lište). Pri lezení s vlastnou hmotnosťou sa to kombinuje s alometrickým škálovaním telesnej hmotnosti (m ∝ L^2 až L^3), čo zvyšuje zaťaženie pútka A2 na 10 mm lište zo 174,2 N (krátke prsty) na 380,0 N (dlhé prsty) – čo predstavuje +118,1 % nárast zaťaženia, približujúci sa k hraniciam ruptúry zisteným na kadaveróznych vzorkách (~400 N). Navyše, plytké lišty poskytujú dlhým článkom menšie relatívne odľahčenie ohybového momentu (ρ = d / L_DP) a umiestnenie dlhších článkov na malú lištu si vyžaduje ostrejšie uhly flexie v PIP kĺbe (θ_PIP > 100°), čo ďalej zosilňuje odtiahnutie šľachy na pútku A2.",
-        bold_prefix="Fyzika pákového pomeru: "
+        "Pri realistickom sublineárnom alometrickom škálovaní kĺbových kondylov (ma ∝ L^0,50) majú lezci s dlhými prstami na mikro-lištách prirodzenú pákovú nevýhodu +17,7 % (297,3 N oproti 252,6 N na 6 mm lište pri rovnakej vonkajšej sile). Pri lezení s vlastnou hmotnosťou sa k tomu pridáva nárast telesnej hmotnosti úmerný výške postavy (m ∝ L^2–L^3), v dôsledku čoho stúpa zaťaženie pútka A2 na 10 mm lište zo 174,2 N (krátke prsty) na 380,0 N (dlhé prsty). Tento nárast o +118,1 % sa už približuje k medznej pevnosti pútka známej z kadaveróznych meraní (~400 N). Plytké lišty navyše poskytujú dlhšiemu koncovému článku menšie relatívne skrátenie páky (ρ = d / L_DP) a poskladanie dlhších článkov na malý chyt si vyžaduje ostrejší uhol v PIP kĺbe (θ_PIP > 100°), čo ešte viac zvyšuje ťah šľachy do pútka A2.",
+        bold_prefix="Biomechanický princíp: "
     )
-    add_body_paragraph(doc, "Praktický tréningový protokol pre lezcov s dlhými prstami:", bold_prefix="")
-    add_bullet_item(doc, "Kým kostrové svalstvo sa adaptuje na tréningové podnety v priebehu týždňov, syntéza kolagénu, tvorba priečnych väzieb a prestavba šľachových pútok prebiehajú výrazne pomalším metabolickým tempom (v praxi sa často odhaduje horizont 12 až 24 mesiacov postupného preťažovania). Lezcom s dlhšími prstami sa odporúča postupovať pri zmenšovaní chytov a pridávaní záťaže konzervatívnejšie ako ich rovesníkom s kratšími prstami.", bold_prefix="Progresívna periodizácia spojivových tkanív: ")
-    add_bullet_item(doc, "Keďže dlhšie prsty zaznamenávajú vyššie absolútne napätie v tkanivách a vyšší tlak na kĺbové puzdrá pri lezení s vlastnou hmotnosťou, poskytnutie 48 až 72 hodín na regeneráciu spojivových tkanív medzi vysoko intenzívnymi tréningami prstov sa javí ako rozumné.", bold_prefix="Predĺžené regeneračné okná: ")
-    add_bullet_item(doc, "Športovci s dlhými prstami prirodzene vynikajú na oblinách, veľkých stiskoch, otvorených štruktúrach a technických kompresných bouldroch, kde im rozpätie a plocha trenia poskytujú výraznú mechanickú výhodu. Naopak, na mikro-lištách čelia mechanickej nevýhode; namiesto silenia uzavretých líšt sa odporúča sústrediť na precíznu prácu nôh (vysoké stupy, vyvesenie do nôh, drop-knee) a otvorený ťahový úchop (drag).", bold_prefix="Využitie biomechanických predností: ")
+    add_body_paragraph(doc, "Odporúčania pre tréning lezcov s dlhými prstami:", bold_prefix="")
+    add_bullet_item(doc, "Kým kostrové svaly sa prispôsobujú tréningovému zaťaženiu v priebehu týždňov, prestavba kolagénu a zosilňovanie šľachových pútok prebiehajú výrazne pomalšie (v praxi sa počíta s horizontom 12 až 24 mesiacov postupnej adaptácie). Lezcom s dlhšími prstami sa preto pri prechode na menšie lišty a pri pridávaní závažia odporúča postupovať opatrnejšie než lezcom s kratšími prstami.", bold_prefix="Pozvoľnejšia progresia pre spojivové tkanivá: ")
+    add_bullet_item(doc, "Keďže pri lezení s vlastnou hmotnosťou vzniká v dlhších prstoch vyššie absolútne napätie v pútku aj vyšší tlak v kĺboch, medzi vysoko intenzívnymi tréningami prstov sa odporúča ponechať 48 až 72 hodín na regeneráciu spojivových tkanív.", bold_prefix="Dlhší čas na regeneráciu: ")
+    add_bullet_item(doc, "Lezci s dlhými prstami majú prirodzenú výhodu na oblinách, stiskoch, väčších štruktúrach a v kompresných krokoch, kde dokážu využiť väčšiu kontaktnú plochu a obopnutie chytu. Naopak, na mikro-lištách sú v mechanickej nevýhode; namiesto silenia zamknutého úchopu (full crimp) sa im odporúča klásť dôraz na presnú prácu nôh (vysoké stupy, odľahčenie cez boky, drop-knee) a využívanie otvoreného úchopu.", bold_prefix="Využitie morfologických predností: ")
 
     # Recommendation 1.4
-    add_heading2(doc, "1.4 Práca nôh ako „brnenie pre pútka“ – tlmenie dynamických rázových preťažení [Doložené literatúrou a biomechanická extrapolácia]")
+    add_heading2(doc, "1.4 Práca nôh ako prevencia rázového preťaženia pútok [Podložené literatúrou a biomechanická extrapolácia]")
     add_body_paragraph(
         doc,
-        "V statickej rovnováhe na 10 mm lište zaznamenávajú štandardné prsty silu na pútku A2 v rozsahu 265,1 až 267,0 N pri zaťažení prostredníka 100 N, čo sa nachádza vo fyziologických medziach. Keď sa však noha nečakane pošmykne alebo vyletí zo stupu, vonkajšie zaťaženie okamžite vyskočí na 25–40 % telesnej hmotnosti na jeden prst (171,7 N). Pri tomto zaťažení narastá normálová sila na pútko A2 pri štandardnom fenotype na 457,5 N, čo podstatne prekračuje kadaveróznu referenčnú hodnotu medze pevnosti v ťahu ~400 N (Lin et al. 1990; Schöffl et al. 2009).",
-        bold_prefix="Fyzika rázového šoku: "
+        "V statickej rovnováhe na 10 mm lište pôsobí na pútko A2 pri zaťažení prostredníka silou 100 N sila v rozmedzí 265,1–267,0 N, čo je v rámci fyziologickej tolerancie tkaniva. Ak však noha nečakane skĺzne zo stupu, vonkajšie zaťaženie prsta skokovo narastie na 25–40 % telesnej hmotnosti (171,7 N). Pri takomto ráze stúpne normálová sila na pútko A2 pri štandardnom morfotype na 457,5 N, čo výrazne prekračuje medznú pevnosť pútka zistenú pri kadaveróznych meraniach (~400 N; Lin et al. 1990; Schöffl et al. 2009).",
+        bold_prefix="Biomechanický princíp: "
     )
-    add_body_paragraph(doc, "Praktické tréningové návyky:", bold_prefix="")
-    add_bullet_item(doc, "Odporúča sa osvojiť si návyk okamžite uvoľniť zovretie ruky a odskočiť, ak sa nohy nečakane pošmyknú, namiesto zúfalého kŕčovitého držania chytu za každú cenu. Akútne ruptúry pútok IV. stupňa sa často vyskytujú práve počas náhleho excentrického rázového zaťaženia po strate stupu.", bold_prefix="Reflex „pustiť pri šmyku“: ")
-    add_bullet_item(doc, "Špičková práca nôh a spevnenie telesného jadra (core) poskytujú funkčnú ochranu flexorových pútok. Nácvik vedomého a presného kladenia nôh na šmykľavé stupy pomáha predchádzať nečakaným pošmyknutiam pri maximálnom zaťažení rúk.", bold_prefix="Cvičenia precíznosti nôh: ")
-    add_bullet_item(doc, "Odporúča sa udržiavať gumu lezečiek čistú. Prach, zvyšky magnézia a nečistoty znižujú koeficient trenia (μ), najmä na ošmýkanom vápenci alebo hladkých no-tex / dual-tex stupoch na umelých stenách. Pravidelné očistenie podrážok lezečiek pred kľúčovým pokusom pomáha zabrániť náhlemu pošmyknutiu nôh, ktoré nárazovo zaťažuje pútka flexorov.", bold_prefix="Starostlivosť o lezečky a ich čistota: ")
+    add_body_paragraph(doc, "Odporúčania pre tréningovú prax:", bold_prefix="")
+    add_bullet_item(doc, "Ak nohy nečakane vypadnú zo stupov, odporúča sa chyt radšej vedome pustiť a odskočiť, než sa ho snažiť udržať kŕčovitým stiskom za každú cenu. Akútne ruptúry pútok IV. stupňa vznikajú veľmi často práve pri náhlom excentrickom ráze po šmyku nohy.", bold_prefix="Návyk uvoľniť úchop pri šmyku nohy: ")
+    add_bullet_item(doc, "Kvalitná práca nôh a spevnenie stredu tela (core) priamo chránia pútka ohýbačov prstov. Cielený nácvik presného ukladania nôh na vyšmýkané stupy znižuje riziko nečakaného šmyku v momentoch, keď sú prsty maximálne zaťažené.", bold_prefix="Dôraz na presnú prácu nôh a spevnenie trupu: ")
+    add_bullet_item(doc, "Podrážky lezečiek sa odporúča udržiavať čisté. Prach, nánosy magnézia a nečistoty znižujú koeficient trenia (μ), a to najmä na vyšmýkanom vápenci alebo na hladkých stupoch (no-tex / dual-tex) na umelých stenách. Očistenie lezečiek pred ťažkým pokusom je jednoduchou prevenciou náhleho šmyku nôh a následného rázového preťaženia pútok.", bold_prefix="Čistota lezečiek: ")
 
     # Recommendation 1.5
-    add_heading2(doc, "1.5 Asymetria medzi prstami a ergonomický výber tréningových líšt [Klinická heuristika doložená literatúrou]")
+    add_heading2(doc, "1.5 Rozdielna dĺžka prstov a ergonomický výber líšt [Klinická heuristika podložená literatúrou]")
     add_body_paragraph(
         doc,
-        "Na rovnej vodorovnej lište je prostredník (III. prst) výrazne dlhší ako ukazovák (II. prst) a prstenník (IV. prst). Aby prsty sedeli v jednej línii na plochej lište, prostredník je nútený do extrémnej hyperflexie v PIP kĺbe (>105°), čo na jeho pútku A2 koncentruje neprimerané normálové sily a krútiace momenty. Navyše, pretože prsty III, IV a V zdieľajú spoločné svalové bruško hlbokého ohýbača (efekt Quadriga), nerovnomerná extenzia prstov vytvára vysoké intertendinózne strihové napätie v lumbrikálnych svaloch.",
-        bold_prefix="Fyzika lumbrikálneho strihu: "
+        "Prostredník (III. prst) je výrazne dlhší než susedný ukazovák (II. prst) a prstenník (IV. prst). Pri úchope na rovnej vodorovnej lište sa preto končeky prstov prirodzene zrovnávajú do jednej línie, čo núti prostredník do nadmerného zohnutia (hyperflexie >105°) v PIP kĺbe a sústreďuje na jeho pútko A2 neúmerne vysokú normálovú silu a krútiaci moment. Navyše, keďže hlboké ohýbače III., IV. a V. prsta vychádzajú zo spoločného svalového bruška (tzv. efekt quadriga), rozdielne vystretie susedných prstov vyvoláva výrazné strihové napätie medzi šľachami a v oblasti lumbrikálnych svalov.",
+        bold_prefix="Biomechanický princíp: "
     )
-    add_body_paragraph(doc, "Praktické odporúčania pre vybavenie a tréning:", bold_prefix="")
-    add_bullet_item(doc, "Odporúča sa voliť posilňovacie dosky s mierne zakrivenými, odstupňovanými alebo zošikmenými lištami, ktoré rešpektujú prirodzený dĺžkový gradient prstov. To umožňuje rovnomernejšie rozloženie záťaže na všetky štyri prsty bez toho, aby bol prostredník nútený do preťažujúcej hyperflexie.", bold_prefix="Anatomicky tvarované lišty: ")
-    add_bullet_item(doc, "Pri tréningu dvojprstových úchopov (prostredník–prstenník) sa odporúča vyhnúť sa tesnému zovretiu nepoužitého ukazováka a malíčka do dlane. Udržiavanie voľných prstov v uvoľnenej, mierne pootvorenej polohe pomáha chrániť lumbrikálne svaly pred natrhnutím.", bold_prefix="Bezpečnosť pri dvojprstových dierach: ")
+    add_body_paragraph(doc, "Odporúčania pre výber pomôcok a tréning:", bold_prefix="")
+    add_bullet_item(doc, "Pri tréningu na hangboarde sa odporúča uprednostniť mierne zaoblené, odstupňované alebo skosené lišty, ktoré rešpektujú prirodzený rozdiel v dĺžke prstov. Záťaž sa tak rozloží rovnomernejšie medzi všetky štyri prsty bez toho, aby bol prostredník nútený do extrémneho ohybu v PIP kĺbe.", bold_prefix="Ergonomicky tvarované lišty: ")
+    add_bullet_item(doc, "Pri zaťažovaní dierok dvojicou prstov (najčastejšie prostredník a prstenník) sa odporúča nekrčiť voľný ukazovák a malíček kŕčovito do dlane. Ak nezaťažené prsty zostanú mierne vystreté a uvoľnené, znižuje sa vzájomný posun šliach hlbokého ohýbača a chránia sa lumbrikálne svaly pred natrhnutím.", bold_prefix="Zásady bezpečnosti pri tréningu na dierkach pre dva prsty: ")
 
     # Recommendation 1.6
-    add_heading2(doc, "1.6 Ochrana kĺbového puzdra a kolaterálnych väzov – riziko pošmyknutia s „unikajúcim prostredníkom“ [Klinické pozorovanie a mechanistická hypotéza]")
-    add_body_paragraph(doc, "Fyzika postupného zošmykovania prstov:", bold_prefix="")
-    add_bullet_item(doc, "V anatómii ľudskej ruky prostredník (III. prst) prečnieva o 8 až 15 mm pred susedný ukazovák (II) a prstenník (IV).", bold_prefix="Dĺžková disproporcia prstov: ")
-    add_bullet_item(doc, "Keď sa ruka nečakane začne šmýkať dozadu alebo vyletí z chytu (v dôsledku potu, vyleštenej skaly, mastných dual-tex chytov či prudkého dynamického pohybu), prsty sa neodpájajú synchrónne. Keďže prsty II a IV sú kratšie, skĺznu z hrany ako prvé.", bold_prefix="Kaskáda postupného pošmyknutia: ")
-    add_bullet_item(doc, "Počas kritického intervalu 20–60 milisekúnd pri pošmyknutí sa 100 % hybnosti padajúceho tela a unikajúceho záberu náhle prenesie na jediný prečnievajúci prostredník.", bold_prefix="Koncentrácia impulzu na jediný prst: ")
-    add_bullet_item(doc, "Ako je prostredník ťahaný cez ostrú hranu chytu pod zaťažením plnej hmotnosti tela, podstupuje prudkú, vysokorýchlostnú excentrickú extenziu. Navyše, keďže povrchy chytov a ťahové vektory sú zriedkavo čisto kolmé, unikajúci prst zažíva intenzívny torzný krútiaci moment (M = r × F_slip).", bold_prefix="Nútená dynamická excentrická extenzia a torzia: ")
-    add_bullet_item(doc, "Lezci s dlhými prstami majú podstatne dlhšie páky stredného a distálneho článku (L_MP + L_DP). To priamo znásobuje vonkajší krútiaci moment pôsobiaci na PIP kĺb a vystavuje puzdrové tkanivá závažným špičkovým torzným momentom.", bold_prefix="Násobenie pákového ramena pri dlhých prstoch: ")
+    add_heading2(doc, "1.6 Ochrana kĺbového puzdra pri zošmyknutí ruky z chytu [Klinické pozorovanie a mechanistická hypotéza]")
+    add_body_paragraph(doc, "Mechanizmus postupného zošmykovania prstov:", bold_prefix="")
+    add_bullet_item(doc, "Na ľudskej ruke presahuje prostredník (III. prst) susedný ukazovák (II. prst) a prstenník (IV. prst) zvyčajne o 8 až 15 mm.", bold_prefix="Prečnievanie prostredníka: ")
+    add_bullet_item(doc, "Keď sa ruka začne nečakane šmýkať z chytu (vplyvom potu, vyšmýkanej skaly, hladkých dual-tex chytov alebo prudkého dynamického kroku), prsty sa z chytu neuvoľnia súčasne. Kratší ukazovák a prstenník skĺznu z hrany ako prvé.", bold_prefix="Postupná strata kontaktu pri šmyku: ")
+    add_bullet_item(doc, "Počas kritických 20–60 milisekúnd pri zošmyknutí sa celá hybnosť padajúceho tela prenesie na jediný prst, ktorý zostal v kontakte s chytom – prečnievajúci prostredník.", bold_prefix="Sústredenie celého impulzu na jeden prst: ")
+    add_bullet_item(doc, "Keď sa prostredník pod plnou hmotnosťou tela ťahá cez ostrú hranu chytu, dochádza k jeho prudkému, nútenému vystretiu (excentrickej extenzii). Keďže tvar chytu a smer ťahu sú len málokedy presne kolmé, na prst zároveň pôsobí výrazný krútiaci (torzný) moment (M = r × F_slip).", bold_prefix="Prudké nútené vystretie a krútenie (torzia): ")
+    add_bullet_item(doc, "Lezci s dlhými prstami majú podstatne dlhšie páky stredného a koncového článku (L_MP + L_DP), čo priamo znásobuje vonkajší krútiaci moment v PIP kĺbe a vystavuje kĺbové puzdro vysokým špičkovým torzným silám.", bold_prefix="Väčšie pákové rameno pri dlhých prstoch: ")
     
-    add_body_paragraph(doc, "Patomechanika kĺbového puzdra a palmárnej doštičky:", bold_prefix="")
-    add_bullet_item(doc, "Kým anulárne pútka zlyhávajú primárne pod vplyvom obvodového ťahu smerujúceho dopredu (bowstringing), väzivové puzdro PIP kĺbu, kolaterálne väzy a väzivovo-chrupavková palmárna (volárna) doštička nesú hlavnú záťaž dynamickej hyperextenzie a laterálno-rotačného strihu.")
-    add_bullet_item(doc, "Táto traumatická trakcia spôsobuje mikroskopické trhlinky v úponoch kolaterálnych väzov a preťažuje úpon palmárnej doštičky, čo vedie k akútnej alebo chronickej kapsulitíde / synovitíde PIP kĺbu.")
-    add_bullet_item(doc, "Na rozdiel od akútneho puknutia pútka sa poranenie kĺbového puzdra prejavuje ako hlboká, difúzna obvodová bolesť okolo PIP kĺbu („opuchnutý / hrubý kĺb“), citlivosť pri stlačení kĺbu zbokov, ranná stuhnutosť a ostrá bolesť pri náhodnom bočnom ťuknutí alebo vytočení prsta.", bold_prefix="Klinický obraz: ")
+    add_body_paragraph(doc, "Mechanizmus poškodenia kĺbového puzdra a palmárnej doštičky:", bold_prefix="")
+    add_bullet_item(doc, "Zatiaľ čo anulárne pútka zlyhávajú najmä pri ťahu šľachy smerom od kosti (bowstringing), väzivové puzdro PIP kĺbu, kolaterálne väzy a väzivovo-chrupavková palmárna (volárna) doštička znášajú hlavný nápor pri násilnom vystretí a bočnom rotačnom strihu.")
+    add_bullet_item(doc, "Takéto trhnutie spôsobuje mikrotrhliny v úponoch kolaterálnych väzov a preťažuje úpon palmárnej doštičky, čo vedie k akútnemu alebo chronickému zápalu kĺbového puzdra a výstelky (kapsulitíde / synovitíde PIP kĺbu).")
+    add_bullet_item(doc, "Na rozdiel od akútneho prasknutia pútka sa poranenie kĺbového puzdra prejavuje tupou, difúznou bolesťou po celom obvode PIP kĺbu („opuchnutý, zhrubnutý kĺb“), citlivosťou pri stlačení kĺbu zboku, rannou stuhnutosťou a ostrou bolesťou pri náhodnom bočnom buchnutí alebo vytočení prsta.", bold_prefix="Klinické prejavy: ")
 
-    add_body_paragraph(doc, "Praktická prevencia a klinický manažment:", bold_prefix="")
-    add_bullet_item(doc, "Trénujte potlačenie reflexu zachytiť pád zúfalým zaťatím jediného unikajúceho prostredníka. Ak sa ruka začne nekontrolovateľne šmýkať, odporúča sa chyt vedome a čisto pustiť, než nechať prostredník ťahať celú hmotnosť tela cez hranu.", bold_prefix="Odstránenie reflexu „zúfalého záseku“: ")
-    add_bullet_item(doc, "Lezcom s výrazným dĺžkovým rozdielom prostredníka alebo opakovaným podráždením kĺbového puzdra sa odporúča aplikovať podporné X-tejpovanie cez palmárnu stranu PIP kĺbu. Prekrížené pásky mechanicky kladú odpor nútenej hyperextenzii a bočnému vychýleniu bez obmedzenia bežnej flexie úchopu.", bold_prefix="Funkčné tejpovanie PIP kĺbu do kríža (X-tejpovanie): ")
-    add_bullet_item(doc, "Pri boulderingu na šmykľavých alebo dynamických oblinách poskytuje voľné zatejpovanie prostredníka k prstenníku (prst III k prstu IV pružnou páskou medzi MCP a PIP kĺbom) kľúčové bočné spevnenie a rozkladá sily pri pošmyknutí na oba prsty.", bold_prefix="Fixácia susedných prstov („buddy-taping“) pri náročných tréningoch: ")
-    add_bullet_item(doc, "Nútenie opuchnutého kĺbu so zapáleným puzdrom do pasívnej extenzie zhoršuje podráždenie synovie.", bold_prefix="Vyhnúť sa agresívnemu pasívnemu naťahovaniu: ", level=1)
-    add_bullet_item(doc, "Odporúča sa vykonávať jemné, submaximálne izometrické cvičenia v polovičnej lište alebo otvorenom úchope pri flexii 45°–60°, ktoré podporujú cirkuláciu synoviálnej tekutiny a remodeláciu kolagénu.", bold_prefix="Aktívna izometria v strednom rozsahu: ", level=1)
-    add_bullet_item(doc, "Striedavé ponáranie do teplej a chladnej vody pomáha redukovať pretrvávajúci pozáťažový kĺbový výpotok a urýchľuje látkovú výmenu v málo cievne zásobenom tkanive kĺbového puzdra.", bold_prefix="Kontrastná hydroterapia: ", level=1)
+    add_body_paragraph(doc, "Praktická prevencia a režimové opatrenia:", bold_prefix="")
+    add_bullet_item(doc, "Odporúča sa vedome trénovať reakciu na pošmyknutie ruky – ak prsty začnú z chytu nekontrolovane schádzať, je bezpečnejšie úchop včas uvoľniť, než nechať celú hmotnosť tela prejsť cez jediný ostávajúci prostredník.", bold_prefix="Potlačenie reflexu kŕčovitého zachytávania šmyku: ")
+    add_bullet_item(doc, "Lezcom s výrazne dlhším prostredníkom alebo s opakovaným podráždením kĺbového puzdra sa odporúča podporné X-tejpovanie na dlaňovej strane PIP kĺbu. Prekrížené pruhy tejpu mechanicky brzdia násilné vystretie a bočný výkyv kĺbu bez toho, aby obmedzovali bežný ohyb prsta.", bold_prefix="Funkčné tejpovanie PIP kĺbu do kríža (X-tejpovanie): ")
+    add_bullet_item(doc, "Pri boulderingu na vyšmýkaných alebo dynamických oblinách poskytuje voľné zatejpovanie prostredníka s prstenníkom (III. a IV. prst spojené páskou v oblasti základného a stredného článku) účinnú bočnú oporu a pri prípadnom šmyku rozloží zaťaženie na oba prsty.", bold_prefix="Spojenie susedných prstov (buddy-taping) pri rizikovom lezení: ")
+    add_bullet_item(doc, "", bold_prefix="Postup pri podráždení a rehabilitácii synovitídy:")
+    add_bullet_item(doc, "Tlačenie opuchnutého kĺbu so zapáleným puzdrom do pasívneho vystretia či úplného zohnutia zhoršuje dráždenie synoviálnej výstelky.", bold_prefix="Vynechanie násilného pasívneho naťahovania: ", level=1)
+    add_bullet_item(doc, "Vhodné sú mierne, submaximálne izometrické zaťaženia v polouzamknutom úchope (half-crimp) alebo otvorenom úchope pri ohnutí kĺbu o 45°–60°, ktoré podporujú prekrvenie, pohyb kĺbovej tekutiny a prestavbu kolagénu.", bold_prefix="Aktívna izometria v strednom rozsahu ohybu: ", level=1)
+    add_bullet_item(doc, "Striedavé ponáranie ruky do teplej a studenej vody pomáha zmierniť pretrvávajúci opuch kĺbu po záťaži a podporuje látkovú výmenu v málo prekrvenom tkanive kĺbového puzdra.", bold_prefix="Striedavé kúpele (kontrastná hydroterapia): ", level=1)
 
     # Recommendation 1.7
-    add_heading2(doc, "1.7 Normalizácia hĺbky lišty pri športovom testovaní [Hypotéza odvodená z modelu]")
+    add_heading2(doc, "1.7 Voľba hĺbky testovacej lišty podľa dĺžky prstov [Hypotéza odvodená z modelu]")
     add_body_paragraph(
         doc,
-        "Štandardné testovacie protokoly hodnotia všetkých lezcov na jednotnej 20 mm lište. Biomechanicky sa však relatívna hĺbka lišty mení v pomere k dĺžke distálneho článku (d / L_DP):",
-        bold_prefix="Mýtus univerzálnej 20 mm lišty: "
+        "Bežné testovacie protokoly hodnotia všetkých lezcov na rovnakej 20 mm lište. Z biomechanického hľadiska sa však skutočná (relatívna) hĺbka chytu mení v závislosti od dĺžky koncového článku prsta (d / L_DP):",
+        bold_prefix="Úskalia jednotnej 20 mm testovacej lišty: "
     )
-    add_bullet_item(doc, "Pri výrazne krátkoprstom fenotype (spodné percentily, L_DP = 18,7 mm) predstavuje 20 mm hlboký chyt (d / L_DP = 1,07). Zapája sa stredný článok, zaťaženie sa prenáša na pútko A3 a nároky na šľachu FDP dramaticky klesajú.")
-    add_bullet_item(doc, "Pri výrazne dlhoprstom fenotype (horné percentily, L_DP = 25,3 mm) predstavuje 20 mm plytkú mikro-lištu (d / L_DP = 0,79), kde sa celé zaťaženie sústredí na koncový článok, čo prudko zvyšuje nároky na ohýbače.")
-    add_body_paragraph(doc, "Praktické odporúčanie pre testovanie:", bold_prefix="")
-    add_body_paragraph(doc, "Odporúča sa štandardizovať testovacie lišty podľa individuálnej anatómie lezca podľa vzorca:")
+    add_bullet_item(doc, "Pre morfotyp s výrazne krátkymi prstami (spodné percentily populácie, L_DP = 18,7 mm) predstavuje 20 mm lišta hlboký chyt (d / L_DP = 1,07). Do opory o chyt sa zapája aj stredný článok, časť zaťaženia preberá pútko A3 a nároky na šľachu hlbokého ohýbača (FDP) výrazne klesajú.")
+    add_bullet_item(doc, "Pre morfotyp s výrazne dlhými prstami (horné percentily populácie, L_DP = 25,3 mm) predstavuje rovnaká 20 mm lišta plytkú lištu (d / L_DP = 0,79), na ktorej celé zaťaženie nesie iba koncový článok, čo podstatne zvyšuje nároky na ohýbače prstov.")
+    add_body_paragraph(doc, "Praktické odporúčanie pre diagnostiku a testovanie:", bold_prefix="")
+    add_body_paragraph(doc, "Pri porovnávacom testovaní sa odporúča prispôsobiť hĺbku testovacej lišty anatómii prsta konkrétneho lezca podľa vzťahu:")
     add_equation_box(doc, "d_test = 0,80 × L_DP")
-    add_bullet_item(doc, "Pre priemerný štandardný prst (L_DP ≈ 22 mm) sa odporúča testovať na lište 17,5 až 18 mm.")
-    add_bullet_item(doc, "V okrajových prípadoch: pre krátke prsty (18,7 mm) sa rozmer upravuje na 15 mm, kým pre extrémne dlhé prsty (25,3 mm) sa rozmer posúva na 20 až 22 mm.")
+    add_bullet_item(doc, "Pre štandardne dlhý prst (L_DP ≈ 22 mm) tomu zodpovedá testovacia lišta s hĺbkou 17,5–18 mm.")
+    add_bullet_item(doc, "V krajných prípadoch morfotypu vychádza pre krátke prsty (18,7 mm) ekvivalentná hĺbka 15 mm, zatiaľ čo pre dlhé prsty (25,3 mm) hĺbka 20–22 mm.")
 
     # Recommendation 1.8
-    add_heading2(doc, "1.8 Tribológia kože, teplota a manažment trenia [Doložené literatúrou a tribologická heuristika]")
+    add_heading2(doc, "1.8 Tribológia kože, teplota a práca s trením [Podložené literatúrou a tribologická heuristika]")
     add_body_paragraph(
         doc,
-        "Trenie medzi pokožkou a skalou má nelineárny charakter a pri vysokom zaťažení klesá (μ ∝ F_N^(n-1)). Epidermálna vrstva kože sa správa ako viskoelastický kompozit; trenie sleduje krivku tvaru obráteného U v závislosti od teploty a hydratácie stratum corneum:",
-        bold_prefix="Fyzika trenia a tribológia: "
+        "Trenie medzi kožou bruška prsta a povrchom skaly či chytu má nelineárny charakter a pri vysokom kontaktnom tlaku relatívne klesá (μ ∝ F_N^(n-1)). Rohová vrstva pokožky (stratum corneum) sa správa ako viskoelastický materiál, pričom koeficient trenia v závislosti od teploty a vlhkosti kože opisuje krivku v tvare obráteného písmena U:",
+        bold_prefix="Biomechanický princíp: "
     )
-    add_bullet_item(doc, "Keď teplota okolia stúpne (>20 °C) alebo sa ruky potia, vytvára sa tekutý mazací film, ktorý spôsobuje prepad koeficientu trenia μ z ≈ 0,65 pod hodnotu 0,35. Ako kompenzáciu lezec prirodzene stláča chyt vyššou normálovou silou, čo kaskádovito vedie k vysokému napätiu v šľachách.", bold_prefix="Teplý a spotený režim („uvarenie chytu / greasing out“): ")
-    add_bullet_item(doc, "Naopak, extrémny chlad (<5 °C), veľmi nízka vlhkosť vzduchu (<30 % RH) alebo nadmerne premagneziovaná pokožka vyvolávajú opačný, rovnako nebezpečný jav známy v lezeckom slangu ako „dry-firing“. V mrazivom a suchom vzduchu stráca stratum corneum svoju viskoelastickú prispôsobivosť a mení sa na tvrdý, sklovitý povrch. Bez základnej vnútornej vlhkosti sa koža nedokáže mikroskopicky deformovať do nerovností skaly. Končeky prstov sa z chytu okamžite zošmyknú bez akéhokoľvek hmatového varovania, čo vysiela netlmené dynamické rázové vlny priamo do anulárnych pútok a kĺbových puzdier.", bold_prefix="Extrémne chladný a vysušený režim („vyšmyknutie na sucho / dry-firing“): ")
-    add_body_paragraph(doc, "Praktický protokol starostlivosti o kožu:", bold_prefix="")
-    add_bullet_item(doc, "Najvhodnejšie podmienky pre trenie nastávajú v chladnom, sviežom prostredí (≈ 8–15 °C s miernou relatívnou vlhkosťou 40–60 %), kedy je pokožka dostatočne tuhá, aby odolávala strihu, no zároveň dostatočne poddajná na mikroskopické uzamknutie v štruktúre materiálu.", bold_prefix="Optimálna zóna trenia: ")
-    add_bullet_item(doc, "Počas mrazivých suchých dní sa odporúča vyhnúť sa nadmernému nabaľovaniu magnézia na už vysušené ruky. Prsty je vhodné zohriať vo vreckách, prípadne pred nástupom na končeky prstov jemne dýchnuť teplý vlhký dych. Toto minimálne množstvo vlhkosti obnoví elasticitu pokožky bez vyvolania tekutého potu.", bold_prefix="Prevencia vyšmyknutia na sucho: ")
-    add_bullet_item(doc, "Pravidelné čistenie chytov kefkou odstraňuje vrstvy vylešteného nánosu a usadeného magnézia a obnovuje mikroštruktúru povrchu. Vhodná kombinácia tekutého kriedového základu s čistým uhličitanom horečnatým udržiava ruky suché bez toho, aby tkanivo vysušila do sklovitého, krehkého stavu.", bold_prefix="Hygiena čistenia chytov a magnézium: ")
+    add_bullet_item(doc, "Pri vyššej teplote okolia (>20 °C) alebo nadmernom potení prstov vzniká na povrchu kože tenký tekutý film, ktorý znižuje koeficient trenia μ z hodnôt okolo 0,65 pod 0,35. Lezec tento pokles trenia podvedome kompenzuje silnejším stiskom chytu (vyššou normálovou silou), čo priamo zvyšuje ťah v šľachách a zaťaženie pútok.", bold_prefix="Vysoká teplota a vlhkosť („šmýkanie na pote“, angl. greasing out): ")
+    add_bullet_item(doc, "Naopak, silný chlad (<5 °C), nízka vlhkosť vzduchu (<30 % RH) alebo nadmerné vrstvenie magnézia spôsobujú opačný, rovnako rizikový jav označovaný ako dry-firing. V chladnom a suchom prostredí stráca povrchová vrstva kože svoju pružnosť a stáva sa tvrdou a krehkou. Bez prirodzenej vlhkosti sa pokožka nedokáže mikroskopicky prispôsobiť nerovnostiam chytu, prsty z neho bez varovania „ustrelia“ a náhle odľahčenie či zachytenie šmyku prenesie prudký ráz do pútok a kĺbových puzdier.", bold_prefix="Nízka teplota a presušená koža („ustrelenie na sucho“, angl. dry-firing): ")
+    add_body_paragraph(doc, "Praktické odporúčania pre starostlivosť o kožu a prácu s trením:", bold_prefix="")
+    add_bullet_item(doc, "Najlepšie trenie pokožka dosahuje v chladnejšom prostredí (≈ 8–15 °C pri relatívnej vlhkosti vzduchu 40–60 %), keď je dostatočne pevná v strihu, no zároveň si zachováva pružnosť potrebnú na kopírovanie mikroštruktúry skaly.", bold_prefix="Optimálne podmienky pre trenie: ")
+    add_bullet_item(doc, "V chladnom a suchom počasí sa odporúča nepreháňať množstvo magnézia na už vysušených prstoch. Pred pokusom je vhodné zohriať prsty vo vreckách a v prípade príliš suchej kože na brušká prstov jemne dýchnuť – minimálna vlhkosť z dychu vráti koži poddajnosť bez toho, aby sa prsty spotili.", bold_prefix="Prevencia „ustrelenia na sucho“ (dry-firing): ")
+    add_bullet_item(doc, "Pravidelné čistenie chytov kefkou odstraňuje nánosy mastnoty, gumy a udupaného magnézia a obnovuje drsnosť povrchu. Vhodná kombinácia tekutého magnézia ako základnej vrstvy a primeraného množstva sypkého magnézia (uhličitanu horečnatého) udrží prsty suché bez nadmerného presušenia pokožky.", bold_prefix="Čistenie chytov a používanie magnézia: ")
 
     # SECTION 2: Diagnostické sebahodnotenie
-    add_heading1(doc, "2. Diagnostické sebahodnotenie: Preťažujete svoje pútka a kĺbové puzdrá?")
+    add_heading1(doc, "2. Diagnostické sebahodnotenie preťaženia pútok a kĺbov")
     add_body_paragraph(
         doc,
-        "Tento klinický kontrolný zoznam založený na dôkazoch slúži lezcom a trénerom na identifikáciu mikropoškodení ešte pred vznikom akútneho štrukturálneho zlyhania tkanív:"
+        "Nasledujúci prehľad slúži na včasné rozpoznanie varovných príznakov mikrotraumatizácie tkanív ešte pred vznikom vážneho akútneho zranenia:"
     )
     
     # Table 1: Diagnostické sebahodnotenie
@@ -657,37 +669,37 @@ def build_document():
     set_table_borders(t1, color="B0C4DE", sz="4")
     t1_widths = [Cm(3.2), Cm(2.8), Cm(4.8), Cm(5.2)]
     
-    t1_headers = ["Diagnostický príznak", "Anatomická štruktúra", "Biomechanická príčina", "Odporúčané opatrenie"]
+    t1_headers = ["Varovný príznak", "Postihnutá štruktúra", "Biomechanická príčina", "Odporúčané opatrenie"]
     t1_data = [
         (
-            "Ranná stuhnutosť pri báze proximálneho článku",
-            "Pošva pútka A2",
-            "Opakované vysoké obvodové napätie pri chronickom lištovaní",
-            "Znížiť objem lištovania o 50 %; na 10 dní prejsť na otvorený úchop."
+            "Ranná stuhnutosť na dlaňovej strane základného článku",
+            "Pútko A2 a šľachová pošva",
+            "Opakované vysoké obvodové napätie pri častom lezení po lištách",
+            "Znížiť objem lezenia na malých lištách o 50 %; na 10 dní prejsť na otvorený úchop."
         ),
         (
-            "Ostrá bolesť pri tlaku na palmárnu bázu PIP kĺbu",
-            "Distálne A2 / proximálne A3",
-            "Odtrhové napätie (peel stress) z hyperextenzie v DIP kĺbe pri uzavretom úchope",
-            "Odporúča sa okamžite prerušiť uzavretý úchop; podpora H-tejpovaním alebo termoplastickým prstencom."
+            "Ostrá bolesť pri tlaku na dlaňovú stranu PIP kĺbu",
+            "Distálny okraj pútka A2 / pútko A3",
+            "Odťahovanie pútka od kosti pri hyperextenzii v DIP kĺbe v zamknutom úchope (full crimp)",
+            "Okamžite vynechať zamknutý úchop; odľahčiť pútko H-tejpovaním alebo podporným prstencom."
         ),
         (
-            "Bolesť pri ťahu na bočných chytoch / gastonoch",
+            "Bolesť pri ťahu za bočné chyty a gastony",
             "Vstup pútka A1 / bočné okraje pútok / kolaterálne väzy",
-            "Nadmerný strih pri radiálnej abdukcii v MCP kĺbe (FA1,lat > 80 N, FPIP,ML > 40 N)",
-            "Skontrolovať líniu predlaktia; vyhnúť sa vytáčaniu ruky na chyte."
+            "Nadmerný bočný strih pri odklone prsta v MCP kĺbe (FA1,lat > 80 N, FPIP,ML > 40 N)",
+            "Upraviť polohu lakťa a predlaktia; nevytáčať zápästie a prsty na chyte do strán."
         ),
         (
-            "Bolesť medzi prstenníkom a prostredníkom",
-            "Strih v lumbrikálnom svale",
-            "Efekt Quadriga pri zaťažení hlbokých dier so zovretými voľnými prstami v dlani",
-            "Odporúča sa prerušiť tréning 2-prstových dier; trénovať výhradne štvorprstový otvorený úchop."
+            "Bolesť v dlani medzi prostredníkom a prstenníkom",
+            "Lumbrikálny sval",
+            "Efekt quadriga pri zaťažení dierok so zovretými voľnými prstami v dlani",
+            "Prerušiť tréning na dvojprstových dierkach; trénovať len so všetkými štyrmi prstami v otvorenom úchope."
         ),
         (
-            "Hlboká obvodová bolesť PIP kĺbu; bočná citlivosť po pošmyknutí ruky",
+            "Tupá bolesť po obvode PIP kĺbu a citlivosť zboku po šmyku ruky",
             "Kĺbové puzdro PIP, palmárna doštička a kolaterálne väzy",
-            "Postupné zošmykovanie prstov pri dynamickom pošmyknutí; dlhý prostredník absorbuje 100 % hybnosti pádu pri prudkej excentrickej extenzii a torznom strihu.",
-            "Zastaviť reflex zúfalého držania pri šmyku; aplikovať X-tejpovanie PIP kĺbu alebo fixáciu k susednému prstu (prsty III+IV); aktívna izometria v strednom rozsahu; vyhnúť sa pasívnej hyperextenzii kĺbu, kým synovitída neustúpi."
+            "Postupné zošmyknutie prstov z chytu, pri ktorom dlhší prostredník zachytil celú hybnosť pádu v prudkom vystretí a skrútení.",
+            "Nekŕčovať ruku pri šmyku; použiť X-tejpovanie PIP kĺbu alebo spojenie III. a IV. prsta (buddy-taping); zaradiť jemnú izometriu v strednom ohybe a vyhnúť sa pasívnemu naťahovaniu do ústupu opuchu."
         )
     ]
     
@@ -728,72 +740,72 @@ def build_document():
     doc.add_paragraph() # Spacing
 
     # SECTION 3: Vekové kategórie
-    add_heading1(doc, "3. Biomechanické usmernenia podľa vekových kategórií: Škálovanie pák článkov prstov a spojivových tkanív počas života")
+    add_heading1(doc, "3. Biomechanické odporúčania podľa vekových kategórií")
     
-    add_heading2(doc, "3.0 Princíp celoživotného škálovania pák")
+    add_heading2(doc, "3.0 Zmena pákových pomerov počas rastu a vývoja")
     add_body_paragraph(
         doc,
-        "Náš 3D biomechanický model poukazuje na to, že vnútorné napätie v šľachách ohýbačov (T_FDP, T_FDS), kĺbové reakčné sily (F_joint) a normálové zaťaženia anulárnych pútok (F_A2, F_A4) sú diktované momentovou rovnováhou okolo jednotlivých kĺbov prsta:"
+        "Navrhnutý 3D biomechanický model ukazuje, že vnútorné napätie v šľachách ohýbačov (T_FDP, T_FDS), reakčné sily v kĺboch (F_joint) a normálové sily pôsobiace na anulárne pútka (F_A2, F_A4) sú určené momentovou rovnováhou v jednotlivých kĺboch prsta:"
     )
     add_equation_box(doc, "M_joint = r_ext(L_DP, L_MP, L_PP) × F_ext")
     add_equation_box(doc, "T_FDP ≈ M_PIP / h_FDP ,        F_pulley = 2 T_FDP · sin(θ / 2)")
     add_body_paragraph(
         doc,
-        "Pretože vnútorné pákové rameno šľachy v osteofibróznom digitálnom kanáli rastie sublineárne s kalibrom skeletu (ma ∝ L^0,50), vnútorné napätie šliach a normálové sily na pútka rastú priamo s dĺžkou pák článkov prstov (L_DP, L_MP, L_PP)."
+        "Keďže vnútorné rameno sily šľachy v osteofibróznom kanáli prsta rastie s hrúbkou kostry len sublineárne (ma ∝ L^0,50), ťah v šľachách a normálové zaťaženie pútok priamo narastajú s predlžovaním článkov prsta (L_DP, L_MP, L_PP)."
     )
     add_body_paragraph(
         doc,
-        "Okrem toho redistribúcia kontaktu pozdĺž prsta závisí od bezrozmerného pomeru hĺbky chytu:"
+        "Rozloženie tlaku pozdĺž prsta zároveň závisí od bezrozmerného pomeru hĺbky chytu k dĺžke koncového článku:"
     )
     add_equation_box(doc, "ρ = d / L_DP")
     add_body_paragraph(
         doc,
-        "Keď je ρ ≤ 1,0, kontaktná sila je koncentrovaná ako jednočlánkový kontakt výlučne na distálnom článku. Keď je ρ > 1,0, stredný článok vytvára dvojčlánkový kontakt, čím prenáša časť normálovej sily na stredný článok, stabilizuje pútko A3 a znižuje vonkajší ohybový moment v DIP kĺbe k nule."
+        "Ak je ρ ≤ 1,0, zaťaženie nesie výlučne koncový článok (jednočlánkový kontakt). Ak je ρ > 1,0, do opory o chyt sa zapája aj stredný článok (dvojčlánkový kontakt), ktorý preberá časť normálovej sily, stabilizuje pútko A3 a znižuje vonkajší ohybový moment v DIP kĺbe takmer na nulu."
     )
 
-    add_heading2(doc, "3.1 Deti (pediatrická kategória: <12–13 rokov / prepubertálne obdobie)")
-    add_body_paragraph(doc, "Dĺžka pák článkov a škálovanie hĺbky chytu (d / L_DP):", bold_prefix="")
-    add_bullet_item(doc, "Detské články prstov sú proporčne miniatúrne: L_DP ≈ 13–16 mm, s celkovou dĺžkou prsta L_tot ≈ 50–65 mm (v porovnaní s 22 mm a 95 mm u dospelých).")
-    add_bullet_item(doc, "Na štandardných chytoch v lezeckých centrách pre dospelých (18–22 mm lišty) je pomer hĺbky chytu pre dieťa ρ = d / L_DP > 1,2–1,5. To, čo je pre dospelého „lišta“, funguje pre dieťa ako hlboká viacčlánková polica, kde sa stredný článok prirodzene opiera o chyt.", bold_prefix="Paradox obrátenia dospelých chytov: ")
-    add_bullet_item(doc, "Naopak, ak stavitelia ciest alebo mládežnícke súťaže zaradia plytké chyty zmenšené na 6–10 mm, pomer klesá na ρ ≤ 0,6, čo koncentruje silu priamo na špičku distálneho článku.", bold_prefix="Riziko detských mikro-líšt: ")
-    add_body_paragraph(doc, "Zraniteľnosť rastovej platničky voči pákam (PPSI / epifyziolýza):", bold_prefix="")
-    add_bullet_item(doc, "Epifyzárna rastová platnička (fýza) na báze stredného článku pozostáva z neosifikovaných chrupavkových chondrocytov, ktoré predstavujú mechanicky najslabší článok detského skeletu.")
-    add_bullet_item(doc, "Pri uzavretom úchope vytvára vysoká hyperextenzia v DIP a flexia v PIP kĺbe výrazné dorzálne strihové napätie priamo cez otvorenú rastovú štrbinu. Opakovaná mikrotrauma môže vyvolať chronické stresové poškodenie epifýzy na báze stredného článku (Primary Periphyseal Stress Injury – PPSI stupne 1–5; Schöffl et al., 2025).")
-    add_body_paragraph(doc, "Praktické odporúčania podložené dôkazmi:", bold_prefix="")
-    add_bullet_item(doc, "Pre prepubertálne deti sa neodporúčajú cielené protokoly na hangboarde, kampusové silové rebríky ani visy s pridanou záťažou, aby sa chránili otvorené rastové platničky.", bold_prefix="Dôrazné obmedzenie izolovaných visov na hangboarde a mikro-líšt: ")
-    add_bullet_item(doc, "Odporúča sa preferovať ergonomické chyty (d ≥ 20 mm), obliny, štruktúry a kompresné tvary, kde sa stredný článok podieľa na kontakte (ρ > 1,0).", bold_prefix="Geometria chytov a podpora dvoch článkov (d ≥ L_DP): ")
+    add_heading2(doc, "3.1 Deti (do 12–13 rokov / predpubertálne obdobie)")
+    add_body_paragraph(doc, "Dĺžka článkov prsta a relatívna hĺbka chytu (d / L_DP):", bold_prefix="")
+    add_bullet_item(doc, "Články detských prstov sú výrazne kratšie: L_DP ≈ 13–16 mm pri celkovej dĺžke prsta L_tot ≈ 50–65 mm (oproti 22 mm a 95 mm u dospelého).")
+    add_bullet_item(doc, "Na štandardných lištách v lezeckých centrách (18–22 mm) dosahuje pomer hĺbky chytu u dieťaťa hodnotu ρ = d / L_DP > 1,2–1,5. Chyt, ktorý je pre dospelého lištou, tak pre dieťa predstavuje dobrý chyt, na ktorom sa o povrch chytu prirodzene opiera aj stredný článok.", bold_prefix="Výhoda na bežných chytoch pre dospelých: ")
+    add_bullet_item(doc, "Ak však stavitelia ciest na tréningu alebo mládežníckych pretekoch použijú plytké lišty (6–10 mm), pomer klesá na ρ ≤ 0,6 a celé zaťaženie sa sústredí na koncový článok prsta.", bold_prefix="Riziko detských mikro-líšt: ")
+    add_body_paragraph(doc, "Náchylnosť rastových platničiek na pákové zaťaženie (PPSI / epifyziolýza):", bold_prefix="")
+    add_bullet_item(doc, "Rastová platnička (fýza) na báze stredného článku je tvorená neosifikovanou chrupavkou, ktorá predstavuje mechanicky najzraniteľnejšie miesto detskej ruky.")
+    add_bullet_item(doc, "Pri zamknutom úchope (full crimp) vyvoláva kombinácia hyperextenzie v DIP kĺbe a ostrého ohybu v PIP kĺbe vysoké strihové napätie priamo v neuzavretej rastovej štrbine. Opakované preťažovanie môže viesť k únavovým zlomeninám a poškodeniu rastovej platničky na báze stredného článku (Primary Periphyseal Stress Injury – PPSI, stupne 1–5; Schöffl et al., 2025).")
+    add_body_paragraph(doc, "Odporúčania pre tréningovú prax:", bold_prefix="")
+    add_bullet_item(doc, "U predpubertálnych detí sa na ochranu neuzavretých rastových platničiek neodporúča zaraďovať izolované visy na hangboarde, cvičenia na campuse (campus boarde) ani lezenie s pridanou záťažou.", bold_prefix="Vynechanie izolovaných visov na hangboarde a mikro-líšt: ")
+    add_bullet_item(doc, "V tréningu detí sa odporúča uprednostniť väčšie ergonomické chyty (d ≥ 20 mm), obliny, štruktúry a stisky, pri ktorých sa o chyt opiera aj stredný článok (ρ > 1,0).", bold_prefix="Voľba chytov s oporou dvoch článkov (d ≥ L_DP): ")
 
-    add_heading2(doc, "3.2 Juniori a dospievajúci (pubertálna kategória: ~13–18 rokov / rastový špurt)")
-    add_body_paragraph(doc, "„Nárast pákových ramien“ počas vrcholu výškovej rýchlosti (PHV):", bold_prefix="")
-    add_bullet_item(doc, "Počas obdobia najrýchlejšieho rastu (Peak Height Velocity – PHV) rýchly pozdĺžny rast článkov prstov predlžuje vonkajšie páky rýchlejšie, než stíha prebiehať remodelácia šliach a fýz.")
-    add_bullet_item(doc, "Športovo-medicínsky výskum (Schöffl et al., 2023, 2025) ukazuje, že akútne ruptúry anulárnych pútok sú u adolescentov pomerne zriedkavé; primárnym miestom zlyhania býva otvorená fýza na báze stredného článku (klasifikovaná škálou PPSI stupne 1–5).", bold_prefix="Dominantná zraniteľnosť (PPSI): ")
-    add_body_paragraph(doc, "Praktické odporúčania podložené dôkazmi:", bold_prefix="")
-    add_bullet_item(doc, "Odporúča sa sledovať trendy telesnej výšky a rastu prstov na identifikáciu fázy PHV (>6–8 cm/rok) a počas rastových špurtov zmierniť objem lištovania.", bold_prefix="Sledovanie rýchlosti rastu: ")
-    add_bullet_item(doc, "Vhodné je uprednostniť visy s vlastnou telesnou hmotnosťou na dostatočne hlbokých lištách (d ≥ 20–25 mm, ρ ≥ 1,0) v otvorenom úchope alebo uvoľnenej polovičnej lište; dynamické kampusové skoky je vhodné odložiť až po dosiahnutí kostrovej zrelosti.", bold_prefix="Konzervatívny tréning na hangboarde na podporných lištách (d ≥ 20 mm): ")
+    add_heading2(doc, "3.2 Mládež a juniori (13–18 rokov / rastový špurt)")
+    add_body_paragraph(doc, "Rýchle predlžovanie pák v období vrcholu rastového špurtu (PHV):", bold_prefix="")
+    add_bullet_item(doc, "Počas obdobia najrýchlejšieho rastu do výšky (Peak Height Velocity – PHV) sa články prstov predlžujú rýchlejšie, než sa dokážu prispôsobiť a spevnieť šľachy, pútka a rastové platničky.")
+    add_bullet_item(doc, "Štúdie zo športovej medicíny (Schöffl et al., 2023, 2025) ukazujú, že akútne ruptúry anulárnych pútok sú u dospievajúcich lezcov pomerne zriedkavé; najčastejším miestom poškodenia zostáva ešte neuzavretá rastová platnička (fýza) na báze stredného článku (klasifikácia PPSI, stupne 1–5).", bold_prefix="Hlavné riziko – stresové poranenia rastovej platničky (PPSI): ")
+    add_body_paragraph(doc, "Odporúčania pre tréningovú prax:", bold_prefix="")
+    add_bullet_item(doc, "Trénerom a rodičom sa odporúča priebežne sledovať prírastky telesnej výšky a dĺžky ruky. V období prudkého rastu (>6–8 cm za rok) je vhodné dočasne znížiť objem lezenia na malých lištách a v zamknutom úchope.", bold_prefix="Sledovanie rýchlosti rastu: ")
+    add_bullet_item(doc, "Ak sa u staršej mládeže zaraďuje tréning na hangboarde, odporúčajú sa visy s vlastnou hmotnosťou na dostatočne hlbokých lištách (d ≥ 20–25 mm, ρ ≥ 1,0) v otvorenom úchope alebo v polouzamknutom úchope (half-crimp); dynamické skoky na campuse je vhodné odložiť až do ukončenia kostrového rastu.", bold_prefix="Opatrný prístup k hangboardu na hlbších lištách (d ≥ 20 mm): ")
 
-    add_heading2(doc, "3.3 Dospelí a hlavná kategória (~18–45 rokov / kostrová zrelosť)")
-    add_body_paragraph(doc, "Fixná dĺžka článkov a fenotypové škálovanie (L_tot ∈ [80, 110 mm]):", bold_prefix="")
-    add_bullet_item(doc, "Pri realistickom sublineárnom alometrickom škálovaní (ma ∝ L^0,50) majú dlhšie prsty prirodzenú +17,7 % mechanickú nevýhodu na mikro-lištách (297,3 N oproti 252,6 N na 6 mm lište pri záťaži 100 N).")
-    add_bullet_item(doc, "Lišta s hĺbkou 20 mm pôsobí ako dvojčlánková polica pre dospelého s krátkymi prstami (L_DP = 18,7 mm, ρ = 1,07, zaťaženie A2 218,0 N), ale zostáva jednočlánkovou lištou pre dospelého s dlhými prstami (L_DP = 25,3 mm, ρ = 0,79, zaťaženie A2 263,6 N, štrukturálna penalizácia +20,9 %).", bold_prefix="Dvojčlánkový kontakt na štandardných testovacích lištách (20 mm): ")
-    add_bullet_item(doc, "Pri podpore telesnej hmotnosti škálovanej k výške (m ∝ L^2) zaznamenávajú lezci s dlhými prstami (92,5 kg) zaťaženie pútka A2 na úrovni 380,0 N na 10 mm lište v porovnaní so 174,2 N u lezcov s krátkymi prstami (50,6 kg) – čo predstavuje +118,1 % nárast absolútneho zaťaženia, približujúci sa k limitom ruptúry pútka (~400 N).", bold_prefix="Alometrický nárast hmotnosti na malých lištách (10 mm): ")
-    add_body_paragraph(doc, "Praktické odporúčania podložené dôkazmi:", bold_prefix="")
-    add_bullet_item(doc, "Lezcom s dlhými prstami vyhovujú regeneračné okná 48–72 hodín medzi náročnými tréningami na lištách.", bold_prefix="Kalibrácia objemu a regenerácie podľa fenotypu: ")
-    add_bullet_item(doc, "Nastavenie hĺbky testovacej lišty podľa individuálnej dĺžky distálneho článku poskytuje biomechanicky spravodlivé a porovnateľné hodnotenie.", bold_prefix="Anatomická normalizácia líšt (d_test ≈ 0,80 L_DP): ")
+    add_heading2(doc, "3.3 Dospelí lezci (18–45 rokov / kostrová zrelosť)")
+    add_body_paragraph(doc, "Ustálená dĺžka článkov a rozdiely medzi morfotypmi (L_tot ∈ [80, 110 mm]):", bold_prefix="")
+    add_bullet_item(doc, "Pri sublineárnom alometrickom škálovaní kĺbov (ma ∝ L^0,50) majú lezci s dlhšími prstami na mikro-lištách prirodzenú pákovú nevýhodu +17,7 % (297,3 N oproti 252,6 N na 6 mm lište pri rovnakom zaťažení 100 N).")
+    add_bullet_item(doc, "Pre dospelého lezca s krátkymi prstami (L_DP = 18,7 mm, ρ = 1,07) predstavuje 20 mm lišta dvojčlánkový chyt so zaťažením pútka A2 na úrovni 218,0 N, zatiaľ čo pre lezca s dlhými prstami (L_DP = 25,3 mm, ρ = 0,79) zostáva jednočlánkovou lištou so zaťažením pútka A2 až 263,6 N (nárast zaťaženia o +20,9 %).", bold_prefix="Rozdielny kontakt na štandardnej 20 mm testovacej lište: ")
+    add_bullet_item(doc, "Pri zohľadnení rastu hmotnosti s výškou postavy (m ∝ L^2) pôsobí na pútko A2 pri vise na 10 mm lište u lezca s dlhými prstami (92,5 kg) sila 380,0 N, oproti 174,2 N u lezca s krátkymi prstami (50,6 kg) – ide o +118,1 % nárast absolútneho zaťaženia, ktorý sa blíži k medznej pevnosti pútka (~400 N).", bold_prefix="Vplyv vyššej telesnej hmotnosti na malých lištách (10 mm): ")
+    add_body_paragraph(doc, "Odporúčania pre tréningovú prax:", bold_prefix="")
+    add_bullet_item(doc, "Lezcom s dlhými prstami sa medzi náročnými tréningami na malých lištách odporúča dopriať 48 až 72 hodín odpočinku.", bold_prefix="Prispôsobenie objemu a regenerácie morfotypu: ")
+    add_bullet_item(doc, "Voľba hĺbky testovacej lišty podľa dĺžky koncového článku zabezpečuje biomechanicky porovnateľné podmienky pri testovaní sily prstov.", bold_prefix="Individuálne prispôsobenie testovacej lišty (d_test ≈ 0,80 L_DP): ")
 
-    add_heading2(doc, "3.4 Veteráni a masters (starší dospelí: 45–60+ rokov / pomalšia obnova tkanív)")
-    add_body_paragraph(doc, "Kumulatívna celoživotná expozícia pák a kĺbové kontaktné napätie:", bold_prefix="")
-    add_bullet_item(doc, "Kumulatívne kĺbové kontaktné napätie (F_joint ≈ T_FDP + T_FDS + F_ext) rastie s dĺžkou pák a telesnou hmotnosťou, čo predisponuje starších lezcov k osteoartróze kĺbov PIP a DIP a k pomalšiemu obratu kolagénu.")
-    add_body_paragraph(doc, "Praktické odporúčania podložené dôkazmi:", bold_prefix="")
-    add_bullet_item(doc, "Vhodné je preferovať otvorený úchop (open hand), ťah na troch prstoch (three-finger drag) a submaximálne kontrolované visy na hustotu spojiva (60–70 % MVC na lištách 20–25 mm) s dôkladným 20–30-minútovým progresívnym rozcvičením.", bold_prefix="Zmenšenie pák pre dlhovekosť kĺbov: ")
+    add_heading2(doc, "3.4 Starší dospelí a kategória masters (nad 45 rokov)")
+    add_body_paragraph(doc, "Dlhodobé kumulatívne zaťaženie kĺbov a opotrebovanie chrupaviek:", bold_prefix="")
+    add_bullet_item(doc, "Celková tlaková sila v kĺboch (F_joint ≈ T_FDP + T_FDS + F_ext) rastie s dĺžkou pák a telesnou hmotnosťou. Po rokoch lezenia to u starších lezcov zvyšuje náchylnosť na osteoartrózu PIP a DIP kĺbov, pričom prirodzená obnova kolagénu s vekom postupne spomaľuje.")
+    add_body_paragraph(doc, "Odporúčania pre tréningovú prax:", bold_prefix="")
+    add_bullet_item(doc, "Odporúča sa uprednostňovať otvorený úchop (open hand), úchop na troch prstoch (three-finger drag) a dlhšie, kontrolované submaximálne visy zamerané na adaptáciu šliach (60–70 % maxima na lištách 20–25 mm), vždy po dôkladnom 20 až 30-minútovom postupnom rozcvičení.", bold_prefix="Šetrenie kĺbov zmenšením pákového zaťaženia: ")
 
     # Table 2: Lifespan Summary
-    add_heading2(doc, "3.5 Zhrnutie: Celoživotné škálovanie pák článkov prstov a biomechanický rizikový profil")
+    add_heading2(doc, "3.5 Prehľad pákových pomerov a rizík podľa veku")
     
     t2_caption = doc.add_paragraph()
     t2_caption.paragraph_format.space_before = Pt(6)
     t2_caption.paragraph_format.space_after = Pt(3)
     t2_caption.paragraph_format.first_line_indent = 0
-    r_cap2 = t2_caption.add_run("Tabuľka 2: Celoživotné škálovanie pák článkov prstov a biomechanický rizikový profil")
+    r_cap2 = t2_caption.add_run("Tabuľka 2: Pákové pomery článkov prstov a rizikový profil podľa veku")
     format_run(r_cap2, size_pt=10.5, bold=True, italic=True)
     
     t2 = doc.add_table(rows=5, cols=6)
@@ -802,45 +814,45 @@ def build_document():
     t2_widths = [Cm(2.0), Cm(2.6), Cm(2.4), Cm(2.8), Cm(3.1), Cm(3.1)]
     
     t2_headers = [
-        "Veková kohorta",
-        "Dynamika pák článkov",
-        "Pomer hĺbky chytu (15 mm)",
-        "Škálovanie vnútorných síl",
-        "Primárny spôsob zlyhania",
-        "Odporúčané zameranie úchopov"
+        "Veková kategória",
+        "Vývoj dĺžky článkov (ΔL / Δt)",
+        "Relatívna hĺbka na 15 mm lište (ρ = d / L_DP)",
+        "Vnútorné sily (T_FDP, F_A2)",
+        "Najčastejšie miesto poškodenia",
+        "Odporúčania pre úchopy a tréning na hangboarde"
     ]
     t2_data = [
         (
-            "Deti (<12–13 r.)",
-            "Progresívny lineárny rast (L_tot ≈ 50–65 mm)",
-            "ρ > 1,0–1,2 (Hlboký chyt)",
-            "Nízky absolútny moment, miniatúrne rameno šľachy",
-            "Neosifikovaná fýza na báze stredného článku (Epifyziolýza / PPSI)",
-            "Vyhnúť sa izolovanému hangboardu a mikro-lištám; dôraz na madlá, obliny."
+            "Deti (do 12–13 r.)",
+            "Plynulý rast (L_tot ≈ 50–65 mm)",
+            "ρ > 1,0–1,2 (bežné lišty pôsobia ako hlboké chyty)",
+            "Nízky absolútny moment, ale malé vnútorné rameno šľachy (h ≈ 3 mm)",
+            "Neuzavretá rastová platnička (fýza) na báze stredného článku (epifyziolýza / PPSI)",
+            "Vynechať izolovaný hangboard a mikro-lišty (d < 12 mm); dôraz na všestrannosť, madlá a obliny."
         ),
         (
-            "Juniori (13–18 r.)",
-            "Rýchly rastový špurt počas PHV",
-            "ρ ≈ 0,8–1,0 (Prechodová zóna)",
-            "Prudký nárast momentu predstihujúci remodeláciu",
-            "Primárne perifyzárne stresové poranenie (PPSI 1–5); ruptúry pútok zriedkavé",
-            "Preferovať vlastnú váhu na hlbších lištách (≥ 20 mm); sledovať PHV."
+            "Mládež a juniori (13–18 r.)",
+            "Prudký rastový špurt v období PHV",
+            "ρ ≈ 0,8–1,0 (prechodová oblasť)",
+            "Rýchly nárast momentu, ktorý predbieha adaptáciu šliach a kostí",
+            "Stresové poranenie rastovej platničky (PPSI 1–5); ruptúry pútok sú zriedkavé",
+            "Visy s vlastnou hmotnosťou na hlbších lištách (≥ 20 mm); sledovať rastový špurt; obmedziť dynamický campus."
         ),
         (
             "Dospelí (18–45 r.)",
-            "Ustálená dĺžka; fenotypová variabilita (80–110 mm)",
-            "ρ ∈ [0,79; 1,07] (Citlivé na hĺbku)",
-            "Nevýhoda páky +17,7 %; +118,1 % nárast záťaže od hmotnosti",
-            "Akútna ruptúra pútka A2 pri rázovom zaťažení (>400 N) a chronická tendovaginitída",
-            "Objem rešpektujúci fenotyp; normalizácia lišty (0,80 L_DP); otvorený úchop."
+            "Ustálená dĺžka; rozdiely medzi morfotypmi (80–110 mm)",
+            "ρ ∈ [0,79; 1,07] (výrazný vplyv hĺbky lišty)",
+            "Páková nevýhoda +17,7 % pri rovnakej sile (ma ∝ L^0,50); +118,1 % nárast sily na pútko vplyvom hmotnosti",
+            "Akútna ruptúra pútka A2 pri rázovom zaťažení (>400 N) a chronický zápal šľachovej pošvy",
+            "Dávkovanie objemu podľa morfotypu; prispôsobenie testovacej lišty (0,80 L_DP); prevaha otvoreného úchopu."
         ),
         (
             "Masters (45+ r.)",
             "Ustálená dĺžka (80–110 mm)",
-            "ρ ∈ [0,79; 1,07] (Citlivé na hĺbku)",
-            "Vysoké celoživotné kumulatívne kontaktné napätie",
-            "Úbytok kĺbovej chrupavky, osteoartróza PIP kĺbu, pomalšia regenerácia",
-            "Zmiernenie pák (otvorený úchop / obliny); submaximálne visy; dlhší odpočinok."
+            "ρ ∈ [0,79; 1,07] (výrazný vplyv hĺbky lišty)",
+            "Vysoké kumulatívne tlakové zaťaženie v kĺboch počas života",
+            "Opotrebovanie kĺbovej chrupavky, osteoartróza PIP kĺbu, pomalšia regenerácia",
+            "Odľahčenie kĺbov (otvorený úchop / obliny); submaximálne visy; dlhšie rozcvičenie a regenerácia."
         )
     ]
     
@@ -879,21 +891,21 @@ def build_document():
             
     doc.add_paragraph() # Spacing
 
-    # SECTION 4: Periodizácia zohľadňujúca fenotyp
-    add_heading1(doc, "4. Periodizácia zohľadňujúca fenotyp a návrh mikrocyklov [Biomechanická hypotéza a navrhovaný intervenčný rámec]")
+    # SECTION 4: Periodizácia podľa morfotypu
+    add_heading1(doc, "4. Periodizácia podľa morfotypu prsta a návrh mikrocyklov [Biomechanická hypotéza a navrhovaný metodický rámec]")
     
     make_callout_box(
         doc,
-        "Kľúčová výskumná hranica: Preklenutie medzery v tréningu podľa fenotypu",
+        "Odborný prínos práce: Zohľadnenie morfotypu prsta v metodike tréningu",
         [
-            "Systematické prehľady a meta-analýzy špecifického tréningu sily prstov v lezení (napr. Stien et al., 2023; Langer et al., 2023) a prelomové intervenčné štúdie (López-Rivera & González-Badillo, 2012, 2019; Devise et al., 2022) potvrdzujú, že hangboardové protokoly vyvolávajú významné adaptácie. Všetky doterajšie vedecké intervencie však manipulovali výlučne s externými premennými – ako je absolútna záťaž, percento intenzity, hĺbka lišty či intervaly zaťaženia a odpočinku – pričom ľudský prst jednotne chápali ako nemennú, rovnakú páku. Žiadna doterajšia kontrolovaná empirická štúdia nepredpísala tréning na základe individuálnej dĺžky prstov, proporcií článkov či anatomického fenotypu.",
-            "Preklenutie tejto biomechanickej medzery je hlavným cieľom tejto práce. Zhodnotením 3D muskuloskeletálnej fyziky relatívneho kontaktu (ρ = d / L_DP), sublineárnej alometrie kondylov (+17,7 % rozdiel v páke), alometrického škálovania telesnej hmotnosti (+118,1 % nárast zaťaženia pútka) a kontaktnej mechaniky viacerých článkov poskytuje náš model trénerom, fyzioterapeutom a lezcom formalizovaný teoretický rámec pre individualizáciu tréningu prstov podľa fenotypu. Týždenné mikrocykly uvedené nižšie predstavujú štruktúrované, testovateľné hypotézy navrhnuté ako vodidlo pre budúce empirické intervenčné štúdie v športovej biomechanike."
+            "Systematické prehľady a metaanalýzy zamerané na tréning sily prstov v lezení (napr. Stien et al., 2023; Langer et al., 2023) aj kľúčové tréningové štúdie (López-Rivera & González-Badillo, 2012, 2019; Devise et al., 2022) potvrdzujú, že systematický tréning na hangboarde prináša výrazný nárast sily. Doterajšie výskumy však pracovali výlučne s vonkajšími parametrami tréningu – ako je veľkosť pridanej záťaže, intenzita, hĺbka lišty či trvanie intervalu práce a odpočinku – pričom k prstom všetkých lezcov pristupovali ako k rovnakej mechanickej páke. V odbornej literatúre doteraz chýbala metodika, ktorá by tréningové zaťaženie diferencovala podľa individuálnej dĺžky prstov, pomerov jednotlivých článkov a anatomického morfotypu.",
+            "Hlavným cieľom tejto práce je práve prepojenie týchto biomechanických súvislostí s tréningovou praxou. Zohľadnením pomeru hĺbky chytu k dĺžke koncového článku (ρ = d / L_DP), sublineárneho rastu kĺbov (+17,7 % rozdiel v páke), nárastu telesnej hmotnosti s výškou postavy (+118,1 % nárast zaťaženia pútka) a opory viacerých článkov prsta ponúka navrhnutý model trénerom, inštruktorom a lezcom ucelený teoretický základ pre individualizáciu tréningu podľa morfotypu. Nasledujúce parametre týždenného mikrocyklu predstavujú metodický návrh a zároveň odbornú hypotézu pre budúce empirické štúdie v športovej biomechanike."
         ]
     )
     
     add_body_paragraph(
         doc,
-        "Nasledujúca tabuľka ilustruje hypotetické rozdiely v periodizácii podľa morfológie ruky:"
+        "Nasledujúca tabuľka porovnáva odporúčané nastavenie tréningu pre dva krajné morfotypy ruky:"
     )
     
     # Table 3: Periodization
@@ -901,7 +913,7 @@ def build_document():
     t3_caption.paragraph_format.space_before = Pt(6)
     t3_caption.paragraph_format.space_after = Pt(3)
     t3_caption.paragraph_format.first_line_indent = 0
-    r_cap3 = t3_caption.add_run("Tabuľka 3: Hypotetické týždenné šablóny mikrocyklov podľa morfológie ruky")
+    r_cap3 = t3_caption.add_run("Tabuľka 3: Odporúčané nastavenie tréningového mikrocyklu podľa morfotypu ruky")
     format_run(r_cap3, size_pt=10.5, bold=True, italic=True)
     
     t3 = doc.add_table(rows=7, cols=3)
@@ -909,14 +921,14 @@ def build_document():
     set_table_borders(t3, color="B0C4DE", sz="4")
     t3_widths = [Cm(4.2), Cm(5.9), Cm(5.9)]
     
-    t3_headers = ["Tréningová dimenzia", "Krátky fenotyp (L_tot < 85 mm)", "Dlhý fenotyp (L_tot > 105 mm)"]
+    t3_headers = ["Tréningový parameter", "Krátkoprstý morfotyp (L_tot < 85 mm)", "Dlhoprstý morfotyp (L_tot > 105 mm)"]
     t3_data = [
-        ("Frekvencia max. hangboardu", "2–3 tréningy / týždeň", "1–2 tréningy / týždeň max."),
-        ("Odpočinok medzi lištovaním", "24–48 hodín", "48–72 hodín odporúčaných"),
-        ("Preferovaná testovacia lišta", "15 mm (d ≈ 0,80 L_DP)", "20–22 mm (d ≈ 0,80 L_DP)"),
-        ("Rozloženie úchopov", "50 % polovičná lišta, 50 % otvorený úchop", "75 % otvorený úchop, 25 % polovičná lišta"),
-        ("Špecializácia na profily", "Lištové previsy, technické hrany", "Obliny, kompresie, stisky"),
-        ("Makrocyklus spojivového tkaniva", "6–8-týždňové bloky zaťaženia", "12–16-týždňové pozvoľné nábehy")
+        ("Frekvencia max. visov na hangboarde", "2–3 tréningy týždenne", "najviac 1–2 tréningy týždenne"),
+        ("Odpočinok medzi intenzívnym lištovaním", "24–48 hodín", "odporúčaných 48–72 hodín"),
+        ("Odporúčaná testovacia lišta", "15 mm (d ≈ 0,80 L_DP)", "20–22 mm (d ≈ 0,80 L_DP)"),
+        ("Pomer úchopov v tréningu", "50 % polouzamknutý úchop (half-crimp), 50 % otvorený úchop", "75 % otvorený úchop, 25 % polouzamknutý úchop (half-crimp)"),
+        ("Prirodzene vyhovujúci charakter lezenia", "Previsy po malých lištách, technické steny", "Obliny, kompresné lezenie, stisky"),
+        ("Dĺžka adaptačného mezocyklu pre šľachy a pútka", "6–8-týždňové tréningové bloky", "12–16-týždňové pozvoľné stupňovanie záťaže")
     ]
     
     hdr3_row = t3.rows[0]
@@ -954,34 +966,34 @@ def build_document():
             
     doc.add_paragraph() # Spacing
 
-    # SECTION 5: Stručný fyzikálny úvod
-    add_heading1(doc, "5. Stručný fyzikálny úvod: Veda v pozadí odporúčaní")
+    # SECTION 5: Stručný fyzikálny prehľad
+    add_heading1(doc, "5. Stručný fyzikálny prehľad: Teoretické východiská modelu")
     add_body_paragraph(
         doc,
-        "Pre trénerov a lezcov, ktorých zaujímajú podkladové matematické formulácie, náš 3D model prepája štyri základné mechanické piliere:"
+        "Pre trénerov, inštruktorov a lezcov so záujmom o detailnejší pohľad na výpočtovú stránku práce sa navrhnutý 3D model opiera o štyri základné mechanické piliere:"
     )
-    add_bullet_item(doc, "Kinematické transformačné matice mapujúce flexiu/extenziu v MCP kĺbe (θ_MCP), abdukciu/addukciu v MCP kĺbe (φ_MCP), flexiu v PIP kĺbe (θ_PIP) a flexiu v DIP kĺbe (θ_DIP).", bold_prefix="1. Priestorová kinematika (reťazec so 4 stupňami voľnosti): ")
-    add_bullet_item(doc, "Rieši distribúciu kontaktného tlaku na distálnom článku (s ≤ L_DP) a strednom článku (s > L_DP). Zapojenie stredného článku aktivuje kostné ukotvenie pútka A3, čím posúva vonkajší moment pôsobiaci na DIP kĺb k nule.", bold_prefix="2. Kontaktná mechanika dvoch článkov: ")
-    add_bullet_item(doc, "Sila presmerovania šľachy na pútku sa počíta z vektorového vychýlenia cez príslušné kĺby:", bold_prefix="3. Presmerovanie šľachy na pútku (Capstan model): ")
+    add_bullet_item(doc, "Kinematické transformačné matice opisujúce ohyb a vystretie (flexiu/extenziu) v MCP kĺbe (θ_MCP), bočný odklon (abdukciu/addukciu) v MCP kĺbe (φ_MCP), ohyb v PIP kĺbe (θ_PIP) a ohyb v DIP kĺbe (θ_DIP).", bold_prefix="1. Priestorová kinematika (reťazec so 4 stupňami voľnosti): ")
+    add_bullet_item(doc, "Výpočet rozloženia kontaktného tlaku na koncovom článku (s ≤ L_DP) a strednom článku (s > L_DP). Pri opore stredného článku o chyt sa zapája pútko A3, čím vonkajší ohybový moment v DIP kĺbe klesá takmer na nulu.", bold_prefix="2. Kontaktná mechanika jedného a dvoch článkov: ")
+    add_bullet_item(doc, "Normálová sila pôsobiaca na pútko vyplýva zo zmeny smeru šľachy pri prechode cez príslušné kĺby:", bold_prefix="3. Vychýlenie šľachy na pútku (kladkový / capstan model): ")
     
     add_equation_box(doc, "F_A2 = T_A2 · ( 0,50 (u_PP - u_MP) )")
     add_equation_box(doc, "F_A1 = T_A1 · ( u_wrist - u_PP )")
     add_equation_box(doc, "F_A4 = T_A4 · ( 0,40 (u_PP - u_MP) )")
     
-    add_bullet_item(doc, "Nenulová radiálna abdukcia (φ_MCP ≠ 0) premieta vektor ťahu šľachy do koronálnej roviny, čo generuje bočné strihové sily (F_z) na vstupe do pútka A1 a na kolaterálnych väzoch PIP kĺbu.", bold_prefix="4. Strihové namáhanie mimo sagitálnej roviny: ")
+    add_bullet_item(doc, "Bočný odklon prsta v MCP kĺbe (φ_MCP ≠ 0) premieta silu ťahu šľachy do čelnej (koronálnej) roviny, čím vznikajú bočné strihové sily (F_z) na vstupe do pútka A1 a na kolaterálnych väzoch PIP kĺbu.", bold_prefix="4. Strihové zaťaženie mimo roviny ohybu: ")
 
     # SECTION: Záver
-    add_heading1(doc, "Záver: Dlhovekosť predchádza výkonu")
+    add_heading1(doc, "Záver: Dlhodobo udržateľné zdravie ako predpoklad výkonnosti")
     add_body_paragraph(
         doc,
-        "V športovom lezení je najsilnejším lezcom ten, kto dokáže trénovať konzistentne a dlhodobo bez vynútených prestávok spôsobených zraneniami. Regeneráciu a adaptáciu šliach a pútok nemožno unáhliť; ich metabolický obrat je rádovo pomalší ako u svalového tkaniva. Porozumením trojrozmernej fyzike prsta môžu lezci trénovať s vedeckým zámerom, chrániť svoje anatomické štruktúry a liezť náročnejšie cesty počas mnohých rokov."
+        "V športovom lezení napreduje najrýchlejšie ten lezec, ktorý dokáže trénovať plynulo a dlhodobo bez nútených výpadkov spôsobených zraneniami. Adaptáciu šliach, pútok a kĺbových puzdier nemožno urýchliť – ich prestavba prebieha rádovo pomalšie než rast svalovej sily. Poznanie priestorovej biomechaniky prsta umožňuje trénerom a lezcom plánovať prípravu s rozvahou, chrániť pohybový aparát pred preťažením a posúvať vlastné lezecké limity počas mnohých rokov."
     )
 
     # SECTION: Literatúra
     add_heading1(doc, "Literatúra")
     
     references = [
-        "Devise, M., Le Mansec, Y., Bideau, N., Bideau, N., Couceiro, M., Seifert, L., 2022. Comparison of finger flexor strength and endurance in rock climbers: a systematic review. Sports Biomech., 1–25. https://doi.org/10.1080/14763141.2022.2136051",
+        "Devise, M., Le Mansec, Y., Bideau, N., Couceiro, M., Seifert, L., 2022. Comparison of finger flexor strength and endurance in rock climbers: a systematic review. Sports Biomech., 1–25. https://doi.org/10.1080/14763141.2022.2136051",
         "Langer, K., Simon, C., Wiemeyer, J., 2023. Strength training in rock climbing: a systematic review. Front. Sports Act. Living 5, 1083437. https://doi.org/10.3389/fspor.2023.1083437",
         "Lin, G.T., Cooney, W.P., Amadio, P.C., An, K.N., 1990. Mechanical properties of human pulley and tendon. J. Hand Surg. Br. 15(4), 429–434. https://doi.org/10.1016/0266-7681(90)90085-f",
         "López-Rivera, E., González-Badillo, J.J., 2012. The effects of two different hangboard training programs on maximal strength and endurance in rock climbers. J. Sports Sci. 30(4), 407–415. https://doi.org/10.1080/02640414.2011.643640",
@@ -1021,3 +1033,4 @@ def build_document():
 
 if __name__ == "__main__":
     build_document()
+
