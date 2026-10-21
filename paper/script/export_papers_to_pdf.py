@@ -3,8 +3,8 @@
 export_papers_to_pdf.py
 =======================
 Automated publication-quality PDF generator for climbing biomechanics manuscripts:
-  1. paper/short_vs_long_finger_advantage.md -> paper/pdf/short_vs_long_finger_advantage.pdf
-  2. paper/practical_training_guide.md -> paper/pdf/practical_training_guide.pdf
+  1. paper/261014-1915UTC-short_vs_long_finger_advantage.md -> paper/pdf/261006-1727UTC-cerovsky_short_vs_long_finger_advantage.pdf
+  2. paper/261006-0801UTC-practical_training_guide.md -> paper/pdf/261006-1727UTC-cerovsky_practical_training_guide.pdf
 
 Features:
   - LaTeX mathematical typesetting via KaTeX (inline $...$ and display $$...$$).
@@ -492,15 +492,15 @@ def main():
     targets = []
     if not args.guide_only:
         targets.append({
-            "src": paper_dir / "short_vs_long_finger_advantage.md",
-            "dest": pdf_dir / "short_vs_long_finger_advantage.pdf",
+            "src": paper_dir / "261014-1915UTC-short_vs_long_finger_advantage.md",
+            "dest": pdf_dir / "261006-1727UTC-cerovsky_short_vs_long_finger_advantage.pdf",
             "title": "A Biomechanical Model of the Human Finger in Rock Climbing: Short vs. Long Finger Advantage",
             "is_manuscript": True
         })
     if not args.paper_only:
         targets.append({
-            "src": paper_dir / "practical_training_guide.md",
-            "dest": pdf_dir / "practical_training_guide.pdf",
+            "src": paper_dir / "261006-0801UTC-practical_training_guide.md",
+            "dest": pdf_dir / "261006-1727UTC-cerovsky_practical_training_guide.pdf",
             "title": "Biomechanical Manual for Finger Training & Injury Prevention in Sport Climbing",
             "is_manuscript": False
         })

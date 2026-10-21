@@ -148,7 +148,7 @@ Sweeping hold depth from $2.0\text{ mm}$ to $45.0\text{ mm}$ reveals distinct re
   $$\tilde{d}_{crossover} = \frac{d_{hold}^*}{L_{DP}} \approx 1.52$$
 * **Energetic Grip Frontiers (Figure 1B):** Under 3-DOF chain posture optimization on overhangs, Half-Crimp minimizes total muscle effort on micro-edges ($d_{hold} < 8\text{ mm}$), a transition zone spans $8\text{--}18\text{ mm}$, and Open Hand is energetically and structurally optimal on deep holds ($d_{hold} > 18\text{ mm}$).
 
-![Figure 1: Hold Depth Force Redistribution, Phenotypic Crossover Mechanics, and Minimum-Effort Grip Frontiers](figures/pub_fig2_hold_depth_crossover.png)
+![Figure 1: Hold Depth Force Redistribution, Phenotypic Crossover Mechanics, and Minimum-Effort Grip Frontiers](figures/261006-0801UTC-pub_fig2_hold_depth_crossover.png)
 *Figure 1: Hold depth force redistribution and grip optimization. (A) Muscle tendon forces (FDP: solid, FDS: dashed) across hold depths ($d_{hold} \in [2, 42\text{ mm}]$) in Half-Crimp for Short (−15%, blue), Standard (green), and Long (+15%, magenta) phenotypes. Crossover points where FDS surpasses FDP as prime mover occur at $28.3\text{ mm}$ (Short), $33.5\text{ mm}$ (Standard), and $38.4\text{ mm}$ (Long), all corresponding to a scale-invariant dimensionless hold depth $\tilde{d} = d / L_{DP} \approx 1.52$. Yellow background shading indicates the single-segment DP region ($d \le L_{DP}$); purple shading indicates dual DP+MP contact. (B) Total tendon force by grip across hold depths ($d_{hold} \in [2, 40\text{ mm}]$) for Full Crimp (red), Half-Crimp (orange), and Open Hand (green).*
 
 ### 4.2 Out-of-Plane Pulley and Joint Shearing Under Radial Abduction
@@ -184,7 +184,7 @@ While strict linear isometry ($ma \propto L^{1.0}$) predicts scale-invariance ($
 |                            | Standard (70.0 kg) |       95.00       |    22.0     |        10.0         |       0.45       | Single (DP)  |        267.0 |             265.1 |
 |                            | Long (+15%, 92.5 kg) |      109.25       |    25.3     |        10.0         |       0.40       | Single (DP)  |        381.2 |             380.0 |
 
-![Figure 2: Anthropometric Phenotype Comparison Across Hold Geometries](figures/pub_fig3b_phenotype_scaling.png)
+![Figure 2: Anthropometric Phenotype Comparison Across Hold Geometries](figures/261016-0717UTC-pub_fig3b_phenotype_scaling.png)
 *Figure 2: Anthropometric phenotype comparison (sub-linear condyle allometry $ma \propto L^{0.50}$, assumed) showing Half-Crimp A2 normal loads for Short (−15%, blue), Standard (orange), and Long (+15%, red) phenotypes across: (1) Fixed 100 N load on a 6 mm micro-edge (+17.7% leverage gap); (2) Fixed 100 N load on a 20 mm testing ledge (dual-phalanx relief for short digits, $\rho = 1.07$ vs. $0.79$); and (3) Bodyweight hang on a 10 mm edge with stature-scaled mass ($m \propto L^2$; +118.1% load surge for long digits). Dotted dark red line indicates the ~400 N elderly cadaveric reference benchmark (Lin et al., 1990; Schöffl et al., 2009).*
 
 ---

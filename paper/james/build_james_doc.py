@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Script to build cerovsky_practical_training_guide_sk.docx
-from the template 1_ICI_titulka_požiadavky_na_form_úpravu.docx
-and the Slovak translation of practical_training_guide.md.
+Script to build 261020-1148UTC-cerovsky_practical_training_guide_sk.docx
+from the template 261020-1006UTC-1_ICI_titulka_požiadavky_na_form_úpravu.docx
+and the Slovak translation of 261006-0801UTC-practical_training_guide.md.
 """
 
 import os
@@ -140,8 +140,8 @@ def make_toc_entry(title, page, level=1):
     return p
 
 BASE_DIR = "/Users/igorcerovsky/Documents/finger/paper/james"
-TEMPLATE_PATH = os.path.join(BASE_DIR, "1_ICI_titulka_požiadavky_na_form_úpravu.docx")
-OUTPUT_PATH = os.path.join(BASE_DIR, "cerovsky_practical_training_guide_sk.docx")
+TEMPLATE_PATH = os.path.join(BASE_DIR, "261020-1006UTC-1_ICI_titulka_požiadavky_na_form_úpravu.docx")
+OUTPUT_PATH = os.path.join(BASE_DIR, "261020-1148UTC-cerovsky_practical_training_guide_sk.docx")
 
 def set_cell_background(cell, fill_hex):
     """Set background color of a table cell."""

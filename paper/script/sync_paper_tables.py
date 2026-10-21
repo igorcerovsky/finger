@@ -2,7 +2,7 @@
 sync_paper_tables.py
 ====================
 Runs the climbing_finger_3d simulation engine and updates Tables 2 and 3
-in paper/short_vs_long_finger_advantage.md to guarantee 100% numerical reproducibility.
+in paper/261014-1915UTC-short_vs_long_finger_advantage.md to guarantee 100% numerical reproducibility.
 """
 
 import os
@@ -14,7 +14,7 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, ROOT_DIR)
 import climbing_finger_3d as c3d
 
-PAPER_MD = os.path.join(ROOT_DIR, 'paper/short_vs_long_finger_advantage.md')
+PAPER_MD = os.path.join(ROOT_DIR, 'paper/261014-1915UTC-short_vs_long_finger_advantage.md')
 
 def generate_table2():
     geom_std = c3d.FingerGeometry(c3d.Config.PP_mm, c3d.Config.MP_mm, c3d.Config.DP_mm, 'Standard')

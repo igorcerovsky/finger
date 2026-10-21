@@ -118,9 +118,9 @@ ax1c.grid(True, alpha=0.3, which='both')
 ax1c.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8)
 
 plt.tight_layout()
-fig1.savefig('outputs/pub_fig1_model_validation.png', dpi=300, bbox_inches='tight')
+fig1.savefig('outputs/261006-0801UTC-pub_fig1_model_validation.png', dpi=300, bbox_inches='tight')
 plt.close(fig1)
-print("Saved pub_fig1_model_validation.png")
+print("Saved 261006-0801UTC-pub_fig1_model_validation.png")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -208,9 +208,9 @@ ax2b.grid(True, alpha=0.3)
 ax2b.legend(loc='upper right', frameon=True, framealpha=0.9, fontsize=8.5)
 
 plt.tight_layout()
-fig2.savefig('outputs/pub_fig2_hold_depth_crossover.png', dpi=300, bbox_inches='tight')
+fig2.savefig('outputs/261006-0801UTC-pub_fig2_hold_depth_crossover.png', dpi=300, bbox_inches='tight')
 plt.close(fig2)
-print("Saved pub_fig2_hold_depth_crossover.png")
+print("Saved 261006-0801UTC-pub_fig2_hold_depth_crossover.png")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -328,9 +328,9 @@ ax3b.grid(True, alpha=0.3, axis='y')
 ax3b.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8)
 
 plt.tight_layout()
-fig3.savefig('outputs/pub_fig3_shear_and_scaling.png', dpi=300, bbox_inches='tight')
+fig3.savefig('outputs/261006-0801UTC-pub_fig3_shear_and_scaling.png', dpi=300, bbox_inches='tight')
 plt.close(fig3)
-print("Saved pub_fig3_shear_and_scaling.png")
+print("Saved 261006-0801UTC-pub_fig3_shear_and_scaling.png")
 
 # Standalone Figure 3B (Phenotype Scaling) for Main Paper
 fig3b_standalone, ax_s = plt.subplots(figsize=(8.5, 5.5), dpi=300)
@@ -358,9 +358,9 @@ ax_s.grid(True, alpha=0.3, axis='y')
 ax_s.legend(loc='upper left', frameon=True, framealpha=0.9, fontsize=8.5)
 
 plt.tight_layout()
-fig3b_standalone.savefig('outputs/pub_fig3b_phenotype_scaling.png', dpi=300, bbox_inches='tight')
+fig3b_standalone.savefig('outputs/261016-0717UTC-pub_fig3b_phenotype_scaling.png', dpi=300, bbox_inches='tight')
 plt.close(fig3b_standalone)
-print("Saved pub_fig3b_phenotype_scaling.png")
+print("Saved 261016-0717UTC-pub_fig3b_phenotype_scaling.png")
 
 # Copy all publication figures to artifact directory and paper/figures directory
 artifact_dirs = [
@@ -371,10 +371,10 @@ artifact_dirs = [
 ]
 os.makedirs("paper/figures", exist_ok=True)
 all_figures = [
-    'pub_fig1_model_validation.png',
-    'pub_fig2_hold_depth_crossover.png',
-    'pub_fig3_shear_and_scaling.png',
-    'pub_fig3b_phenotype_scaling.png'
+    '261006-0801UTC-pub_fig1_model_validation.png',
+    '261006-0801UTC-pub_fig2_hold_depth_crossover.png',
+    '261006-0801UTC-pub_fig3_shear_and_scaling.png',
+    '261016-0717UTC-pub_fig3b_phenotype_scaling.png'
 ]
 for fn in all_figures:
     if os.path.exists(f'outputs/{fn}'):

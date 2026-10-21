@@ -87,6 +87,6 @@ This was a highly subtle biomechanical and kinematic coordinate mismatch:
 
 3. **Publication Deliverables**:
    - Authored a complete, publication-ready 5–8 page manuscript ([paper/paper_draft.md](file:///Users/igorcerovsky/Documents/finger/paper/paper_draft.md)) adhering to standard *Journal of Biomechanics* structure, complete with mathematical formulations, structured tables, and literature citations.
-   - Authored companion athletic manual ([paper/practical_training_guide.md](file:///Users/igorcerovsky/Documents/finger/paper/practical_training_guide.md)) translating 3D physics into actionable training protocols and injury prevention rules.
+   - Authored companion athletic manual ([paper/261006-0801UTC-practical_training_guide.md](file:///Users/igorcerovsky/Documents/finger/paper/261006-0801UTC-practical_training_guide.md)) translating 3D physics into actionable training protocols and injury prevention rules.
 
 **Status: ITERATION 18 COMPLETED — Fast continuation optimizer operational, wrist tenodesis and adaptive tribology integrated, regression tests passing, and 5-8 page scientific paper drafted.**
